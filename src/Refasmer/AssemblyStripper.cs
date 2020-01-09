@@ -16,12 +16,12 @@ namespace JetBrains.Refasmer
         
         public void StripType( TypeDefinition type )
         {
+            Debug($"Stripping type {type.Name}");
             using (WithLogPrefix($"[{type.Name}]"))
             {
-                Debug("Stripping type");
 
                 var nonPublicMethods = type.Methods.Where(CanDeleteMethod).ToList();
-                Debug($"Removing {nonPublicMethods.Count} non public methods");
+                Trace($"Removing {nonPublicMethods.Count} non public methods");
                 type.Methods.RemoveRange(nonPublicMethods);
 
                 var nonPublicProperties = type.Properties
@@ -30,25 +30,25 @@ namespace JetBrains.Refasmer
                                 (p.OtherMethods?.All(CanDeleteMethod) ?? true))
                     .ToList();
 
-                Debug($"Removing {nonPublicProperties.Count} non public properties");
+                Trace($"Removing {nonPublicProperties.Count} non public properties");
                 type.Properties.RemoveRange(nonPublicProperties);
 
                 if (!type.IsValueType)
                 {
                     var nonPublicFields = type.Fields.Where(m => !m.IsPublic).ToList();
-                    Debug($"Removing {nonPublicFields.Count} non public fields from ref type");
+                    Trace($"Removing {nonPublicFields.Count} non public fields from ref type");
                     type.Fields.RemoveRange(nonPublicFields);
                 }
 
-                Debug($"Removing bodies from methods");
+                Trace($"Removing bodies from methods");
                 foreach (var method in type.Methods.Where(m => m.Body != null))
                 {
-                    Debug($"  {method.Name}");
+                    Trace($"  {method.Name}");
                     method.Body.Instructions.Clear();
                     method.Body.Variables.Clear();
                 }
 
-                Debug($"Handling nested types");
+                Trace($"Handling nested types");
                 foreach (var nestedType in type.NestedTypes)
                     StripType(nestedType);
             }
@@ -66,32 +66,36 @@ namespace JetBrains.Refasmer
 
         public void MakeRefAssembly(AssemblyDefinition assembly)
         {
-            using (WithLogPrefix($"[{assembly.Name}]"))
+            StripAssembly(assembly);
+
+            Debug("Adding ReferenceAssemblyAttribute to assembly");
+            var refs = assembly.MainModule.AssemblyReferences
+                .Select(ar => ar.FullName)
+                .ToHashSet();
+
+            var mscorlib =  Assembly.Load("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+            var scope = assembly.MainModule.AssemblyReferences.SingleOrDefault(ar => ar.FullName == mscorlib.FullName);
+            if (scope != null)
             {
-                StripAssembly(assembly);
-
-                Debug("Adding ReferenceAssemblyAttribute to assembly");
-                var refs = assembly.MainModule.AssemblyReferences
-                    .Select(ar => ar.FullName)
-                    .ToHashSet();
-
-                var mscorlib =
-                    Assembly.Load("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+                Debug($"Adding ReferenceAssemblyAttribute");
                 var attrType = mscorlib.GetType("System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
                 var method = assembly.MainModule.ImportReference(attrType.GetConstructor(Type.EmptyTypes));
 
                 var attr = new CustomAttribute(method);
-                attr.AttributeType.Scope =
-                    assembly.MainModule.AssemblyReferences.Single(ar => ar.FullName == mscorlib.FullName);
+                attr.AttributeType.Scope = scope;
                 assembly.CustomAttributes.Add(attr);
-
-                Debug("Patching assembly references");
-                var refsToDelete = assembly.MainModule.AssemblyReferences
-                    .Where(ar => !refs.Contains(ar.FullName)).ToList();
-
-                assembly.MainModule.AssemblyReferences.RemoveRange(refsToDelete);
             }
+            else
+            {
+                Warning($"Cannot add ReferenceAssemblyAttribute, reference to mscorlib not found");
+            }
+
+            Debug("Patching assembly references");
+            var refsToDelete = assembly.MainModule.AssemblyReferences
+                .Where(ar => !refs.Contains(ar.FullName)).ToList();
+
+            assembly.MainModule.AssemblyReferences.RemoveRange(refsToDelete);
         }
-        
+
     }
 }

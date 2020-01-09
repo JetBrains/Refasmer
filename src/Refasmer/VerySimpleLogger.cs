@@ -26,7 +26,7 @@ namespace JetBrains.Refasmer
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             if (IsEnabled(logLevel))
-                _writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}: {formatter(state, exception)}");
+                _writer.WriteLine(formatter(state, exception));
         }
 
         public bool IsEnabled(LogLevel logLevel)

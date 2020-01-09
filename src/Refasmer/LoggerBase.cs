@@ -80,5 +80,14 @@ namespace JetBrains.Refasmer
             _logger.LogWarning($"{_loggerPrefixStack.Peek()} {msg}");
         }
 
+        public void Trace( string msg )
+        {
+            _logger.LogTrace($"{_loggerPrefixStack.Peek()} {msg}");
+        }
+
+        public void Critical( string msg )
+        {
+            _logger.LogCritical($"{_loggerPrefixStack.Peek()} {msg}");
+        }
     }
 }
