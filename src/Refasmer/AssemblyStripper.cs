@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
@@ -64,6 +65,12 @@ namespace JetBrains.Refasmer
             assembly.MainModule.Resources.Clear();
         }
 
+        private static readonly HashSet<string> CoreLibVariants = new HashSet<string>
+        {
+            "netstandard",
+            "mscorlib"
+        };
+        
         public void MakeRefAssembly(AssemblyDefinition assembly)
         {
             StripAssembly(assembly);
@@ -73,21 +80,35 @@ namespace JetBrains.Refasmer
                 .Select(ar => ar.FullName)
                 .ToHashSet();
 
-            var mscorlib =  Assembly.Load("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-            var scope = assembly.MainModule.AssemblyReferences.SingleOrDefault(ar => ar.FullName == mscorlib.FullName);
-            if (scope != null)
+            Type refAsmAttrType = null;
+            AssemblyNameReference reference = null;
+            
+            foreach (var coreLibVariant in CoreLibVariants)
+            {
+                reference = assembly.MainModule.AssemblyReferences.SingleOrDefault(ar => ar.Name == coreLibVariant);
+                
+                if (reference == null)
+                    continue;
+
+                var lib = Assembly.Load(reference.FullName);
+                refAsmAttrType = lib.GetType("System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
+
+                if (refAsmAttrType != null)
+                    break;
+            }
+            
+            if (refAsmAttrType != null)
             {
                 Debug($"Adding ReferenceAssemblyAttribute");
-                var attrType = mscorlib.GetType("System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
-                var method = assembly.MainModule.ImportReference(attrType.GetConstructor(Type.EmptyTypes));
+                var method = assembly.MainModule.ImportReference(refAsmAttrType.GetConstructor(Type.EmptyTypes));
 
                 var attr = new CustomAttribute(method);
-                attr.AttributeType.Scope = scope;
+                attr.AttributeType.Scope = reference;
                 assembly.CustomAttributes.Add(attr);
             }
             else
             {
-                Warning($"Cannot add ReferenceAssemblyAttribute, reference to mscorlib not found");
+                Warning($"Cannot add ReferenceAssemblyAttribute, reference not found");
             }
 
             Debug("Patching assembly references");
