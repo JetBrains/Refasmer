@@ -42,8 +42,8 @@ namespace JetBrains.Refasmer
                 { "O|outputdir=", "set output directory", v => _outputDir = v },
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
                 { "d|dump", "dump assembly meta info", v => {  if (v != null) operation = Operation.DumpMetainfo; } },
-                { "refpath=", "add reference path", v => referencePaths.Add(v) },
-                { "sysrefpath", "use system reference path", v => useSystemReferencePath = v != null },
+                { "e|refpath=", "add reference path", v => referencePaths.Add(v) },
+                { "s|sysrefpath", "use system reference path", v => useSystemReferencePath = v != null },
                 { "<>", v => inputs.Add(v) },
             };
 
@@ -127,10 +127,12 @@ namespace JetBrains.Refasmer
             }
             else
             {
-                output = $"{Path.GetFileName(input)}.stripped";
+                output = $"{Path.GetFileName(input)}.refasm";
             }
 
             _logger.Trace($"Writing result to {output}");
+            if (File.Exists(output))
+                File.Delete(output);
             assembly.Write(output);
         }
 
@@ -140,7 +142,11 @@ namespace JetBrains.Refasmer
 
             var writer = Console.Out;
             
-            if (!string.IsNullOrEmpty(_outputDir))
+            if (!string.IsNullOrEmpty(_outputFile))
+            {
+                writer = new StreamWriter(_outputFile);
+            }
+            else if (!string.IsNullOrEmpty(_outputDir))
             {
                 writer = new StreamWriter(Path.Combine(_outputDir, $"{Path.GetFileName(input)}.dump"));
             }

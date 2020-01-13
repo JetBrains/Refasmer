@@ -13,7 +13,7 @@ namespace JetBrains.Refasmer
         }
 
         private static bool CanDeleteMethod(MethodDefinition method) => 
-            method != null && !method.IsPublic && !method.IsVirtual;
+            method != null && !method.IsPublic && !method.IsVirtual && !method.IsConstructor;
         
         public void StripType( TypeDefinition type )
         {
@@ -68,7 +68,8 @@ namespace JetBrains.Refasmer
         private static readonly HashSet<string> CoreLibVariants = new HashSet<string>
         {
             "netstandard",
-            "mscorlib"
+            "mscorlib",
+            "System.Private.CoreLib"
         };
         
         public void MakeRefAssembly(AssemblyDefinition assembly)

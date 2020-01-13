@@ -113,7 +113,7 @@ namespace JetBrains.Refasmer
                 
                 Modules = assembly.Modules.Select(a => new 
                 {
-                    a.Name, a.Mvid,
+                    a.Name,
                     
                     References = a.AssemblyReferences
                         .Select(ar => ar.FullName)
@@ -149,14 +149,12 @@ namespace JetBrains.Refasmer
                                 f.FullName, f.Attributes,
                                 CustomAttributes = CustomAttributesToStings(f.CustomAttributes),
                                 Flags = FieldAttributes(f),
-                                DeclaringTypeName = f.DeclaringType.FullName,
                             }).OrderBy(f => f.FullName).ToList(),
 
                             Properties = t.Properties?.Select(p => new
                             {
                                 p.FullName, p.Attributes,
                                 CustomAttributes = CustomAttributesToStings(p.CustomAttributes),
-                                DeclaringType = p.DeclaringType.FullName,
                                 GetMethodName = p.GetMethod?.FullName,
                                 SetMethodName = p.SetMethod?.FullName,
                                 OtherMethodNames = p.OtherMethods?.Select(m => m.FullName).OrderBy(s => s).ToList(),
