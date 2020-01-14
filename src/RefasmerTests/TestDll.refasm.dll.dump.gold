@@ -168,6 +168,33 @@
               "BodySize": 0
             },
             {
+              "FullName": "System.String RefasmerTests.PublicClass::ProtectedMethod(System.Int32)",
+              "Attributes": 132,
+              "CustomAttributes": [],
+              "Flags": [
+                "IsFamily",
+                "IsHideBySig",
+                "IsReuseSlot",
+                "IsIL",
+                "IsManaged"
+              ],
+              "BodySize": 0
+            },
+            {
+              "FullName": "System.String RefasmerTests.PublicClass::ProtectedStaticMethod(System.Int32)",
+              "Attributes": 148,
+              "CustomAttributes": [],
+              "Flags": [
+                "IsFamily",
+                "IsStatic",
+                "IsHideBySig",
+                "IsReuseSlot",
+                "IsIL",
+                "IsManaged"
+              ],
+              "BodySize": 0
+            },
+            {
               "FullName": "System.String RefasmerTests.PublicClass::PublicMethod(System.Int32)",
               "Attributes": 134,
               "CustomAttributes": [],
@@ -212,6 +239,23 @@
           ],
           "Fields": [
             {
+              "FullName": "System.Int32 RefasmerTests.PublicClass::ProtectedInt",
+              "Attributes": 4,
+              "CustomAttributes": [],
+              "Flags": [
+                "IsFamily"
+              ]
+            },
+            {
+              "FullName": "System.Int32 RefasmerTests.PublicClass::ProtectedStaticInt",
+              "Attributes": 20,
+              "CustomAttributes": [],
+              "Flags": [
+                "IsFamily",
+                "IsStatic"
+              ]
+            },
+            {
               "FullName": "System.Int32 RefasmerTests.PublicClass::PublicInt",
               "Attributes": 6,
               "CustomAttributes": [],
@@ -226,6 +270,23 @@
               "Flags": [
                 "IsPublic",
                 "IsStatic"
+              ]
+            },
+            {
+              "FullName": "System.String RefasmerTests.PublicClass::ProtectedStaticString",
+              "Attributes": 20,
+              "CustomAttributes": [],
+              "Flags": [
+                "IsFamily",
+                "IsStatic"
+              ]
+            },
+            {
+              "FullName": "System.String RefasmerTests.PublicClass::ProtectedString",
+              "Attributes": 4,
+              "CustomAttributes": [],
+              "Flags": [
+                "IsFamily"
               ]
             },
             {
