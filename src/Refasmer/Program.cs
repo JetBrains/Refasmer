@@ -79,8 +79,24 @@ namespace JetBrains.Refasmer
                     _logger.Info($"Processing {input}");
                     using (_logger.WithLogPrefix($"[{Path.GetFileName(input)}]"))
                     {
-                        _logger.Trace("Reading assembly");
-                        var assembly = AssemblyDefinition.ReadAssembly(input, new ReaderParameters {AssemblyResolver = resolver});
+                        AssemblyDefinition assembly;
+
+                        try
+                        {
+                            _logger.Trace("Reading assembly");
+                            assembly = ModuleDefinition .ReadModule(input, new ReaderParameters {AssemblyResolver = resolver}).Assembly;
+                            
+                            if (assembly == null)
+                            {
+                                _logger.Error("Module format is not supported");
+                                return 1;
+                            }
+                        }
+                        catch (BadImageFormatException e)
+                        {
+                            _logger.Error(e.Message);
+                            return 1;
+                        }
 
                         switch (operation)
                         {
@@ -93,9 +109,10 @@ namespace JetBrains.Refasmer
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }
-                        
+
                     }
                 }
+
                 _logger.Info("All done");
                 return 0;
             }

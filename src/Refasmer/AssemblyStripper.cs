@@ -117,6 +117,10 @@ namespace JetBrains.Refasmer
                 .Where(ar => !refs.Contains(ar.FullName)).ToList();
 
             assembly.MainModule.AssemblyReferences.RemoveRange(refsToDelete);
+
+            Debug("Removing all modules but main");
+            assembly.Modules.Clear();
+            assembly.Modules.Add(assembly.MainModule);
         }
 
     }
