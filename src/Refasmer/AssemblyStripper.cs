@@ -13,7 +13,7 @@ namespace JetBrains.Refasmer
         }
 
         private static bool CanDeleteMethod(MethodDefinition method) => 
-            method != null && !method.IsPublic && !method.IsVirtual && !method.IsConstructor;
+            method != null && method.IsPrivate && !method.IsVirtual && !method.IsConstructor;
         
         public void StripType( TypeDefinition type )
         {
@@ -21,9 +21,9 @@ namespace JetBrains.Refasmer
             using (WithLogPrefix($"[{type.Name}]"))
             {
 
-                var nonPublicMethods = type.Methods.Where(CanDeleteMethod).ToList();
-                Trace($"Removing {nonPublicMethods.Count} non public methods");
-                type.Methods.RemoveRange(nonPublicMethods);
+                var methodsToDelete = type.Methods.Where(CanDeleteMethod).ToList();
+                Trace($"Removing {methodsToDelete.Count} methods");
+                type.Methods.RemoveRange(methodsToDelete);
 
                 var nonPublicProperties = type.Properties
                     .Where(p => CanDeleteMethod(p.GetMethod) &&
@@ -36,9 +36,9 @@ namespace JetBrains.Refasmer
 
                 if (!type.IsValueType)
                 {
-                    var nonPublicFields = type.Fields.Where(m => !m.IsPublic).ToList();
-                    Trace($"Removing {nonPublicFields.Count} non public fields from ref type");
-                    type.Fields.RemoveRange(nonPublicFields);
+                    var fieldsToDelete = type.Fields.Where(m => m.IsPrivate).ToList();
+                    Trace($"Removing {fieldsToDelete.Count} fields from ref type");
+                    type.Fields.RemoveRange(fieldsToDelete);
                 }
 
                 Trace($"Removing bodies from methods");
