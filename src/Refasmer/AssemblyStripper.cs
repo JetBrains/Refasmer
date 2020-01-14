@@ -82,21 +82,20 @@ namespace JetBrains.Refasmer
                 .ToHashSet();
 
             Type refAsmAttrType = null;
-            AssemblyNameReference reference = null;
+            AssemblyNameReference attributeReference = null;
             
             foreach (var coreLibVariant in CoreLibVariants)
-            {
-                reference = assembly.MainModule.AssemblyReferences.SingleOrDefault(ar => ar.Name == coreLibVariant);
-                
-                if (reference == null)
-                    continue;
+                foreach (var reference in assembly.MainModule.AssemblyReferences.Where(ar => ar.Name == coreLibVariant).OrderByDescending(ar => ar.Version))
+                {
+                    var lib = Assembly.Load(reference.FullName);
+                    refAsmAttrType = lib.GetType("System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
 
-                var lib = Assembly.Load(reference.FullName);
-                refAsmAttrType = lib.GetType("System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
-
-                if (refAsmAttrType != null)
-                    break;
-            }
+                    if (refAsmAttrType != null)
+                    {
+                        attributeReference = reference;                        
+                        break;
+                    }
+                }
             
             if (refAsmAttrType != null)
             {
@@ -104,7 +103,7 @@ namespace JetBrains.Refasmer
                 var method = assembly.MainModule.ImportReference(refAsmAttrType.GetConstructor(Type.EmptyTypes));
 
                 var attr = new CustomAttribute(method);
-                attr.AttributeType.Scope = reference;
+                attr.AttributeType.Scope = attributeReference;
                 assembly.CustomAttributes.Add(attr);
             }
             else
@@ -121,6 +120,9 @@ namespace JetBrains.Refasmer
             Debug("Removing all modules but main");
             assembly.Modules.Clear();
             assembly.Modules.Add(assembly.MainModule);
+            
+            
+            assembly.
         }
 
     }

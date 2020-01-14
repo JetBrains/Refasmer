@@ -84,13 +84,22 @@ namespace JetBrains.Refasmer
                         try
                         {
                             _logger.Trace("Reading assembly");
-                            assembly = ModuleDefinition .ReadModule(input, new ReaderParameters {AssemblyResolver = resolver}).Assembly;
+                            var module = ModuleDefinition.ReadModule(input, new ReaderParameters {AssemblyResolver = resolver});
                             
+                            if ((module.Attributes & ModuleAttributes.ILOnly) == 0)
+                            {
+                                _logger.Error("Mixed-mode assemblies is not supported");
+                                return 1;
+                            }
+
+                            assembly = module.Assembly;
+
                             if (assembly == null)
                             {
                                 _logger.Error("Module format is not supported");
                                 return 1;
                             }
+
                         }
                         catch (BadImageFormatException e)
                         {
