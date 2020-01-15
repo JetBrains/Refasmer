@@ -120,9 +120,6 @@ namespace JetBrains.Refasmer
             Debug("Removing all modules but main");
             assembly.Modules.Clear();
             assembly.Modules.Add(assembly.MainModule);
-            
-            
-            assembly.
         }
 
     }

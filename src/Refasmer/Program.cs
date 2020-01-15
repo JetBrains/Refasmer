@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Xml;
 using Microsoft.Extensions.Logging;
 using Mono.Cecil;
 using Mono.Options;
@@ -13,14 +16,36 @@ namespace JetBrains.Refasmer
         {
             MakeRefasm,
             DumpMetainfo,
+            MakeXmlList
         }
 
-
+        
         static bool _overwrite;
         static string _outputDir;
         static string _outputFile;
         static LoggerBase _logger;
 
+        class InvalidOptionException : Exception
+        {
+            public InvalidOptionException(string message) : base(message)
+            {
+            }
+        }
+        
+        private static void AddFileListAttr(string v, Dictionary<string, string> attrs)
+        {
+            if (!string.IsNullOrEmpty(v))
+            {
+                var split = v.Split('=');
+                if (split.Length == 2)
+                {
+                    attrs[split[0]] = split[1];
+                    return;
+                }
+            }
+            throw new InvalidOptionException("FileList attr should be like name=value");
+        }
+        
         public static int Main(string[] args)
         {
             var inputs = new List<string>();
@@ -32,22 +57,44 @@ namespace JetBrains.Refasmer
             var showHelp = false;
             var quiet = false;
 
+            var fileListAttr = new Dictionary<string, string>();
+            
             var options = new OptionSet
             {
                 { "v", "increase verbosity", v => { if (v != null && verbosity > LogLevel.Trace) verbosity--; } },
                 { "q|quiet", "be quiet", v => quiet = v != null },
                 { "h|help", "show help", v => { showHelp = v != null; } },
-                { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
-                { "o|output=", "set output file, for single file only", v => _outputFile = v },
+
                 { "O|outputdir=", "set output directory", v => _outputDir = v },
+                { "o|output=", "set output file, for single file only", v => _outputFile = v },
+
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
-                { "d|dump", "dump assembly meta info", v => {  if (v != null) operation = Operation.DumpMetainfo; } },
+                { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
                 { "e|refpath=", "add reference path", v => referencePaths.Add(v) },
                 { "s|sysrefpath", "use system reference path", v => useSystemReferencePath = v != null },
+
+                { "d|dump", "dump assembly meta info", v => {  if (v != null) operation = Operation.DumpMetainfo; } },
+
+                { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
+                { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
+                
                 { "<>", v => inputs.Add(v) },
             };
 
-            options.Parse(args);
+            try
+            {
+                options.Parse(args);
+            }
+            catch (InvalidOptionException e)
+            {
+                Console.Error.WriteLine(e.Message);
+                return 1;
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"{e}");
+                return 1;
+            }
 
             if (quiet)
                 verbosity = LogLevel.None;
@@ -71,8 +118,28 @@ namespace JetBrains.Refasmer
             _logger = new LoggerBase(new VerySimpleLogger(Console.Error, verbosity));
             var resolver = new AssemblyResolver(referencePaths, useSystemReferencePath);
 
+            
             try
             {
+                _logger.Trace($"Program arguments: {string.Join(" ", args)}");
+
+                XmlTextWriter xmlWriter = null;
+                
+                if (operation == Operation.MakeXmlList)
+                {
+                    xmlWriter = !string.IsNullOrEmpty(_outputFile) 
+                        ? new XmlTextWriter(_outputFile, Encoding.UTF8) 
+                        : new XmlTextWriter(Console.Out);
+                    
+                    xmlWriter.Formatting = Formatting.Indented;  
+
+                    xmlWriter.WriteStartDocument();
+                    xmlWriter.WriteStartElement("FileList");
+
+                    foreach (var (key, value) in fileListAttr)
+                        xmlWriter.WriteAttributeString(key, value);
+                }
+                
                 _logger.Info($"Processing {inputs.Count} assemblies");
                 foreach (var input in inputs)
                 {
@@ -115,11 +182,22 @@ namespace JetBrains.Refasmer
                             case Operation.DumpMetainfo:
                                 DumpAssembly(assembly, input);
                                 break;
+                            case Operation.MakeXmlList:
+                                WriteAssemblyToXml(assembly, xmlWriter);
+                                break;
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }
 
                     }
+                }
+
+                if (xmlWriter != null)
+                {
+                    xmlWriter.WriteEndElement();
+                    xmlWriter.WriteEndDocument();
+                    
+                    xmlWriter.Close();
                 }
 
                 _logger.Info("All done");
@@ -130,6 +208,28 @@ namespace JetBrains.Refasmer
                 _logger.Error($"{e}");
                 return 1;
             }
+        }
+
+        private static void WriteAssemblyToXml(AssemblyDefinition assembly, XmlTextWriter xmlWriter)
+        {
+            xmlWriter.WriteStartElement("File");
+            xmlWriter.WriteAttributeString("AssemblyName", assembly.Name.Name);
+            xmlWriter.WriteAttributeString("Version", assembly.Name.Version.ToString(4));
+            xmlWriter.WriteAttributeString("Culture", string.IsNullOrEmpty(assembly.Name.Culture) ? "neutral" : assembly.Name.Culture);
+
+            
+            var sb = new StringBuilder();
+
+            foreach (var b in assembly.Name.PublicKeyToken)
+                sb.Append(b.ToString("x2"));
+            
+            xmlWriter.WriteAttributeString("PublicKeyToken", sb.ToString());
+
+            xmlWriter.WriteAttributeString("InGac", "false");
+            xmlWriter.WriteAttributeString("ProcessorArchitecture", "MSIL");
+                 
+            xmlWriter.WriteEndElement();
+            
         }
 
         private static void MakeRefasm(AssemblyDefinition assembly, string input)
