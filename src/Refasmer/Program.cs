@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Xml;
+using JetBrains.Refasmer.PEHandler;
 using Microsoft.Extensions.Logging;
 using Mono.Cecil;
 using Mono.Options;
+using PEHandler;
 
 namespace JetBrains.Refasmer
 {
@@ -56,15 +59,17 @@ namespace JetBrains.Refasmer
             var verbosity = LogLevel.Warning;
             var showHelp = false;
             var quiet = false;
-
+            var continueOnErrors = false;
+            
             var fileListAttr = new Dictionary<string, string>();
             
             var options = new OptionSet
             {
                 { "v", "increase verbosity", v => { if (v != null && verbosity > LogLevel.Trace) verbosity--; } },
                 { "q|quiet", "be quiet", v => quiet = v != null },
-                { "h|help", "show help", v => { showHelp = v != null; } },
-
+                { "h|help", "show help", v => showHelp = v != null },
+                { "c|continue", "continue on errors", v => continueOnErrors = v != null },
+                
                 { "O|outputdir=", "set output directory", v => _outputDir = v },
                 { "o|output=", "set output file, for single file only", v => _outputFile = v },
 
@@ -72,7 +77,6 @@ namespace JetBrains.Refasmer
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
                 { "e|refpath=", "add reference path", v => referencePaths.Add(v) },
                 { "s|sysrefpath", "use system reference path", v => useSystemReferencePath = v != null },
-
                 { "d|dump", "dump assembly meta info", v => {  if (v != null) operation = Operation.DumpMetainfo; } },
 
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
@@ -152,10 +156,13 @@ namespace JetBrains.Refasmer
                         {
                             _logger.Trace("Reading assembly");
                             var module = ModuleDefinition.ReadModule(input, new ReaderParameters {AssemblyResolver = resolver});
-                            
+
                             if ((module.Attributes & ModuleAttributes.ILOnly) == 0)
                             {
                                 _logger.Error("Mixed-mode assemblies is not supported");
+                                
+                                if (continueOnErrors)
+                                    continue;
                                 return 1;
                             }
 
@@ -164,6 +171,8 @@ namespace JetBrains.Refasmer
                             if (assembly == null)
                             {
                                 _logger.Error("Module format is not supported");
+                                if (continueOnErrors)
+                                    continue;
                                 return 1;
                             }
 
@@ -171,6 +180,8 @@ namespace JetBrains.Refasmer
                         catch (BadImageFormatException e)
                         {
                             _logger.Error(e.Message);
+                            if (continueOnErrors)
+                                continue;
                             return 1;
                         }
 
@@ -256,11 +267,26 @@ namespace JetBrains.Refasmer
                 output = $"{Path.GetFileName(input)}.refasm";
             }
 
+            using var ms = new MemoryStream();
+            assembly.Write(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            var peFile = new PEFile(ms, 512);
+
+            peFile.RsrcHandler.Root.Entries.Clear();
+            peFile.RsrcHandler.Write();
+            var bytes = peFile.Write();
+            
+            ms.Seek(0, SeekOrigin.Begin);
+            ms.Write(bytes);
+            
             _logger.Trace($"Writing result to {output}");
             if (File.Exists(output))
                 File.Delete(output);
-            assembly.Write(output);
+
+            File.WriteAllBytes(output, bytes);
         }
+        
 
         private static void DumpAssembly(AssemblyDefinition assembly, string input)
         {
