@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Xml;
 using JetBrains.Refasmer.PEHandler;
 using Microsoft.Extensions.Logging;
 using Mono.Cecil;
 using Mono.Options;
-using PEHandler;
 
 namespace JetBrains.Refasmer
 {
@@ -60,6 +57,8 @@ namespace JetBrains.Refasmer
             var showHelp = false;
             var quiet = false;
             var continueOnErrors = false;
+
+            var stripPE = false;
             
             var fileListAttr = new Dictionary<string, string>();
             
@@ -74,6 +73,7 @@ namespace JetBrains.Refasmer
                 { "o|output=", "set output file, for single file only", v => _outputFile = v },
 
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
+                { "p|pestrip", "strip native PE resources", v => stripPE = v != null },
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
                 { "e|refpath=", "add reference path", v => referencePaths.Add(v) },
                 { "s|sysrefpath", "use system reference path", v => useSystemReferencePath = v != null },
@@ -157,15 +157,6 @@ namespace JetBrains.Refasmer
                             _logger.Trace("Reading assembly");
                             var module = ModuleDefinition.ReadModule(input, new ReaderParameters {AssemblyResolver = resolver});
 
-                            if ((module.Attributes & ModuleAttributes.ILOnly) == 0)
-                            {
-                                _logger.Error("Mixed-mode assemblies is not supported");
-                                
-                                if (continueOnErrors)
-                                    continue;
-                                return 1;
-                            }
-
                             assembly = module.Assembly;
 
                             if (assembly == null)
@@ -188,7 +179,7 @@ namespace JetBrains.Refasmer
                         switch (operation)
                         {
                             case Operation.MakeRefasm:
-                                MakeRefasm(assembly, input);
+                                MakeRefasm(assembly, input, stripPE);
                                 break;
                             case Operation.DumpMetainfo:
                                 DumpAssembly(assembly, input);
@@ -243,10 +234,38 @@ namespace JetBrains.Refasmer
             
         }
 
-        private static void MakeRefasm(AssemblyDefinition assembly, string input)
+        private static void MakeRefasm(AssemblyDefinition assembly, string input, bool stripPE )
         {
             var stripper = new AssemblyStripper(_logger);
             stripper.MakeRefAssembly(assembly);
+            assembly.MainModule.Attributes = assembly.MainModule.Attributes | ModuleAttributes.ILOnly;
+
+            byte[] bytes = null; 
+            
+            using var ms = new MemoryStream();
+            assembly.Write(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            if (stripPE)
+            {
+                try
+                {
+                    _logger.Debug("Stripping native PE resources");
+               
+                    var peFile = new PEFile(ms, 512);
+
+                    peFile.RsrcHandler.Root.Entries.Clear();
+                    peFile.RsrcHandler.Write();
+                    bytes = peFile.Write();
+                }
+                catch (Exception e)
+                {
+                    _logger.Warning($"Cannot strip PE: {e.Message}");
+                }
+            }
+
+            if (bytes == null)
+                bytes = ms.ToArray();
 
             string output;
 
@@ -266,19 +285,6 @@ namespace JetBrains.Refasmer
             {
                 output = $"{Path.GetFileName(input)}.refasm";
             }
-
-            using var ms = new MemoryStream();
-            assembly.Write(ms);
-            ms.Seek(0, SeekOrigin.Begin);
-
-            var peFile = new PEFile(ms, 512);
-
-            peFile.RsrcHandler.Root.Entries.Clear();
-            peFile.RsrcHandler.Write();
-            var bytes = peFile.Write();
-            
-            ms.Seek(0, SeekOrigin.Begin);
-            ms.Write(bytes);
             
             _logger.Trace($"Writing result to {output}");
             if (File.Exists(output))

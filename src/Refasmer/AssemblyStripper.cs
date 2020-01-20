@@ -77,6 +77,7 @@ namespace JetBrains.Refasmer
             StripAssembly(assembly);
 
             Debug("Adding ReferenceAssemblyAttribute to assembly");
+
             var refs = assembly.MainModule.AssemblyReferences
                 .Select(ar => ar.FullName)
                 .ToHashSet();
