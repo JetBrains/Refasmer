@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Microsoft.Extensions.Logging;
 
-namespace JetBrains.Refasmer
+namespace JetBrains.Refasmer2
 {
     public class VerySimpleLogger: ILogger
     {

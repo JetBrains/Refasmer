@@ -1,29 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
-using JetBrains.Refasmer.PEHandler;
 using Microsoft.Extensions.Logging;
-using Mono.Cecil;
 using Mono.Options;
 
-namespace JetBrains.Refasmer
+namespace JetBrains.Refasmer2
 {
     public static class Program
     {
         enum Operation
         {
             MakeRefasm,
-            DumpMetainfo,
             MakeXmlList
         }
 
         
-        static bool _overwrite;
-        static string _outputDir;
-        static string _outputFile;
-        static LoggerBase _logger;
+        private static bool _overwrite;
+        private static string _outputDir;
+        private static string _outputFile;
+        private static LoggerBase _logger;
 
         class InvalidOptionException : Exception
         {
@@ -45,12 +46,10 @@ namespace JetBrains.Refasmer
             }
             throw new InvalidOptionException("FileList attr should be like name=value");
         }
-        
+
         public static int Main(string[] args)
         {
             var inputs = new List<string>();
-            var referencePaths = new List<string> {"."};
-            var useSystemReferencePath = false;
             var operation = Operation.MakeRefasm;
 
             var verbosity = LogLevel.Warning;
@@ -58,8 +57,6 @@ namespace JetBrains.Refasmer
             var quiet = false;
             var continueOnErrors = false;
 
-            var stripPE = false;
-            
             var fileListAttr = new Dictionary<string, string>();
             
             var options = new OptionSet
@@ -73,12 +70,8 @@ namespace JetBrains.Refasmer
                 { "o|output=", "set output file, for single file only", v => _outputFile = v },
 
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
-                { "p|pestrip", "strip native PE resources", v => stripPE = v != null },
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
-                { "e|refpath=", "add reference path", v => referencePaths.Add(v) },
-                { "s|sysrefpath", "use system reference path", v => useSystemReferencePath = v != null },
-                { "d|dump", "dump assembly meta info", v => {  if (v != null) operation = Operation.DumpMetainfo; } },
-
+                
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
                 
@@ -107,7 +100,7 @@ namespace JetBrains.Refasmer
             {
                 var selfName = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
                 
-                Console.Out.WriteLine($"Usage: {selfName} [options] <dll to strip> [<dll to strip> ...]");
+                Console.Out.WriteLine($"Usage: {selfName} [options] <dll> [<dll> ...]");
                 Console.Out.WriteLine("Options:");
                 options.WriteOptionDescriptions(Console.Out);
                 return 0;
@@ -120,9 +113,7 @@ namespace JetBrains.Refasmer
             }
 
             _logger = new LoggerBase(new VerySimpleLogger(Console.Error, verbosity));
-            var resolver = new AssemblyResolver(referencePaths, useSystemReferencePath);
 
-            
             try
             {
                 _logger.Trace($"Program arguments: {string.Join(" ", args)}");
@@ -150,23 +141,20 @@ namespace JetBrains.Refasmer
                     _logger.Info($"Processing {input}");
                     using (_logger.WithLogPrefix($"[{Path.GetFileName(input)}]"))
                     {
-                        AssemblyDefinition assembly;
-
+                        MetadataReader metaReader;
                         try
                         {
                             _logger.Trace("Reading assembly");
-                            var module = ModuleDefinition.ReadModule(input, new ReaderParameters {AssemblyResolver = resolver});
+                            var peReader = new PEReader(new FileStream(input, FileMode.Open)); 
+                            metaReader = peReader.GetMetadataReader();
 
-                            assembly = module.Assembly;
-
-                            if (assembly == null)
+                            if (!metaReader.IsAssembly)
                             {
-                                _logger.Error("Module format is not supported");
+                                _logger.Error("File format is not supported");
                                 if (continueOnErrors)
                                     continue;
                                 return 1;
                             }
-
                         }
                         catch (BadImageFormatException e)
                         {
@@ -179,13 +167,10 @@ namespace JetBrains.Refasmer
                         switch (operation)
                         {
                             case Operation.MakeRefasm:
-                                MakeRefasm(assembly, input, stripPE);
-                                break;
-                            case Operation.DumpMetainfo:
-                                DumpAssembly(assembly, input);
+                                MakeRefasm(metaReader, input);
                                 break;
                             case Operation.MakeXmlList:
-                                WriteAssemblyToXml(assembly, xmlWriter);
+                                WriteAssemblyToXml(metaReader, xmlWriter);
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -212,17 +197,20 @@ namespace JetBrains.Refasmer
             }
         }
 
-        private static void WriteAssemblyToXml(AssemblyDefinition assembly, XmlTextWriter xmlWriter)
+        private static void WriteAssemblyToXml(MetadataReader metaReader, XmlTextWriter xmlWriter)
         {
-            xmlWriter.WriteStartElement("File");
-            xmlWriter.WriteAttributeString("AssemblyName", assembly.Name.Name);
-            xmlWriter.WriteAttributeString("Version", assembly.Name.Version.ToString(4));
-            xmlWriter.WriteAttributeString("Culture", string.IsNullOrEmpty(assembly.Name.Culture) ? "neutral" : assembly.Name.Culture);
-
+            var assembly = metaReader.GetAssemblyDefinition();
             
+            xmlWriter.WriteStartElement("File");
+            xmlWriter.WriteAttributeString("AssemblyName", metaReader.GetString(assembly.Name));
+            xmlWriter.WriteAttributeString("Version", assembly.Version.ToString(4));
+
+            var culture = metaReader.GetString(assembly.Culture);
+            xmlWriter.WriteAttributeString("Culture", string.IsNullOrEmpty(culture) ? "neutral" : culture);
+
             var sb = new StringBuilder();
 
-            foreach (var b in assembly.Name.PublicKeyToken)
+            foreach (var b in metaReader.GetBlobContent(assembly.PublicKey))
                 sb.Append(b.ToString("x2"));
             
             xmlWriter.WriteAttributeString("PublicKeyToken", sb.ToString());
@@ -231,42 +219,28 @@ namespace JetBrains.Refasmer
             xmlWriter.WriteAttributeString("ProcessorArchitecture", "MSIL");
                  
             xmlWriter.WriteEndElement();
-            
         }
 
-        private static void MakeRefasm(AssemblyDefinition assembly, string input, bool stripPE )
+        private static void MakeRefasm(MetadataReader metaReader, string input )
         {
-            var stripper = new AssemblyStripper(_logger);
-            stripper.MakeRefAssembly(assembly);
-            assembly.MainModule.Attributes = assembly.MainModule.Attributes | ModuleAttributes.ILOnly;
+            var metaBuilder = new MetadataBuilder();
 
-            byte[] bytes = null; 
+            var importer =
+                new MetadataImporter(metaReader, metaBuilder, _logger)
+                {
+                    FieldFilter = f => (f.Attributes & FieldAttributes.FieldAccessMask) > FieldAttributes.Assembly,
+                    MethodFilter = m => (m.Attributes & MethodAttributes.MemberAccessMask) > MethodAttributes.Assembly || (m.Attributes & MethodAttributes.Virtual) != 0
+                };
             
-            using var ms = new MemoryStream();
-            assembly.Write(ms);
-            ms.Seek(0, SeekOrigin.Begin);
-
-            if (stripPE)
-            {
-                try
-                {
-                    _logger.Debug("Stripping native PE resources");
-               
-                    var peFile = new PEFile(ms, 512);
-
-                    peFile.RsrcHandler.Root.Entries.Clear();
-                    peFile.RsrcHandler.Write();
-                    bytes = peFile.Write();
-                }
-                catch (Exception e)
-                {
-                    _logger.Warning($"Cannot strip PE: {e.Message}");
-                }
-            }
-
-            if (bytes == null)
-                bytes = ms.ToArray();
-
+            importer.Import();
+            
+            var metaRootBuilder = new MetadataRootBuilder(metaBuilder);
+            var peHeaderBuilder = new PEHeaderBuilder();
+            var ilStream = new BlobBuilder();
+            var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream);
+            var blobBuilder = new BlobBuilder();
+            peBuilder.Serialize(blobBuilder);
+            
             string output;
 
             if (!string.IsNullOrEmpty(_outputFile))
@@ -290,27 +264,7 @@ namespace JetBrains.Refasmer
             if (File.Exists(output))
                 File.Delete(output);
 
-            File.WriteAllBytes(output, bytes);
+            File.WriteAllBytes(output, blobBuilder.ToArray());
         }
-        
-
-        private static void DumpAssembly(AssemblyDefinition assembly, string input)
-        {
-            var dumper = new AssemblyDumper(_logger);
-
-            var writer = Console.Out;
-            
-            if (!string.IsNullOrEmpty(_outputFile))
-            {
-                writer = new StreamWriter(_outputFile);
-            }
-            else if (!string.IsNullOrEmpty(_outputDir))
-            {
-                writer = new StreamWriter(Path.Combine(_outputDir, $"{Path.GetFileName(input)}.dump"));
-            }
-
-            dumper.DumpAssembly(assembly, writer);
-            writer.Flush();
-        }
-    }
+   }
 }
