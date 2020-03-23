@@ -10,7 +10,7 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 
-namespace JetBrains.Refasmer2
+namespace JetBrains.Refasmer
 {
     public static class Program
     {

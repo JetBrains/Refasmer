@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-namespace JetBrains.Refasmer2
+namespace JetBrains.Refasmer
 {
     public class MetadataImporter : LoggerBase
     {
@@ -162,9 +162,10 @@ namespace JetBrains.Refasmer2
                 _builder.AddNestedType(dstNested, dstHandle);
                 Trace($"Imported nested type {_reader.ToString(srcNested)} -> {MetaUtil.RowId(dstNested):X}");
             }
-
+            
             var interfaceImpls = src.GetInterfaceImplementations()
-                .Select(x => Tuple.Create(x, GetOrImport(_reader.GetInterfaceImplementation(x).Interface)))
+                .Select(x => Tuple.Create(x, Get(_reader.GetInterfaceImplementation(x).Interface)))
+                .Where(x => !x.Item2.IsNil)
                 .OrderBy(x => MetaUtil.RowId(x.Item2));
 
             foreach (var (srcInterfaceImplHandle, dstInterface) in interfaceImpls)

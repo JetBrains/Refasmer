@@ -5,7 +5,7 @@ using System.Reflection.Metadata;
 using System.Xml;
 using System.Xml.Schema;
 
-namespace JetBrains.Refasmer2
+namespace JetBrains.Refasmer
 {
     public static class MetaUtil
     {

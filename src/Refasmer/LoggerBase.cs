@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 
-namespace JetBrains.Refasmer2
+namespace JetBrains.Refasmer
 {
     public class LoggerBase
     {
