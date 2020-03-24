@@ -23,12 +23,17 @@ namespace JetBrains.Refasmer
 
         public void Import()
         {
+            
+            
+            var version = new Version((int) (DateTime.Now.Ticks & 0xFFFF), (int) (DateTime.Now.Ticks & 0xFFFF)); 
+            
             var srcAssembly = _reader.GetAssemblyDefinition();
-            _builder.AddAssembly(ImportValue(srcAssembly.Name), new Version(), ImportValue(srcAssembly.Culture), ImportValue(srcAssembly.PublicKey),
+            _builder.AddAssembly(ImportValue(srcAssembly.Name), srcAssembly.Version, ImportValue(srcAssembly.Culture), ImportValue(srcAssembly.PublicKey),
                 srcAssembly.Flags, srcAssembly.HashAlgorithm);
             Debug($"Imported assembly {_reader.ToString(srcAssembly)}");
 
             var srcModule = _reader.GetModuleDefinition();
+
             _builder.AddModule(srcModule.Generation, ImportValue(srcModule.Name), ImportValue(srcModule.Mvid), ImportValue(srcModule.GenerationId),
                 ImportValue(srcModule.BaseGenerationId));
             Debug($"Imported module {_reader.ToString(srcModule)}");
@@ -78,7 +83,7 @@ namespace JetBrains.Refasmer
                     .Select(x =>
                         Tuple.Create((EntityHandle)Get(x), _reader.GetMethodDefinition(x).GetGenericParameters())))
                 .Where(x => !x.Item1.IsNil)
-                .OrderBy(x => MetaUtil.RowId(x.Item1))
+                .OrderBy(x => CodedIndex.TypeOrMethodDef(x.Item1))
                 .ToList();
 
             Debug($"Importing generic constraints");
@@ -105,12 +110,14 @@ namespace JetBrains.Refasmer
             var src = _reader.GetTypeDefinition(srcHandle);
 
             var dst = _builder.AddTypeDefinition(src.Attributes, ImportValue(src.Namespace), ImportValue(src.Name),
-                Get(src.BaseType), NextFieldHandle(), NextMethodHandle());
+                GetOrImport(src.BaseType), NextFieldHandle(), NextMethodHandle());
 
             Trace($"Imported {_reader.ToString(srcHandle)} -> {MetaUtil.RowId(dst):X}");
             
             if (dst != srcHandle)
                 throw new Exception("WTF: Direct type mapping broken");
+
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             foreach (var srcFieldHandle in src.GetFields())
             {
@@ -120,8 +127,8 @@ namespace JetBrains.Refasmer
                     continue;
                 
                 var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name), ImportValue(srcField.Signature));
-                Trace($"Imported {_reader.ToString(srcFieldHandle)} -> {MetaUtil.RowId(dstFieldHandle):X}");
                 _fieldDefinitionCache.Add(srcFieldHandle, dstFieldHandle);
+                Trace($"Imported {_reader.ToString(srcFieldHandle)} -> {MetaUtil.RowId(dstFieldHandle):X}");
             }
 
             foreach (var srcMethodHandle in src.GetMethods())
@@ -132,16 +139,17 @@ namespace JetBrains.Refasmer
                     continue;
 
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes, ImportValue(srcMethod.Name),
-                    ImportValue(srcMethod.Signature), 0, NextParameterHandle());
-                Trace($"Imported {_reader.ToString(srcMethodHandle)} -> {MetaUtil.RowId(dstMethodHandle):X}");
+                    ImportValue(srcMethod.Signature), -1, NextParameterHandle());
                 _methodDefinitionCache.Add(srcMethodHandle, dstMethodHandle);
+                Trace($"Imported {_reader.ToString(srcMethodHandle)} -> {MetaUtil.RowId(dstMethodHandle):X}");
 
+                using var __ = WithLogPrefix($"[{_reader.ToString(srcMethodHandle)}]");
                 foreach (var srcParameterHandle in srcMethod.GetParameters())
                 {
                     var srcParameter = _reader.GetParameter(srcParameterHandle);
                     var dstParameterHandle = _builder.AddParameter(srcParameter.Attributes, ImportValue(srcParameter.Name), srcParameter.SequenceNumber);
-                    Trace($"Imported {_reader.ToString(srcParameterHandle)} -> {MetaUtil.RowId(dstParameterHandle):X}");
                     _parameterCache.Add(srcParameterHandle, dstParameterHandle);
+                    Trace($"Imported {_reader.ToString(srcParameterHandle)} -> {MetaUtil.RowId(dstParameterHandle):X}");
                 }
             }
         }
@@ -164,15 +172,16 @@ namespace JetBrains.Refasmer
             }
             
             var interfaceImpls = src.GetInterfaceImplementations()
-                .Select(x => Tuple.Create(x, Get(_reader.GetInterfaceImplementation(x).Interface)))
+                .Select(x => Tuple.Create(x, GetOrImport(_reader.GetInterfaceImplementation(x).Interface)))
                 .Where(x => !x.Item2.IsNil)
-                .OrderBy(x => MetaUtil.RowId(x.Item2));
+                .OrderBy(x => CodedIndex.TypeDefOrRefOrSpec(x.Item2))
+                .ToList();
 
             foreach (var (srcInterfaceImplHandle, dstInterface) in interfaceImpls)
             {
                 var dstInterfaceImplHandle = _builder.AddInterfaceImplementation(dstHandle, dstInterface);
                 _interfaceImplementationCache.Add(srcInterfaceImplHandle, dstInterfaceImplHandle);
-                Trace($"Imported interface implementation {_reader.ToString(srcInterfaceImplHandle)} -> {MetaUtil.RowId(dstInterfaceImplHandle):X}");
+                Trace($"Imported interface implementation {_reader.ToString(srcInterfaceImplHandle)} ->  {MetaUtil.RowId(dstInterface):X} {MetaUtil.RowId(dstInterfaceImplHandle):X}");
             }
 
             foreach (var srcMethodImplementationHandle in src.GetMethodImplementations())
@@ -202,7 +211,10 @@ namespace JetBrains.Refasmer
             }
 
             if (!src.GetLayout().IsDefault)
-                _builder.AddTypeLayout(dstHandle, (ushort)src.GetLayout().PackingSize, (uint)src.GetLayout().Size);
+            {
+                _builder.AddTypeLayout(dstHandle, (ushort) src.GetLayout().PackingSize, (uint) src.GetLayout().Size);
+                Trace($"Imported layout Size={src.GetLayout().Size} PackingSize={src.GetLayout().PackingSize}");
+            }
         }
 
         private void ImportFieldDefinitionAccessories(FieldDefinitionHandle srcHandle)
@@ -220,8 +232,9 @@ namespace JetBrains.Refasmer
                 var srcConst = _reader.GetConstant(src.GetDefaultValue());
                 var value = _reader.GetBlobReader(srcConst.Value).ReadConstant(srcConst.TypeCode);
 
-                _builder.AddConstant(dstHandle, value);
-                Trace($"Imported default value {value}");
+                var dstConst = _builder.AddConstant(dstHandle, value);
+                
+                Trace($"Imported default value {_reader.ToString(srcConst)} -> {MetaUtil.RowId(dstConst):X} = {value}");
             }
 
             if (!src.GetMarshallingDescriptor().IsNil)
@@ -233,7 +246,7 @@ namespace JetBrains.Refasmer
             if (src.GetOffset() != -1)
             {
                 _builder.AddFieldLayout(dstHandle, src.GetOffset());
-                Trace($"Importing offset {src.GetOffset()}");
+                Trace($"Imported offset {src.GetOffset()}");
             }
 
             if (src.GetRelativeVirtualAddress() != 0)
@@ -253,7 +266,7 @@ namespace JetBrains.Refasmer
                 return;
             
             using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
-            
+
             var srcImport = src.GetImport();
 
             if (!srcImport.Name.IsNil)
@@ -273,28 +286,47 @@ namespace JetBrains.Refasmer
             var remover = Get(accessors.Remover);
             var raiser = Get(accessors.Raiser);
 
-            var others = accessors.Others.Select(Get).Where(a => !a.IsNil).ToList();
+            var others = accessors.Others
+                .Select(a => Tuple.Create(a, Get(a)))
+                .Where(a => !a.Item2.IsNil)
+                .ToList();
 
-            if (adder.IsNil && remover.IsNil && raiser.IsNil && !others.Any(x => x.IsNil))
+            if (adder.IsNil && remover.IsNil && raiser.IsNil && !others.Any())
             {
                 Trace($"Not imported event {_reader.ToString(src)}");
                 return;
             }
             
-            var dstHandle = _builder.AddEvent(src.Attributes, ImportValue(src.Name), Get(src.Type));
+            var dstHandle = _builder.AddEvent(src.Attributes, ImportValue(src.Name), GetOrImport(src.Type));
             _eventDefinitionCache.Add(srcHandle, dstHandle);
-            
-            if (!adder.IsNil)
-                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Adder, adder);
-            if (!remover.IsNil)
-                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Remover, remover);
-            if (!raiser.IsNil)
-                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Raiser, raiser);
-
-            foreach (var accessor in others)
-                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Other, accessor);
-
             Trace($"Imported event {_reader.ToString(src)} -> {MetaUtil.RowId(dstHandle):X}");
+
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
+
+            if (!adder.IsNil)
+            {
+                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Adder, adder);
+                Trace($"Imported adder {_reader.ToString(accessors.Adder)} -> {MetaUtil.RowId(adder):X}");
+            }
+
+            if (!remover.IsNil)
+            {
+                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Remover, remover);
+                Trace($"Imported remover {_reader.ToString(accessors.Remover)} -> {MetaUtil.RowId(remover):X}");
+            }
+
+            if (!raiser.IsNil)
+            {
+                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Raiser, raiser);
+                Trace($"Imported raiser {_reader.ToString(accessors.Raiser)} -> {MetaUtil.RowId(raiser):X}");
+            }
+
+            foreach (var (srcAccessor, dstAccessor) in others)
+            {
+                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Other, dstAccessor);
+                Trace($"Imported other {_reader.ToString(srcAccessor)} -> {MetaUtil.RowId(dstAccessor):X}");
+            }
+
         }
 
         private void ImportProperty(PropertyDefinitionHandle srcHandle)
@@ -305,9 +337,13 @@ namespace JetBrains.Refasmer
 
             var getter = Get(accessors.Getter);
             var setter = Get(accessors.Setter);
-            var others = accessors.Others.Select(Get).Where(a => !a.IsNil).ToList();
 
-            if (getter.IsNil && setter.IsNil && !others.Any(x => x.IsNil))
+            var others = accessors.Others
+                .Select(a => Tuple.Create(a, Get(a)))
+                .Where(a => !a.Item2.IsNil)
+                .ToList();
+
+            if (getter.IsNil && setter.IsNil && !others.Any())
             {
                 Trace($"Not imported property {_reader.ToString(src)}");
                 return;
@@ -316,13 +352,27 @@ namespace JetBrains.Refasmer
             var dstHandle = _builder.AddProperty(src.Attributes, ImportValue(src.Name), ImportValue(src.Signature));
             _propertyDefinitionCache.Add(srcHandle, dstHandle);
 
-            if (!getter.IsNil)
-                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Getter, getter);
-            if (!setter.IsNil)
-                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Setter, setter);
+            Trace($"Imported property {_reader.ToString(src)} -> {MetaUtil.RowId(dstHandle):X}");
 
-            foreach (var accessor in others)
-                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Other, accessor);
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
+
+            if (!getter.IsNil)
+            {
+                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Getter, getter);
+                Trace($"Imported getter {_reader.ToString(accessors.Getter)} -> {MetaUtil.RowId(getter):X}");
+            }
+
+            if (!setter.IsNil)
+            {
+                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Setter, setter);
+                Trace($"Imported setter {_reader.ToString(accessors.Setter)} -> {MetaUtil.RowId(setter):X}");
+            }
+
+            foreach (var (srcAccessor, dstAccessor) in others)
+            {
+                _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Other, dstAccessor);
+                Trace($"Imported other {_reader.ToString(srcAccessor)} -> {MetaUtil.RowId(dstAccessor):X}");
+            }
 
             var defaultValue = src.GetDefaultValue(); 
             
@@ -330,10 +380,10 @@ namespace JetBrains.Refasmer
             {
                 var srcConst = _reader.GetConstant(defaultValue);
                 var value = _reader.GetBlobReader(srcConst.Value).ReadConstant(srcConst.TypeCode);
+                var dstConst = _builder.AddConstant(dstHandle, value);
 
-                _builder.AddConstant(dstHandle, value);
+                Trace($"Imported default value {_reader.ToString(srcConst)} -> {MetaUtil.RowId(dstConst):X} = {value}");
             }
-            Trace($"Imported property {_reader.ToString(src)} -> {MetaUtil.RowId(dstHandle):X}");
         }
 
         private void ImportGenericConstraints(EntityHandle entityHandle, GenericParameterHandleCollection srcParams)

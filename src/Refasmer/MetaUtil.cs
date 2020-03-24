@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Xml;
 using System.Xml.Schema;
 
@@ -72,6 +73,9 @@ namespace JetBrains.Refasmer
 
         public static string ToString(this MetadataReader reader, DeclarativeSecurityAttributeHandle x) => ToString(reader, reader.GetDeclarativeSecurityAttribute(x));
         public static string ToString(this MetadataReader reader, DeclarativeSecurityAttribute x) => $"{{DeclSecAttr[{RowId(x):X}]: {reader.ToString(x.PermissionSet)}}}";
+
+        public static string ToString(this MetadataReader reader, ConstantHandle x) => ToString(reader, reader.GetConstant(x));
+        public static string ToString(this MetadataReader reader, Constant x) => $"{{Const[{RowId(x):X}]: {reader.ToString(x.Parent)}}}";
 
         public static string ToString(this MetadataReader reader, EntityHandle x)
         {
@@ -172,5 +176,6 @@ namespace JetBrains.Refasmer
 
         public static bool IsNil( object handle ) => 
             (bool) handle.GetType().GetProperty("IsNil")?.GetMethod?.Invoke(handle, new object[0]);
+        
     }
 }

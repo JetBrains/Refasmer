@@ -156,7 +156,7 @@ namespace JetBrains.Refasmer
                                 return 1;
                             }
                         }
-                        catch (BadImageFormatException e)
+                        catch (InvalidOperationException e)
                         {
                             _logger.Error(e.Message);
                             if (continueOnErrors)
@@ -234,6 +234,8 @@ namespace JetBrains.Refasmer
             
             importer.Import();
             
+            _logger.Debug($"Building reference assembly");
+            
             var metaRootBuilder = new MetadataRootBuilder(metaBuilder);
             var peHeaderBuilder = new PEHeaderBuilder();
             var ilStream = new BlobBuilder();
@@ -257,10 +259,10 @@ namespace JetBrains.Refasmer
             }
             else
             {
-                output = $"{Path.GetFileName(input)}.refasm";
+                output = $"{Path.GetFileName(input)}.refasm.dll";
             }
             
-            _logger.Trace($"Writing result to {output}");
+            _logger.Debug($"Writing result to {output}");
             if (File.Exists(output))
                 File.Delete(output);
 
