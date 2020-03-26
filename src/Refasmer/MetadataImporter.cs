@@ -77,6 +77,21 @@ namespace JetBrains.Refasmer
             foreach (var srcFieldHandle in _reader.FieldDefinitions)
                 ImportFieldDefinitionAccessories(srcFieldHandle);
 
+
+            Debug($"Importing nested classes");
+            var nestedTypes = _reader.TypeDefinitions
+                .Select(x => Tuple.Create(Get(x), _reader.GetTypeDefinition(x).GetNestedTypes()))
+                .SelectMany(x => x.Item2.Select(y => Tuple.Create(x.Item1, y, Get(y))))
+                .OrderBy(x => MetaUtil.RowId(x.Item3))
+                .ToList();
+            
+            foreach (var (dstHandle, srcNested, dstNested) in nestedTypes)
+            {
+                _builder.AddNestedType(dstNested, dstHandle);
+                Trace($"Imported nested type {_reader.ToString(srcNested)} -> {MetaUtil.RowId(dstNested):X}");
+            }
+
+
             var generic = _reader.TypeDefinitions
                 .Select(x => Tuple.Create((EntityHandle)Get(x), _reader.GetTypeDefinition(x).GetGenericParameters()))
                 .Concat(_reader.MethodDefinitions
@@ -164,13 +179,6 @@ namespace JetBrains.Refasmer
             
             using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
-            foreach (var srcNested in src.GetNestedTypes())
-            {
-                var dstNested = Get(srcNested);
-                _builder.AddNestedType(dstNested, dstHandle);
-                Trace($"Imported nested type {_reader.ToString(srcNested)} -> {MetaUtil.RowId(dstNested):X}");
-            }
-            
             var interfaceImpls = src.GetInterfaceImplementations()
                 .Select(x => Tuple.Create(x, GetOrImport(_reader.GetInterfaceImplementation(x).Interface)))
                 .Where(x => !x.Item2.IsNil)
