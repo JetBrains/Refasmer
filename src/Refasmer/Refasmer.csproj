@@ -9,7 +9,7 @@
         <TargetFrameworks>
             netstandard2.1;
             netcoreapp3.1;
-<!--            net471;-->
+            net461;
         </TargetFrameworks>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
