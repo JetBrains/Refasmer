@@ -20,6 +20,5 @@
         <PackageReference Include="System.Reflection.Metadata" Version="1.6.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" />
-        <PackageReference Include="System.ValueTuple" />
     </ItemGroup>
 </Project>
