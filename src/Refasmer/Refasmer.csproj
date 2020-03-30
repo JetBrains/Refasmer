@@ -6,7 +6,11 @@
         <RootNamespace>JetBrains.Refasmer</RootNamespace>
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>Refasmer.snk</AssemblyOriginatorKeyFile>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFrameworks>
+            netstandard2.1;
+            netcoreapp3.1;
+<!--            net471;-->
+        </TargetFrameworks>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
