@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+	<metadata minClientVersion="2.0">
+		<id>JetBrains.Refasmer</id>
+		<version>1.0.20200323.2</version>
+		<title>JetBrains :: Refasmer — strip assembly to public API</title>
+		<authors>JetBrains</authors>
+		<owners>JetBrains</owners>
+		<projectUrl>http://www.jetbrains.com</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>JetBrains :: Refasmer — strip assembly to public API</description>
+		<dependencies>
+			<dependency id="Mono.Options" version="6.6.0.161" />
+			<dependency id="Microsoft.Extensions.Logging" version="3.1.2" />
+			<dependency id="Microsoft.CodeAnalysis.CSharp" />
+			<dependency id="Microsoft.NETFramework.ReferenceAssemblies" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\Debug\net461\Refasmer.exe" target="lib/net461"/>
+	</files>
+</package>
