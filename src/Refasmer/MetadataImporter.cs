@@ -647,7 +647,7 @@ namespace JetBrains.Refasmer
         public static void MakeRefasm( string inputPath, string outputPath, LoggerBase logger )
         {
             logger.Trace("Reading assembly");
-            var peReader = new PEReader(new FileStream(inputPath, FileMode.Open)); 
+            var peReader = new PEReader(new FileStream(inputPath, FileMode.Open, FileAccess.Read)); 
             var metaReader = peReader.GetMetadataReader();
 
             if (!metaReader.IsAssembly)
