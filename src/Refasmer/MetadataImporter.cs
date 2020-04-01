@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 
 namespace JetBrains.Refasmer
 {
@@ -640,6 +642,42 @@ namespace JetBrains.Refasmer
                     throw new ArgumentOutOfRangeException();
             }
             throw new NotImplementedException();
+        }
+
+        public static void MakeRefasm( string inputPath, string outputPath, LoggerBase logger )
+        {
+            logger.Trace("Reading assembly");
+            var peReader = new PEReader(new FileStream(inputPath, FileMode.Open)); 
+            var metaReader = peReader.GetMetadataReader();
+
+            if (!metaReader.IsAssembly)
+                throw new Exception("File format is not supported"); 
+            
+            var metaBuilder = new MetadataBuilder();
+
+            var importer =
+                new MetadataImporter(metaReader, metaBuilder, logger)
+                {
+                    FieldFilter = f => (f.Attributes & FieldAttributes.FieldAccessMask) > FieldAttributes.Assembly,
+                    MethodFilter = m => (m.Attributes & MethodAttributes.MemberAccessMask) > MethodAttributes.Assembly || (m.Attributes & MethodAttributes.Virtual) != 0
+                };
+            
+            importer.Import();
+            
+            logger.Debug($"Building reference assembly");
+            
+            var metaRootBuilder = new MetadataRootBuilder(metaBuilder);
+            var peHeaderBuilder = new PEHeaderBuilder();
+            var ilStream = new BlobBuilder();
+            var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream);
+            var blobBuilder = new BlobBuilder();
+            peBuilder.Serialize(blobBuilder);
+            
+            logger.Debug($"Writing result to {outputPath}");
+            if (File.Exists(outputPath))
+                File.Delete(outputPath);
+
+            File.WriteAllBytes(outputPath, blobBuilder.ToArray());
         }
      }
 }
