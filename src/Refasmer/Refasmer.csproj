@@ -8,7 +8,7 @@
         <AssemblyOriginatorKeyFile>Refasmer.snk</AssemblyOriginatorKeyFile>
         <TargetFrameworks>
             netstandard2.1;
-            netcoreapp3.1;
+            netcoreapp3.0;
             net461;
         </TargetFrameworks>
         <LangVersion>latest</LangVersion>
