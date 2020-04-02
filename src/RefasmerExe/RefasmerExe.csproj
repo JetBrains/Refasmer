@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net461</TargetFramework>
+        <RootNamespace>JetBrains.Refasmer</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Refasmer\Refasmer.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Mono.Options" Version="6.6.0.161" />
+    </ItemGroup>
+
+</Project>
