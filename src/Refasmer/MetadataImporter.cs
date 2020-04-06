@@ -25,8 +25,6 @@ namespace JetBrains.Refasmer
 
         public void Import()
         {
-            
-            
             var version = new Version((int) (DateTime.Now.Ticks & 0xFFFF), (int) (DateTime.Now.Ticks & 0xFFFF)); 
             
             var srcAssembly = _reader.GetAssemblyDefinition();
@@ -167,7 +165,24 @@ namespace JetBrains.Refasmer
                     var dstParameterHandle = _builder.AddParameter(srcParameter.Attributes, ImportValue(srcParameter.Name), srcParameter.SequenceNumber);
                     _parameterCache.Add(srcParameterHandle, dstParameterHandle);
                     Trace($"Imported {_reader.ToString(srcParameterHandle)} -> {MetaUtil.RowId(dstParameterHandle):X}");
+
+                    var defaultValue = srcParameter.GetDefaultValue();
+                    
+                    if (!defaultValue.IsNil)
+                        ImportDefaultValue(defaultValue, dstParameterHandle);
                 }
+            }
+        }
+
+        private void ImportDefaultValue( ConstantHandle defaultValue, EntityHandle dstHandle )
+        {
+            if (!defaultValue.IsNil)
+            {
+                var srcConst = _reader.GetConstant(defaultValue);
+                var value = _reader.GetBlobReader(srcConst.Value).ReadConstant(srcConst.TypeCode);
+                var dstConst = _builder.AddConstant(dstHandle, value);
+
+                Trace($"Imported default value {_reader.ToString(srcConst)} -> {MetaUtil.RowId(dstConst):X} = {value}");
             }
         }
 
@@ -385,15 +400,8 @@ namespace JetBrains.Refasmer
             }
 
             var defaultValue = src.GetDefaultValue(); 
-            
             if (!defaultValue.IsNil)
-            {
-                var srcConst = _reader.GetConstant(defaultValue);
-                var value = _reader.GetBlobReader(srcConst.Value).ReadConstant(srcConst.TypeCode);
-                var dstConst = _builder.AddConstant(dstHandle, value);
-
-                Trace($"Imported default value {_reader.ToString(srcConst)} -> {MetaUtil.RowId(dstConst):X} = {value}");
-            }
+                ImportDefaultValue(defaultValue, dstHandle);
         }
 
         private void ImportGenericConstraints(EntityHandle entityHandle, GenericParameterHandleCollection srcParams)
