@@ -644,7 +644,7 @@ namespace JetBrains.Refasmer
             throw new NotImplementedException();
         }
 
-        public static void MakeRefasm( string inputPath, string outputPath, LoggerBase logger )
+        public static void MakeRefasm( string inputPath, string outputPath, bool stripPrivate, LoggerBase logger )
         {
             logger.Trace("Reading assembly");
             var peReader = new PEReader(new FileStream(inputPath, FileMode.Open, FileAccess.Read)); 
@@ -655,12 +655,16 @@ namespace JetBrains.Refasmer
             
             var metaBuilder = new MetadataBuilder();
 
-            var importer =
-                new MetadataImporter(metaReader, metaBuilder, logger)
-                {
-                    FieldFilter = f => (f.Attributes & FieldAttributes.FieldAccessMask) > FieldAttributes.Assembly,
-                    MethodFilter = m => (m.Attributes & MethodAttributes.MemberAccessMask) > MethodAttributes.Assembly || (m.Attributes & MethodAttributes.Virtual) != 0
-                };
+            var importer = new MetadataImporter(metaReader, metaBuilder, logger);
+            
+            if (stripPrivate)
+            {
+                importer.FieldFilter = f => 
+                    (f.Attributes & FieldAttributes.FieldAccessMask) > FieldAttributes.Assembly;
+                importer.MethodFilter = m =>
+                    (m.Attributes & MethodAttributes.MemberAccessMask) > MethodAttributes.Assembly ||
+                    (m.Attributes & MethodAttributes.Virtual) != 0;
+            };
             
             importer.Import();
             

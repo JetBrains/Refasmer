@@ -22,6 +22,7 @@ namespace JetBrains.Refasmer
 
         
         private static bool _overwrite;
+        private static bool _stripPrivate;
         private static string _outputDir;
         private static string _outputFile;
         private static LoggerBase _logger;
@@ -71,6 +72,7 @@ namespace JetBrains.Refasmer
 
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
+                { "s|strip", "strip private fields and methods", v => _stripPrivate = v != null },
                 
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
@@ -225,13 +227,17 @@ namespace JetBrains.Refasmer
         {
             var metaBuilder = new MetadataBuilder();
 
-            var importer =
-                new MetadataImporter(metaReader, metaBuilder, _logger)
-                {
-                    FieldFilter = f => (f.Attributes & FieldAttributes.FieldAccessMask) > FieldAttributes.Assembly,
-                    MethodFilter = m => (m.Attributes & MethodAttributes.MemberAccessMask) > MethodAttributes.Assembly || (m.Attributes & MethodAttributes.Virtual) != 0
-                };
+            var importer = new MetadataImporter(metaReader, metaBuilder, _logger);
             
+            if (_stripPrivate)
+            {
+                importer.FieldFilter = f => 
+                    (f.Attributes & FieldAttributes.FieldAccessMask) > FieldAttributes.Assembly;
+                importer.MethodFilter = m =>
+                    (m.Attributes & MethodAttributes.MemberAccessMask) > MethodAttributes.Assembly ||
+                    (m.Attributes & MethodAttributes.Virtual) != 0;
+            }
+        
             importer.Import();
             
             _logger.Debug($"Building reference assembly");
