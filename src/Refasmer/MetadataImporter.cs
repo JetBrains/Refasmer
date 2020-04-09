@@ -82,6 +82,20 @@ namespace JetBrains.Refasmer
             foreach (var srcFieldHandle in _reader.FieldDefinitions)
                 ImportFieldDefinitionAccessories(srcFieldHandle);
 
+
+            var generic = _reader.TypeDefinitions
+                .Select(x => Tuple.Create((EntityHandle)Get(x), _reader.GetTypeDefinition(x).GetGenericParameters()))
+                .Concat(_reader.MethodDefinitions
+                    .Select(x =>
+                        Tuple.Create((EntityHandle)Get(x), _reader.GetMethodDefinition(x).GetGenericParameters())))
+                .Where(x => !x.Item1.IsNil)
+                .OrderBy(x => CodedIndex.TypeOrMethodDef(x.Item1))
+                .ToList();
+
+            Debug($"Importing generic constraints");
+            foreach (var (dstHandle, genericParams) in generic)
+                ImportGenericConstraints(dstHandle, genericParams);
+
             Debug($"Importing custom attributes");
             foreach (var src in _reader.CustomAttributes)
                 GetOrImport(src);
@@ -176,11 +190,9 @@ namespace JetBrains.Refasmer
             foreach (var srcInterfaceImplHandle in src.GetInterfaceImplementations())
             {
                 var srcInterfaceImpl = _reader.GetInterfaceImplementation(srcInterfaceImplHandle);
-                var srcInterfaceHandle = srcInterfaceImpl.Interface;
+                var dstInterfaceHandle = Get(srcInterfaceImpl.Interface);
 
-                var dstInterfaceHandle = Get(srcInterfaceHandle);
                 var dstInterfaceImplHandle = _builder.AddInterfaceImplementation(dstHandle, dstInterfaceHandle);
-
                 _interfaceImplementationCache.Add(srcInterfaceImplHandle, dstInterfaceImplHandle);
                 Trace($"Imported interface implementation {_reader.ToString(srcInterfaceImplHandle)} ->  {MetaUtil.RowId(dstInterfaceHandle):X} {MetaUtil.RowId(dstInterfaceImplHandle):X}");
             }
@@ -216,16 +228,13 @@ namespace JetBrains.Refasmer
                 _builder.AddTypeLayout(dstHandle, (ushort) src.GetLayout().PackingSize, (uint) src.GetLayout().Size);
                 Trace($"Imported layout Size={src.GetLayout().Size} PackingSize={src.GetLayout().PackingSize}");
             }
-
+            
             foreach (var srcNestedHandle in src.GetNestedTypes())
             {
-                var dstNestedHandle = Get(srcNestedHandle);
+                var dstNestedHandle = Get(srcNestedHandle); 
                 _builder.AddNestedType(dstNestedHandle, dstHandle);
                 Trace($"Imported nested type {_reader.ToString(srcNestedHandle)} -> {MetaUtil.RowId(dstNestedHandle):X}");
             }
-
-            Debug($"Importing generic constraints");
-            ImportGenericConstraints(dstHandle, src.GetGenericParameters());
         }
 
         private void ImportFieldDefinitionAccessories(FieldDefinitionHandle srcHandle)
@@ -285,9 +294,6 @@ namespace JetBrains.Refasmer
                 _builder.AddMethodImport(dstHandle, srcImport.Attributes, ImportValue(srcImport.Name), GetOrImport(srcImport.Module));
                 Trace($"Imported method import {_reader.ToString(srcImport.Module)} {_reader.ToString(srcImport.Name)}");
             }
-
-            Debug($"Importing generic constraints");
-            ImportGenericConstraints(dstHandle, src.GetGenericParameters());
         }
 
         private void ImportEvent(EventDefinitionHandle srcHandle)
@@ -585,8 +591,6 @@ namespace JetBrains.Refasmer
                     return Get((AssemblyFileHandle) srcHandle);
                 case HandleKind.MethodImplementation:
                     return Get((MethodImplementationHandle) srcHandle);
-                case HandleKind.TypeSpecification:
-                    return Get((TypeSpecificationHandle) srcHandle);
                 
                 case HandleKind.ExportedType:
                     return allowImport ? GetOrImport((ExportedTypeHandle) srcHandle) : Get((ExportedTypeHandle) srcHandle);
@@ -596,6 +600,8 @@ namespace JetBrains.Refasmer
                     return allowImport ? GetOrImport((DeclarativeSecurityAttributeHandle) srcHandle) : Get((DeclarativeSecurityAttributeHandle) srcHandle);
                 case HandleKind.ModuleReference:
                     return allowImport ? GetOrImport((ModuleReferenceHandle) srcHandle) : Get((ModuleReferenceHandle) srcHandle);
+                case HandleKind.TypeSpecification:
+                    return allowImport ? GetOrImport((TypeSpecificationHandle) srcHandle) : Get((TypeSpecificationHandle) srcHandle);
 
                 //Globals
                 case HandleKind.ModuleDefinition:
@@ -667,7 +673,7 @@ namespace JetBrains.Refasmer
             
             logger.Debug($"Building reference assembly");
             
-            var metaRootBuilder = new MetadataRootBuilder(metaBuilder, suppressValidation:true);
+            var metaRootBuilder = new MetadataRootBuilder(metaBuilder);
             var peHeaderBuilder = new PEHeaderBuilder();
             var ilStream = new BlobBuilder();
             var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream);
