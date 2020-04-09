@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -176,6 +177,12 @@ namespace JetBrains.Refasmer
 
         public static bool IsNil( object handle ) => 
             (bool) handle.GetType().GetProperty("IsNil")?.GetMethod?.Invoke(handle, new object[0]);
-        
+
+
+        public static IEnumerable<TypeSpecificationHandle> TypeSpecifications( this MetadataReader reader )
+        {
+            for (var n = 1; n <= reader.GetTableRowCount(TableIndex.TypeSpec); n++)
+                yield return MetadataTokens.TypeSpecificationHandle(n);
+        }
     }
 }

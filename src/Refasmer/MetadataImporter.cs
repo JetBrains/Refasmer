@@ -32,6 +32,7 @@ namespace JetBrains.Refasmer
                 srcAssembly.Flags, srcAssembly.HashAlgorithm);
             Debug($"Imported assembly {_reader.ToString(srcAssembly)}");
 
+            
             var srcModule = _reader.GetModuleDefinition();
 
             _builder.AddModule(srcModule.Generation, ImportValue(srcModule.Name), ImportValue(srcModule.Mvid), ImportValue(srcModule.GenerationId),
@@ -56,6 +57,10 @@ namespace JetBrains.Refasmer
                     src => _builder.AddTypeReference(Get(src.ResolutionScope), ImportValue(src.Namespace), ImportValue(src.Name)),
                     src => _reader.ToString(src));
 
+            Debug($"Importing type specs");
+            foreach (var srcHandle in _reader.TypeSpecifications())
+                GetOrImport(srcHandle);
+                
             Debug($"Importing member references");
             foreach (var srcHandle in _reader.MemberReferences)
                 ImportEntity(srcHandle, _memberReferenceCache, _reader.GetMemberReference,
