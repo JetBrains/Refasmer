@@ -81,7 +81,19 @@ namespace JetBrains.Refasmer
             Debug($"Importing field definitions");
             foreach (var srcFieldHandle in _reader.FieldDefinitions)
                 ImportFieldDefinitionAccessories(srcFieldHandle);
-
+            
+            Debug($"Importing nested classes");
+            var nestedTypes = _reader.TypeDefinitions
+                .Select(x => Tuple.Create(Get(x), _reader.GetTypeDefinition(x).GetNestedTypes()))
+                .SelectMany(x => x.Item2.Select(y => Tuple.Create(x.Item1, y, Get(y))))
+                .OrderBy(x => MetaUtil.RowId(x.Item3))
+                .ToList();
+            
+            foreach (var (dstHandle, srcNested, dstNested) in nestedTypes)
+            {
+                _builder.AddNestedType(dstNested, dstHandle);
+                Trace($"Imported nested type {_reader.ToString(srcNested)} -> {MetaUtil.RowId(dstNested):X}");
+            }
 
             var generic = _reader.TypeDefinitions
                 .Select(x => Tuple.Create((EntityHandle)Get(x), _reader.GetTypeDefinition(x).GetGenericParameters()))
@@ -228,13 +240,7 @@ namespace JetBrains.Refasmer
                 _builder.AddTypeLayout(dstHandle, (ushort) src.GetLayout().PackingSize, (uint) src.GetLayout().Size);
                 Trace($"Imported layout Size={src.GetLayout().Size} PackingSize={src.GetLayout().PackingSize}");
             }
-            
-            foreach (var srcNestedHandle in src.GetNestedTypes())
-            {
-                var dstNestedHandle = Get(srcNestedHandle); 
-                _builder.AddNestedType(dstNestedHandle, dstHandle);
-                Trace($"Imported nested type {_reader.ToString(srcNestedHandle)} -> {MetaUtil.RowId(dstNestedHandle):X}");
-            }
+
         }
 
         private void ImportFieldDefinitionAccessories(FieldDefinitionHandle srcHandle)
