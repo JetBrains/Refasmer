@@ -242,7 +242,7 @@ namespace JetBrains.Refasmer
             
             _logger.Debug($"Building reference assembly");
             
-            var metaRootBuilder = new MetadataRootBuilder(metaBuilder);
+            var metaRootBuilder = new MetadataRootBuilder(metaBuilder, suppressValidation:true);
             var peHeaderBuilder = new PEHeaderBuilder();
             var ilStream = new BlobBuilder();
             var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream);
