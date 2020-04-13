@@ -144,10 +144,12 @@ namespace JetBrains.Refasmer
                     using (_logger.WithLogPrefix($"[{Path.GetFileName(input)}]"))
                     {
                         MetadataReader metaReader;
+
+                        PEReader peReader;
                         try
                         {
                             _logger.Trace("Reading assembly");
-                            var peReader = new PEReader(new FileStream(input, FileMode.Open)); 
+                            peReader = new PEReader(new FileStream(input, FileMode.Open)); 
                             metaReader = peReader.GetMetadataReader();
 
                             if (!metaReader.IsAssembly)
@@ -169,7 +171,7 @@ namespace JetBrains.Refasmer
                         switch (operation)
                         {
                             case Operation.MakeRefasm:
-                                MakeRefasm(metaReader, input);
+                                MakeRefasm(metaReader, peReader, input);
                                 break;
                             case Operation.MakeXmlList:
                                 WriteAssemblyToXml(metaReader, xmlWriter);
@@ -223,7 +225,7 @@ namespace JetBrains.Refasmer
             xmlWriter.WriteEndElement();
         }
 
-        private static void MakeRefasm(MetadataReader metaReader, string input )
+        private static void MakeRefasm(MetadataReader metaReader, PEReader peReader, string input )
         {
             var metaBuilder = new MetadataBuilder();
 
@@ -242,8 +244,30 @@ namespace JetBrains.Refasmer
             
             _logger.Debug($"Building reference assembly");
             
-            var metaRootBuilder = new MetadataRootBuilder(metaBuilder, suppressValidation:true);
-            var peHeaderBuilder = new PEHeaderBuilder();
+            var metaRootBuilder = new MetadataRootBuilder(metaBuilder, metaReader.MetadataVersion, true);
+
+            var peHeaderBuilder = new PEHeaderBuilder(
+                peReader.PEHeaders.CoffHeader.Machine, 
+                peReader.PEHeaders.PEHeader.SectionAlignment,
+                peReader.PEHeaders.PEHeader.FileAlignment,
+                peReader.PEHeaders.PEHeader.ImageBase,
+                peReader.PEHeaders.PEHeader.MajorLinkerVersion,
+                peReader.PEHeaders.PEHeader.MinorLinkerVersion,
+                peReader.PEHeaders.PEHeader.MajorOperatingSystemVersion,
+                peReader.PEHeaders.PEHeader.MinorOperatingSystemVersion,
+                peReader.PEHeaders.PEHeader.MajorImageVersion,
+                peReader.PEHeaders.PEHeader.MinorImageVersion,
+                peReader.PEHeaders.PEHeader.MajorSubsystemVersion,
+                peReader.PEHeaders.PEHeader.MinorSubsystemVersion,
+                peReader.PEHeaders.PEHeader.Subsystem,
+                peReader.PEHeaders.PEHeader.DllCharacteristics,
+                peReader.PEHeaders.CoffHeader.Characteristics,
+                peReader.PEHeaders.PEHeader.SizeOfStackReserve,
+                peReader.PEHeaders.PEHeader.SizeOfStackCommit,
+                peReader.PEHeaders.PEHeader.SizeOfHeapReserve,
+                peReader.PEHeaders.PEHeader.SizeOfHeapCommit
+            );
+            
             var ilStream = new BlobBuilder();
             var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream);
             var blobBuilder = new BlobBuilder();

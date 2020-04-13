@@ -679,8 +679,30 @@ namespace JetBrains.Refasmer
             
             logger.Debug($"Building reference assembly");
             
-            var metaRootBuilder = new MetadataRootBuilder(metaBuilder, suppressValidation:true);
-            var peHeaderBuilder = new PEHeaderBuilder();
+            var metaRootBuilder = new MetadataRootBuilder(metaBuilder, metaReader.MetadataVersion, true);
+
+            var peHeaderBuilder = new PEHeaderBuilder(
+                peReader.PEHeaders.CoffHeader.Machine, 
+                peReader.PEHeaders.PEHeader.SectionAlignment,
+                peReader.PEHeaders.PEHeader.FileAlignment,
+                peReader.PEHeaders.PEHeader.ImageBase,
+                peReader.PEHeaders.PEHeader.MajorLinkerVersion,
+                peReader.PEHeaders.PEHeader.MinorLinkerVersion,
+                peReader.PEHeaders.PEHeader.MajorOperatingSystemVersion,
+                peReader.PEHeaders.PEHeader.MinorOperatingSystemVersion,
+                peReader.PEHeaders.PEHeader.MajorImageVersion,
+                peReader.PEHeaders.PEHeader.MinorImageVersion,
+                peReader.PEHeaders.PEHeader.MajorSubsystemVersion,
+                peReader.PEHeaders.PEHeader.MinorSubsystemVersion,
+                peReader.PEHeaders.PEHeader.Subsystem,
+                peReader.PEHeaders.PEHeader.DllCharacteristics,
+                peReader.PEHeaders.CoffHeader.Characteristics,
+                peReader.PEHeaders.PEHeader.SizeOfStackReserve,
+                peReader.PEHeaders.PEHeader.SizeOfStackCommit,
+                peReader.PEHeaders.PEHeader.SizeOfHeapReserve,
+                peReader.PEHeaders.PEHeader.SizeOfHeapCommit
+                );
+            
             var ilStream = new BlobBuilder();
             var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream);
             var blobBuilder = new BlobBuilder();
