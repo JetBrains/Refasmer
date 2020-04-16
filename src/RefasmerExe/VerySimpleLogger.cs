@@ -29,14 +29,8 @@ namespace JetBrains.Refasmer
                 _writer.WriteLine(formatter(state, exception));
         }
 
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return logLevel >= _level;
-        }
+        public bool IsEnabled(LogLevel logLevel) => logLevel >= _level;
 
-        public IDisposable BeginScope<TState>(TState state)
-        {
-            return null;
-        }
+        public IDisposable BeginScope<TState>(TState state) => null;
     }
 }
