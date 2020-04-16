@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 
@@ -59,35 +60,29 @@ namespace JetBrains.Refasmer
         {
             return _loggerPrefixStack.Pop();
         }
-
-        public void Info( string msg )
-        {
-            _logger.LogInformation($"{_loggerPrefixStack.Peek()} {msg}");
-        }
-
-        public void Debug( string msg )
-        {
-            _logger.LogDebug($"{_loggerPrefixStack.Peek()} {msg}");
-        }
-
-        public void Error( string msg )
-        {
-            _logger.LogError($"{_loggerPrefixStack.Peek()} {msg}");
-        }
-
-        public void Warning( string msg )
-        {
-            _logger.LogWarning($"{_loggerPrefixStack.Peek()} {msg}");
-        }
-
-        public void Trace( string msg )
-        {
-            _logger.LogTrace($"{_loggerPrefixStack.Peek()} {msg}");
-        }
-
-        public void Critical( string msg )
-        {
-            _logger.LogCritical($"{_loggerPrefixStack.Peek()} {msg}");
-        }
+        public Action<string> Trace => 
+            _logger.IsEnabled(LogLevel.Trace) 
+                ? msg => _logger.LogTrace($"{_loggerPrefixStack.Peek()} {msg}")
+                : (Action<string>)null;
+        public Action<string> Debug => 
+            _logger.IsEnabled(LogLevel.Debug) 
+                ? msg => _logger.LogDebug($"{_loggerPrefixStack.Peek()} {msg}")
+                : (Action<string>)null;
+        public Action<string> Info => 
+            _logger.IsEnabled(LogLevel.Information) 
+                ? msg => _logger.LogInformation($"{_loggerPrefixStack.Peek()} {msg}")
+                : (Action<string>)null;
+        public Action<string> Warning => 
+            _logger.IsEnabled(LogLevel.Warning) 
+                ? msg => _logger.LogWarning($"{_loggerPrefixStack.Peek()} {msg}")
+                : (Action<string>)null;
+        public Action<string> Error => 
+            _logger.IsEnabled(LogLevel.Error) 
+                ? msg => _logger.LogError($"{_loggerPrefixStack.Peek()} {msg}")
+                : (Action<string>)null;
+        public Action<string> Critical => 
+            _logger.IsEnabled(LogLevel.Critical) 
+                ? msg => _logger.LogCritical($"{_loggerPrefixStack.Peek()} {msg}")
+                : (Action<string>)null;
     }
 }

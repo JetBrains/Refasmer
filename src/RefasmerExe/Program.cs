@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
@@ -118,7 +116,7 @@ namespace JetBrains.Refasmer
 
             try
             {
-                _logger.Trace($"Program arguments: {string.Join(" ", args)}");
+                _logger.Trace?.Invoke($"Program arguments: {string.Join(" ", args)}");
 
                 XmlTextWriter xmlWriter = null;
                 
@@ -137,10 +135,10 @@ namespace JetBrains.Refasmer
                         xmlWriter.WriteAttributeString(key, value);
                 }
                 
-                _logger.Info($"Processing {inputs.Count} assemblies");
+                _logger.Info?.Invoke($"Processing {inputs.Count} assemblies");
                 foreach (var input in inputs)
                 {
-                    _logger.Info($"Processing {input}");
+                    _logger.Info?.Invoke($"Processing {input}");
                     using (_logger.WithLogPrefix($"[{Path.GetFileName(input)}]"))
                     {
                         MetadataReader metaReader;
@@ -148,13 +146,13 @@ namespace JetBrains.Refasmer
                         PEReader peReader;
                         try
                         {
-                            _logger.Trace("Reading assembly");
+                            _logger.Trace?.Invoke("Reading assembly");
                             peReader = new PEReader(new FileStream(input, FileMode.Open)); 
                             metaReader = peReader.GetMetadataReader();
 
                             if (!metaReader.IsAssembly)
                             {
-                                _logger.Error("File format is not supported");
+                                _logger.Error?.Invoke("File format is not supported");
                                 if (continueOnErrors)
                                     continue;
                                 return 1;
@@ -162,7 +160,7 @@ namespace JetBrains.Refasmer
                         }
                         catch (InvalidOperationException e)
                         {
-                            _logger.Error(e.Message);
+                            _logger.Error?.Invoke(e.Message);
                             if (continueOnErrors)
                                 continue;
                             return 1;
@@ -191,12 +189,12 @@ namespace JetBrains.Refasmer
                     xmlWriter.Close();
                 }
 
-                _logger.Info("All done");
+                _logger.Info?.Invoke("All done");
                 return 0;
             }
             catch (Exception e)
             {
-                _logger.Error($"{e}");
+                _logger.Error?.Invoke($"{e}");
                 return 1;
             }
         }
@@ -227,51 +225,7 @@ namespace JetBrains.Refasmer
 
         private static void MakeRefasm(MetadataReader metaReader, PEReader peReader, string input )
         {
-            var metaBuilder = new MetadataBuilder();
-
-            var importer = new MetadataImporter(metaReader, metaBuilder, _logger);
-            
-            if (_stripPrivate)
-            {
-                importer.FieldFilter = f => 
-                    (f.Attributes & FieldAttributes.FieldAccessMask) > FieldAttributes.Assembly;
-                importer.MethodFilter = m =>
-                    (m.Attributes & MethodAttributes.MemberAccessMask) > MethodAttributes.Assembly ||
-                    (m.Attributes & MethodAttributes.Virtual) != 0;
-            }
-        
-            importer.Import();
-            
-            _logger.Debug($"Building reference assembly");
-            
-            var metaRootBuilder = new MetadataRootBuilder(metaBuilder, metaReader.MetadataVersion, true);
-
-            var peHeaderBuilder = new PEHeaderBuilder(
-                peReader.PEHeaders.CoffHeader.Machine, 
-                peReader.PEHeaders.PEHeader.SectionAlignment,
-                peReader.PEHeaders.PEHeader.FileAlignment,
-                peReader.PEHeaders.PEHeader.ImageBase,
-                peReader.PEHeaders.PEHeader.MajorLinkerVersion,
-                peReader.PEHeaders.PEHeader.MinorLinkerVersion,
-                peReader.PEHeaders.PEHeader.MajorOperatingSystemVersion,
-                peReader.PEHeaders.PEHeader.MinorOperatingSystemVersion,
-                peReader.PEHeaders.PEHeader.MajorImageVersion,
-                peReader.PEHeaders.PEHeader.MinorImageVersion,
-                peReader.PEHeaders.PEHeader.MajorSubsystemVersion,
-                peReader.PEHeaders.PEHeader.MinorSubsystemVersion,
-                peReader.PEHeaders.PEHeader.Subsystem,
-                peReader.PEHeaders.PEHeader.DllCharacteristics,
-                peReader.PEHeaders.CoffHeader.Characteristics,
-                peReader.PEHeaders.PEHeader.SizeOfStackReserve,
-                peReader.PEHeaders.PEHeader.SizeOfStackCommit,
-                peReader.PEHeaders.PEHeader.SizeOfHeapReserve,
-                peReader.PEHeaders.PEHeader.SizeOfHeapCommit
-            );
-            
-            var ilStream = new BlobBuilder();
-            var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream);
-            var blobBuilder = new BlobBuilder();
-            peBuilder.Serialize(blobBuilder);
+            var result = MetadataImporter.MakeRefasm(metaReader, peReader, _stripPrivate, _logger);
             
             string output;
 
@@ -292,11 +246,11 @@ namespace JetBrains.Refasmer
                 output = $"{Path.GetFileName(input)}.refasm.dll";
             }
             
-            _logger.Debug($"Writing result to {output}");
+            _logger.Debug?.Invoke($"Writing result to {output}");
             if (File.Exists(output))
                 File.Delete(output);
 
-            File.WriteAllBytes(output, blobBuilder.ToArray());
+            File.WriteAllBytes(output, result);
         }
    }
 }
