@@ -5,6 +5,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
+using JetBrains.Refasmer.Filters;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 
@@ -225,7 +226,9 @@ namespace JetBrains.Refasmer
 
         private static void MakeRefasm(MetadataReader metaReader, PEReader peReader, string input )
         {
-            var result = MetadataImporter.MakeRefasm(metaReader, peReader, _stripPrivate, _logger);
+            var filter = new AllowPublic();
+            
+            var result = MetadataImporter.MakeRefasm(metaReader, peReader, filter, _logger);
             
             string output;
 
