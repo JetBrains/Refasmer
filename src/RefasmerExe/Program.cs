@@ -21,7 +21,6 @@ namespace JetBrains.Refasmer
 
         
         private static bool _overwrite;
-        private static bool _stripPrivate;
         private static string _outputDir;
         private static string _outputFile;
         private static LoggerBase _logger;
@@ -71,7 +70,6 @@ namespace JetBrains.Refasmer
 
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
-                { "s|strip", "strip private fields and methods", v => _stripPrivate = v != null },
                 
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },

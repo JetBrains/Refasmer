@@ -12,13 +12,12 @@ namespace JetBrains.Refasmer
         private readonly MetadataReader _reader;
         private readonly MetadataBuilder _builder;
 
-        private readonly IImportFilter _filter;
+        public IImportFilter Filter;
         
-        public MetadataImporter( MetadataReader reader, MetadataBuilder builder, LoggerBase logger, IImportFilter filter = null) : base(logger)
+        public MetadataImporter( MetadataReader reader, MetadataBuilder builder, LoggerBase logger) : base(logger)
         {
             _reader = reader;
             _builder = builder;
-            _filter = filter;
         }
 
 
@@ -26,7 +25,10 @@ namespace JetBrains.Refasmer
         {
             var metaBuilder = new MetadataBuilder();
 
-            var importer = new MetadataImporter(metaReader, metaBuilder, logger, filter);
+            var importer = new MetadataImporter(metaReader, metaBuilder, logger);
+            importer.Filter = filter ?? (importer.IsInternalsVisible()
+                ? (IImportFilter) new AllowPublicAndInternals() : new AllowPublic());
+            
             importer.Import();
             
             logger.Debug?.Invoke($"Building reference assembly");

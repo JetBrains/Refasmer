@@ -23,13 +23,13 @@ namespace JetBrains.Refasmer
         private string ToString(AssemblyFile x) => $"{{AssemblyFile[{RowId(x):X}]: {ToString(x.Name)}}}";
 
         private string ToString(TypeReferenceHandle x) => ToString(_reader.GetTypeReference(x));
-        private string ToString(TypeReference x) => $"{{TypeRef[{RowId(x):X}]: {ToString(x.Namespace)}::{ToString(x.Name)}}}";
+        private string ToString(TypeReference x) => $"{{TypeRef[{RowId(x):X}]: {ToString(x.Namespace)}.{ToString(x.Name)}}}";
 
         private string ToString(MemberReferenceHandle x) => ToString(_reader.GetMemberReference(x));
         private string ToString(MemberReference x) => $"{{MemberRef[{RowId(x):X}]: {ToString(x.Name)} {ToString(x.Signature)}}}";
 
         private string ToString(TypeDefinitionHandle x) => ToString(_reader.GetTypeDefinition(x));
-        private string ToString(TypeDefinition x) => $"{{TypeDef[{RowId(x):X}]: {ToString(x.Namespace)}::{ToString(x.Name)}}}";
+        private string ToString(TypeDefinition x) => $"{{TypeDef[{RowId(x):X}]: {ToString(x.Namespace)}.{ToString(x.Name)}}}";
 
         private string ToString(TypeSpecificationHandle x) => ToString(_reader.GetTypeSpecification(x));
         private string ToString(TypeSpecification x) => $"{{TypeSpec[{RowId(x):X}]: {ToString(x.Signature)}}}";
@@ -65,7 +65,7 @@ namespace JetBrains.Refasmer
         private string ToString(ExportedType x) => $"{{ExpType[{RowId(x):X}]: {ToString(x.Namespace)}::{ToString(x.Name)}}}";
 
         private string ToString(CustomAttributeHandle x) => ToString(_reader.GetCustomAttribute(x));
-        private string ToString(CustomAttribute x) => $"{{CustomAttr[{RowId(x):X}]: {x.DecodeValue()ToString(x.Parent)}}}";
+        private string ToString(CustomAttribute x) => $"{{CustomAttr[{RowId(x):X}]: {ToString(GetCustomAttrClass(x))} {ToString(x.Parent)}}}";
 
         private string ToString(DeclarativeSecurityAttributeHandle x) => ToString(_reader.GetDeclarativeSecurityAttribute(x));
         private string ToString(DeclarativeSecurityAttribute x) => $"{{DeclSecAttr[{RowId(x):X}]: {ToString(x.PermissionSet)}}}";

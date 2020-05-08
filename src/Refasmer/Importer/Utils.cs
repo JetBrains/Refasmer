@@ -25,8 +25,28 @@ namespace JetBrains.Refasmer
 
         private PropertyDefinitionHandle NextPropertyHandle() =>
             MetadataTokens.PropertyDefinitionHandle(GetNextToken(TableIndex.Property));
-    }
 
+        private EntityHandle GetCustomAttrClass( CustomAttributeHandle attrHandle ) =>
+            GetCustomAttrClass(_reader.GetCustomAttribute(attrHandle));
+        
+        private EntityHandle GetCustomAttrClass( CustomAttribute attr )
+        {
+            switch (attr.Constructor.Kind)
+            {
+                case HandleKind.MemberReference:
+                    return _reader.GetMemberReference((MemberReferenceHandle) attr.Constructor).Parent;
+                case HandleKind.MethodDefinition:
+                    return _reader.GetMethodDefinition((MethodDefinitionHandle) attr.Constructor).GetDeclaringType();
+                default:
+                    return default;
+            }
+            
+        }
+        
+    }
+    
+    
+    
     public static class MetadataReaderExtensions
     {
         public static IEnumerable<TypeSpecificationHandle> TypeSpecifications( this MetadataReader reader )

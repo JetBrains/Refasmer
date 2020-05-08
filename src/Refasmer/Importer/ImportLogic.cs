@@ -24,7 +24,7 @@ namespace JetBrains.Refasmer
             {
                 var srcField = _reader.GetFieldDefinition(srcFieldHandle);
                 
-                if (_filter?.AllowImport(srcField, _reader) == false)
+                if (Filter?.AllowImport(srcField, _reader) == false)
                     continue;
 
                 var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name),
@@ -37,7 +37,7 @@ namespace JetBrains.Refasmer
             {
                 var srcMethod = _reader.GetMethodDefinition(srcMethodHandle);
 
-                if (_filter?.AllowImport(srcMethod, _reader) == false)
+                if (Filter?.AllowImport(srcMethod, _reader) == false)
                     continue;
 
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
@@ -303,14 +303,57 @@ namespace JetBrains.Refasmer
                 Trace?.Invoke($"Imported default value {ToString(srcConst)} -> {RowId(dstConst):X} = {value}");
             }
         }
+
+        public bool IsInternalsVisible()
+        {
+            var internalsVisibleTo = _reader.GetAssemblyDefinition().GetCustomAttributes()
+                .Select(_reader.GetCustomAttribute)
+                .Where(attr =>
+                {
+                    EntityHandle attrClassHandle;
+                    switch (attr.Constructor.Kind)
+                    {
+                        case HandleKind.MemberReference:
+                            attrClassHandle = _reader.GetMemberReference((MemberReferenceHandle) attr.Constructor).Parent;
+                            break;
+                        case HandleKind.MethodDefinition:
+                            attrClassHandle = _reader.GetMethodDefinition((MethodDefinitionHandle) attr.Constructor).GetDeclaringType();
+                            break;
+                        default:
+                            return false;
+                    }
+
+                    string attrClassName;
+
+                    switch (attrClassHandle.Kind)
+                    {
+                        case HandleKind.TypeDefinition:
+                            var typeDef = _reader.GetTypeDefinition((TypeDefinitionHandle) attrClassHandle);
+                            attrClassName = $"{_reader.GetString(typeDef.Namespace)}.{_reader.GetString(typeDef.Name)}";
+                            break;
+                        case HandleKind.TypeReference:
+                            var typeRef = _reader.GetTypeReference((TypeReferenceHandle) attrClassHandle);
+                            attrClassName = $"{_reader.GetString(typeRef.Namespace)}.{_reader.GetString(typeRef.Name)}";
+                            break;
+                        default:
+                            return false;
+                    }
+
+                    return attrClassName == "System.Runtime.CompilerServices.InternalsVisibleToAttribute";
+                }).ToList();
+            
+            return internalsVisibleTo.Any();
+        }
         
         public void Import()
         {
             var srcAssembly = _reader.GetAssemblyDefinition();
+
             _builder.AddAssembly(ImportValue(srcAssembly.Name), srcAssembly.Version, ImportValue(srcAssembly.Culture),
                 ImportValue(srcAssembly.PublicKey),
                 srcAssembly.Flags, srcAssembly.HashAlgorithm);
             Debug?.Invoke($"Imported assembly {ToString(srcAssembly)}");
+
 
             var srcModule = _reader.GetModuleDefinition();
             
@@ -326,7 +369,7 @@ namespace JetBrains.Refasmer
             var index = 1;
             Debug?.Invoke($"Preparing type list for import");
             foreach (var srcHandle in _reader.TypeDefinitions)
-                if (_filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false)
+                if (Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false)
                     _typeDefinitionCache[srcHandle] = MetadataTokens.TypeDefinitionHandle(index++);
             
             Debug?.Invoke($"Importing type definitions");
