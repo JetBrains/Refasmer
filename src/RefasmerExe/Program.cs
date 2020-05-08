@@ -224,9 +224,7 @@ namespace JetBrains.Refasmer
 
         private static void MakeRefasm(MetadataReader metaReader, PEReader peReader, string input )
         {
-            var filter = new AllowPublic();
-            
-            var result = MetadataImporter.MakeRefasm(metaReader, peReader, filter, _logger);
+            var result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger);
             
             string output;
 

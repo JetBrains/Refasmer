@@ -21,13 +21,27 @@ namespace JetBrains.Refasmer
         }
 
 
-        public static byte[] MakeRefasm(MetadataReader metaReader, PEReader peReader, IImportFilter filter, LoggerBase logger )
+        public static byte[] MakeRefasm(MetadataReader metaReader, PEReader peReader, LoggerBase logger, IImportFilter filter = null )
         {
             var metaBuilder = new MetadataBuilder();
 
             var importer = new MetadataImporter(metaReader, metaBuilder, logger);
-            importer.Filter = filter ?? (importer.IsInternalsVisible()
-                ? (IImportFilter) new AllowPublicAndInternals() : new AllowPublic());
+
+            if (filter != null)
+            {
+                importer.Filter = filter;
+                logger.Info?.Invoke("Using custom entity filter");
+            }
+            else if (importer.IsInternalsVisible())
+            {
+                importer.Filter = new AllowPublicAndInternals();
+                logger.Info?.Invoke("InternalsVisibleTo attributes found, using AllowPublicAndInternals entity filter");
+            }
+            else
+            {
+                importer.Filter = new AllowPublic();
+                logger.Info?.Invoke("Using AllowPublic entity filter");
+            }
             
             importer.Import();
             
@@ -65,7 +79,7 @@ namespace JetBrains.Refasmer
             return blobBuilder.ToArray();
         }
 
-        public static void MakeRefasm( string inputPath, string outputPath, IImportFilter filter, LoggerBase logger )
+        public static void MakeRefasm( string inputPath, string outputPath, LoggerBase logger, IImportFilter filter = null )
         {
             logger.Trace?.Invoke("Reading assembly");
             var peReader = new PEReader(new FileStream(inputPath, FileMode.Open, FileAccess.Read)); 
@@ -74,7 +88,7 @@ namespace JetBrains.Refasmer
             if (!metaReader.IsAssembly)
                 throw new Exception("File format is not supported"); 
             
-            var result = MakeRefasm(metaReader, peReader, filter, logger);
+            var result = MakeRefasm(metaReader, peReader, logger, filter);
 
             logger.Debug?.Invoke($"Writing result to {outputPath}");
             if (File.Exists(outputPath))
