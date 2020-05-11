@@ -40,9 +40,6 @@ namespace JetBrains.Refasmer.Filters
 
         public virtual bool AllowImport( FieldDefinition field, MetadataReader reader )
         {
-            if ((field.Attributes & FieldAttributes.InitOnly) != 0)
-                return false;
-
             switch (field.Attributes & FieldAttributes.FieldAccessMask)
             {
                 case FieldAttributes.Public:

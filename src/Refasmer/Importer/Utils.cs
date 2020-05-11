@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -30,7 +29,7 @@ namespace JetBrains.Refasmer
             GetCustomAttrClass(_reader.GetCustomAttribute(attrHandle));
         
         private EntityHandle GetCustomAttrClass( CustomAttribute attr )
-        {
+        {//{CustomAttr[CFC]: {TypeDef[858]: System.Runtime.CompilerServices.CompilerGeneratedAttribute} {TypeDef[A27]: .<PrivateImplementationDetails>}}
             switch (attr.Constructor.Kind)
             {
                 case HandleKind.MemberReference:
@@ -40,9 +39,7 @@ namespace JetBrains.Refasmer
                 default:
                     return default;
             }
-            
         }
-        
     }
     
     

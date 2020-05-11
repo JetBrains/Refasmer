@@ -16,16 +16,19 @@ namespace JetBrains.Refasmer
             var dstHandle = _builder.AddTypeDefinition(src.Attributes, ImportValue(src.Namespace), ImportValue(src.Name),
                 Import(src.BaseType), NextFieldHandle(), NextMethodHandle());
 
-            Trace?.Invoke($"Imported {ToString(srcHandle)} -> {RowId(dstHandle):X}");
+            Trace?.Invoke($"Imported {ToString(src)} -> {RowId(dstHandle):X}");
 
             using var _ = WithLogPrefix($"[{ToString(src)}]");
 
             foreach (var srcFieldHandle in src.GetFields())
             {
                 var srcField = _reader.GetFieldDefinition(srcFieldHandle);
-                
+
                 if (Filter?.AllowImport(srcField, _reader) == false)
+                {
+                    Trace?.Invoke($"Not imported {ToString(srcField)}");
                     continue;
+                }
 
                 var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name),
                     ImportSignatureWithHeader(srcField.Signature));
@@ -38,22 +41,25 @@ namespace JetBrains.Refasmer
                 var srcMethod = _reader.GetMethodDefinition(srcMethodHandle);
 
                 if (Filter?.AllowImport(srcMethod, _reader) == false)
+                {
+                    Trace?.Invoke($"Not imported {ToString(srcMethod)}");
                     continue;
+                }
 
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
                     ImportValue(srcMethod.Name),
                     ImportSignatureWithHeader(srcMethod.Signature), -1, NextParameterHandle());
                 _methodDefinitionCache.Add(srcMethodHandle, dstMethodHandle);
-                Trace?.Invoke($"Imported {ToString(srcMethodHandle)} -> {RowId(dstMethodHandle):X}");
+                Trace?.Invoke($"Imported {ToString(srcMethod)} -> {RowId(dstMethodHandle):X}");
 
-                using var __ = WithLogPrefix($"[{ToString(srcMethodHandle)}]");
+                using var __ = WithLogPrefix($"[{ToString(srcMethod)}]");
                 foreach (var srcParameterHandle in srcMethod.GetParameters())
                 {
                     var srcParameter = _reader.GetParameter(srcParameterHandle);
                     var dstParameterHandle = _builder.AddParameter(srcParameter.Attributes,
                         ImportValue(srcParameter.Name), srcParameter.SequenceNumber);
                     _parameterCache.Add(srcParameterHandle, dstParameterHandle);
-                    Trace?.Invoke($"Imported {ToString(srcParameterHandle)} -> {RowId(dstParameterHandle):X}");
+                    Trace?.Invoke($"Imported {ToString(srcParameter)} -> {RowId(dstParameterHandle):X}");
 
                     var defaultValue = srcParameter.GetDefaultValue();
 
@@ -79,7 +85,7 @@ namespace JetBrains.Refasmer
                 var dstInterfaceImplHandle = _builder.AddInterfaceImplementation(dstHandle, dstInterfaceHandle);
                 _interfaceImplementationCache.Add(srcInterfaceImplHandle, dstInterfaceImplHandle);
                 Trace?.Invoke(
-                    $"Imported interface implementation {ToString(srcInterfaceImplHandle)} ->  {RowId(dstInterfaceHandle):X} {RowId(dstInterfaceImplHandle):X}");
+                    $"Imported interface implementation {ToString(srcInterfaceImpl)} ->  {RowId(dstInterfaceHandle):X} {RowId(dstInterfaceImplHandle):X}");
             }
 
             foreach (var srcMethodImplementationHandle in src.GetMethodImplementations())

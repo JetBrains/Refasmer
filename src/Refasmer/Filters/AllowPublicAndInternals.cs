@@ -7,6 +7,9 @@ namespace JetBrains.Refasmer.Filters
     {
         public virtual bool AllowImport( TypeDefinition type, MetadataReader reader )
         {
+            if (reader.GetString(type.Name) == "<PrivateImplementationDetails>")
+                return false;
+
             switch (type.Attributes & TypeAttributes.VisibilityMask)
             {
                 case TypeAttributes.Public:
@@ -43,8 +46,8 @@ namespace JetBrains.Refasmer.Filters
 
         public virtual bool AllowImport( FieldDefinition field, MetadataReader reader )
         {
-            if ((field.Attributes & FieldAttributes.InitOnly) != 0)
-                return false;
+            //if ((field.Attributes & FieldAttributes.InitOnly) != 0)
+            //    return false;
             
             switch (field.Attributes & FieldAttributes.FieldAccessMask)
             {
