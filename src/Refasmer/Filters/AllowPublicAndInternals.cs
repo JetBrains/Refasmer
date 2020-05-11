@@ -7,7 +7,7 @@ namespace JetBrains.Refasmer.Filters
     {
         public virtual bool AllowImport( TypeDefinition type, MetadataReader reader )
         {
-            if (reader.GetString(type.Name) == "<PrivateImplementationDetails>")
+            if (reader.GetString(type.Name).StartsWith("<PrivateImplementationDetails>"))
                 return false;
 
             switch (type.Attributes & TypeAttributes.VisibilityMask)
