@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 
@@ -5,15 +7,36 @@ namespace JetBrains.Refasmer.Filters
 {
     public class AllowPublicAndInternals: IImportFilter
     {
-        public virtual bool AllowImport( TypeDefinition type, MetadataReader reader )
+        private readonly HashSet<EntityHandle> _compilerGeneratedAttributeHandles = new HashSet<EntityHandle>();
+
+        private bool IsCompilerGenerated( MetadataReader reader, CustomAttributeHandleCollection attrHandles )
         {
-            if (reader.GetString(type.Name).StartsWith("<PrivateImplementationDetails>"))
+            var attrs = attrHandles.Select(reader.GetCustomAttribute).ToList();
+                
+            if (attrs.Any(attr => _compilerGeneratedAttributeHandles.Contains(attr.Constructor)))
+                return true;
+
+            var compilerGeneratedAttr = attrs
+                .Where(attr =>
+                    reader.GetFullname(reader.GetCustomAttrClass(attr)) ==
+                    "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
+                .Select(attr => (CustomAttribute?) attr)
+                .FirstOrDefault();
+
+            if (compilerGeneratedAttr == null)
                 return false;
 
+            _compilerGeneratedAttributeHandles.Add(compilerGeneratedAttr.Value.Constructor);
+            return true;
+        }
+        
+        public virtual bool AllowImport( TypeDefinition type, MetadataReader reader )
+        {
             switch (type.Attributes & TypeAttributes.VisibilityMask)
             {
-                case TypeAttributes.Public:
                 case TypeAttributes.NotPublic:
+                    return !IsCompilerGenerated(reader, type.GetCustomAttributes());
+                case TypeAttributes.Public:
                 case TypeAttributes.NestedPublic:
                 case TypeAttributes.NestedAssembly:
                 case TypeAttributes.NestedFamORAssem:
@@ -31,8 +54,12 @@ namespace JetBrains.Refasmer.Filters
         {
             switch (method.Attributes & MethodAttributes.MemberAccessMask)
             {
-                case MethodAttributes.Public:
                 case MethodAttributes.Assembly:
+                    if ((method.Attributes & MethodAttributes.SpecialName) != 0)
+                        return true;
+                    return !IsCompilerGenerated(reader, method.GetCustomAttributes());
+
+                case MethodAttributes.Public:
                 case MethodAttributes.FamORAssem:
                     return true;
                 case MethodAttributes.Family:
@@ -46,13 +73,11 @@ namespace JetBrains.Refasmer.Filters
 
         public virtual bool AllowImport( FieldDefinition field, MetadataReader reader )
         {
-            //if ((field.Attributes & FieldAttributes.InitOnly) != 0)
-            //    return false;
-            
             switch (field.Attributes & FieldAttributes.FieldAccessMask)
             {
-                case FieldAttributes.Public:
                 case FieldAttributes.Assembly:
+                    return !IsCompilerGenerated(reader, field.GetCustomAttributes());
+                case FieldAttributes.Public:
                 case FieldAttributes.FamORAssem:
                     return true;
                 case FieldAttributes.Family:

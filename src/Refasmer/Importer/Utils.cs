@@ -27,19 +27,8 @@ namespace JetBrains.Refasmer
 
         private EntityHandle GetCustomAttrClass( CustomAttributeHandle attrHandle ) =>
             GetCustomAttrClass(_reader.GetCustomAttribute(attrHandle));
-        
-        private EntityHandle GetCustomAttrClass( CustomAttribute attr )
-        {//{CustomAttr[CFC]: {TypeDef[858]: System.Runtime.CompilerServices.CompilerGeneratedAttribute} {TypeDef[A27]: .<PrivateImplementationDetails>}}
-            switch (attr.Constructor.Kind)
-            {
-                case HandleKind.MemberReference:
-                    return _reader.GetMemberReference((MemberReferenceHandle) attr.Constructor).Parent;
-                case HandleKind.MethodDefinition:
-                    return _reader.GetMethodDefinition((MethodDefinitionHandle) attr.Constructor).GetDeclaringType();
-                default:
-                    return default;
-            }
-        }
+
+        private EntityHandle GetCustomAttrClass( CustomAttribute attr ) => _reader.GetCustomAttrClass(attr);
     }
     
     

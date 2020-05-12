@@ -316,35 +316,8 @@ namespace JetBrains.Refasmer
                 .Select(_reader.GetCustomAttribute)
                 .Where(attr =>
                 {
-                    EntityHandle attrClassHandle;
-                    switch (attr.Constructor.Kind)
-                    {
-                        case HandleKind.MemberReference:
-                            attrClassHandle = _reader.GetMemberReference((MemberReferenceHandle) attr.Constructor).Parent;
-                            break;
-                        case HandleKind.MethodDefinition:
-                            attrClassHandle = _reader.GetMethodDefinition((MethodDefinitionHandle) attr.Constructor).GetDeclaringType();
-                            break;
-                        default:
-                            return false;
-                    }
-
-                    string attrClassName;
-
-                    switch (attrClassHandle.Kind)
-                    {
-                        case HandleKind.TypeDefinition:
-                            var typeDef = _reader.GetTypeDefinition((TypeDefinitionHandle) attrClassHandle);
-                            attrClassName = $"{_reader.GetString(typeDef.Namespace)}.{_reader.GetString(typeDef.Name)}";
-                            break;
-                        case HandleKind.TypeReference:
-                            var typeRef = _reader.GetTypeReference((TypeReferenceHandle) attrClassHandle);
-                            attrClassName = $"{_reader.GetString(typeRef.Namespace)}.{_reader.GetString(typeRef.Name)}";
-                            break;
-                        default:
-                            return false;
-                    }
-
+                    var attrClassHandle = _reader.GetCustomAttrClass(attr);
+                    var attrClassName = _reader.GetFullname(attrClassHandle);
                     return attrClassName == "System.Runtime.CompilerServices.InternalsVisibleToAttribute";
                 }).ToList();
             
