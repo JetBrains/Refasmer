@@ -37,14 +37,15 @@ namespace JetBrains.Refasmer.Filters
                 case TypeAttributes.NotPublic:
                     return !IsCompilerGenerated(reader, type.GetCustomAttributes());
                 case TypeAttributes.Public:
+                    return true;
                 case TypeAttributes.NestedPublic:
                 case TypeAttributes.NestedAssembly:
                 case TypeAttributes.NestedFamORAssem:
-                    return true;
+                    return AllowImport(reader.GetTypeDefinition(type.GetDeclaringType()), reader);
                 case TypeAttributes.NestedFamily:
                 case TypeAttributes.NestedFamANDAssem:
                     var declaringType = reader.GetTypeDefinition(type.GetDeclaringType());
-                    return (declaringType.Attributes & TypeAttributes.Sealed) == 0;
+                    return (declaringType.Attributes & TypeAttributes.Sealed) == 0 && AllowImport(declaringType, reader);
                 default:
                     return false;
             }

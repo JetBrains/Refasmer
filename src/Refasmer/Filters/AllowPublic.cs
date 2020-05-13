@@ -1,7 +1,5 @@
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace JetBrains.Refasmer.Filters
 {
@@ -12,12 +10,13 @@ namespace JetBrains.Refasmer.Filters
             switch (type.Attributes & TypeAttributes.VisibilityMask)
             {
                 case TypeAttributes.Public:
-                case TypeAttributes.NestedPublic:
                     return true;
+                case TypeAttributes.NestedPublic:
+                    return AllowImport(reader.GetTypeDefinition(type.GetDeclaringType()), reader);
                 case TypeAttributes.NestedFamily:
                 case TypeAttributes.NestedFamORAssem:
                     var declaringType = reader.GetTypeDefinition(type.GetDeclaringType());
-                    return (declaringType.Attributes & TypeAttributes.Sealed) == 0;
+                    return (declaringType.Attributes & TypeAttributes.Sealed) == 0 && AllowImport(declaringType, reader);
                 default:
                     return false;
             }
