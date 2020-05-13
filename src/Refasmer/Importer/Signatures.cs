@@ -8,22 +8,37 @@ namespace JetBrains.Refasmer
     {
         private class UnknownTypeInSignature : Exception
         {
-            readonly EntityHandle _handle;
+            public readonly EntityHandle Handle;
 
             public UnknownTypeInSignature( EntityHandle handle, string message )
                 : base(message)
             {
-                _handle = handle;
+                Handle = handle;
             }
         }
-        
+
         private BlobHandle ImportTypeSignature( BlobHandle srcHandle )
         {
-            var blobReader = _reader.GetBlobReader(srcHandle);
-            var blobBuilder = new BlobBuilder(blobReader.Length);
+            try
+            {
+                var blobReader = _reader.GetBlobReader(srcHandle);
+                var blobBuilder = new BlobBuilder(blobReader.Length);
 
-            ImportTypeSignature(ref blobReader, blobBuilder);
-            return _builder.GetOrAddBlob(blobBuilder);
+                ImportTypeSignature(ref blobReader, blobBuilder);
+                return _builder.GetOrAddBlob(blobBuilder);
+            }
+            catch (UnknownTypeInSignature e)
+            {
+                if (e.Handle.Kind != HandleKind.TypeDefinition)
+                    throw;
+
+                var typeDef = _reader.GetTypeDefinition((TypeDefinitionHandle) e.Handle);
+
+                if (Filter?.AllowImport(typeDef, _reader) == true)
+                    throw;
+
+            }
+            return default;
         }
 
         private BlobHandle ImportSignatureWithHeader( BlobHandle srcHandle )

@@ -31,7 +31,11 @@ namespace JetBrains.Refasmer
 
         private TypeSpecificationHandle Import( TypeSpecificationHandle srcHandle ) =>
             ImportEntity(srcHandle, _typeSpecificationCache, _reader.GetTypeSpecification,
-                src => _builder.AddTypeSpecification(ImportTypeSignature(src.Signature)), ToString, IsNil);
+                src =>
+                {
+                    var dstSignature = ImportTypeSignature(src.Signature);
+                    return dstSignature.IsNil ? default : _builder.AddTypeSpecification(dstSignature);
+                }, ToString, IsNil);
 
         
         private CustomAttributeHandle Import( CustomAttributeHandle srcHandle ) =>

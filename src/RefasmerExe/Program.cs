@@ -145,7 +145,7 @@ namespace JetBrains.Refasmer
                         PEReader peReader;
                         try
                         {
-                            _logger.Trace?.Invoke("Reading assembly");
+                            _logger.Debug?.Invoke($"Reading assembly {input}");
                             peReader = new PEReader(new FileStream(input, FileMode.Open)); 
                             metaReader = peReader.GetMetadataReader();
 

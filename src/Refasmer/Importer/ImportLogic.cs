@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -9,6 +11,28 @@ namespace JetBrains.Refasmer
 {
     public partial class MetadataImporter
     {
+        private bool AllowImportType( EntityHandle typeHandle )
+        {
+            if (typeHandle.IsNil)
+                return false;
+                
+            if (Filter == null)
+                return true;
+            
+            switch (typeHandle.Kind)
+            {
+                case HandleKind.TypeDefinition:
+                    return Filter.AllowImport(_reader.GetTypeDefinition((TypeDefinitionHandle) typeHandle), _reader);
+                case HandleKind.TypeReference:
+                    return true;
+                case HandleKind.TypeSpecification:
+                    return AllowImportType(_reader.GetGenericType((TypeSpecificationHandle)typeHandle));
+                    
+                default:
+                    throw new ArgumentOutOfRangeException(nameof (typeHandle));
+            }
+        }
+        
         private TypeDefinitionHandle ImportTypeDefinitionSkeleton( TypeDefinitionHandle srcHandle )
         {
             var src = _reader.GetTypeDefinition(srcHandle);
@@ -36,11 +60,17 @@ namespace JetBrains.Refasmer
                 Trace?.Invoke($"Imported {ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
             }
 
+            var implementations = src.GetMethodImplementations()
+                .Select(_reader.GetMethodImplementation)
+                .Where(mi => AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
+                .Select(mi => (MethodDefinitionHandle)mi.MethodBody)
+                .ToImmutableHashSet();
+            
             foreach (var srcMethodHandle in src.GetMethods())
             {
                 var srcMethod = _reader.GetMethodDefinition(srcMethodHandle);
 
-                if (Filter?.AllowImport(srcMethod, _reader) == false)
+                if (!implementations.Contains(srcMethodHandle) && Filter?.AllowImport(srcMethod, _reader) == false)
                 {
                     Trace?.Invoke($"Not imported {ToString(srcMethod)}");
                     continue;
@@ -82,10 +112,18 @@ namespace JetBrains.Refasmer
                 var srcInterfaceImpl = _reader.GetInterfaceImplementation(srcInterfaceImplHandle);
                 var dstInterfaceHandle = Import(srcInterfaceImpl.Interface);
 
-                var dstInterfaceImplHandle = _builder.AddInterfaceImplementation(dstHandle, dstInterfaceHandle);
-                _interfaceImplementationCache.Add(srcInterfaceImplHandle, dstInterfaceImplHandle);
-                Trace?.Invoke(
-                    $"Imported interface implementation {ToString(srcInterfaceImpl)} ->  {RowId(dstInterfaceHandle):X} {RowId(dstInterfaceImplHandle):X}");
+                if (dstInterfaceHandle.IsNil)
+                {
+                    Trace?.Invoke(
+                        $"Not imported interface implementation {ToString(srcInterfaceImpl)}");
+                }
+                else
+                {
+                    var dstInterfaceImplHandle = _builder.AddInterfaceImplementation(dstHandle, dstInterfaceHandle);
+                    _interfaceImplementationCache.Add(srcInterfaceImplHandle, dstInterfaceImplHandle);
+                    Trace?.Invoke(
+                        $"Imported interface implementation {ToString(srcInterfaceImpl)} ->  {RowId(dstInterfaceHandle):X} {RowId(dstInterfaceImplHandle):X}");
+                }
             }
 
             foreach (var srcMethodImplementationHandle in src.GetMethodImplementations())
@@ -408,7 +446,7 @@ namespace JetBrains.Refasmer
             Debug?.Invoke($"Importing exported types");
             foreach (var src in _reader.ExportedTypes)
                 Import(src);
-
+            
             Debug?.Invoke($"Importing done");
         }
         

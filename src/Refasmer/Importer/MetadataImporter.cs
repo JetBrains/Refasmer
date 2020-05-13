@@ -81,7 +81,7 @@ namespace JetBrains.Refasmer
 
         public static void MakeRefasm( string inputPath, string outputPath, LoggerBase logger, IImportFilter filter = null )
         {
-            logger.Trace?.Invoke("Reading assembly");
+            logger.Debug?.Invoke($"Reading assembly {inputPath}");
             var peReader = new PEReader(new FileStream(inputPath, FileMode.Open, FileAccess.Read)); 
             var metaReader = peReader.GetMetadataReader();
 
