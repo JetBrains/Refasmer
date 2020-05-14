@@ -43,32 +43,47 @@ namespace JetBrains.Refasmer
 
         private BlobHandle ImportSignatureWithHeader( BlobHandle srcHandle )
         {
-            var blobReader = _reader.GetBlobReader(srcHandle);
-            var blobBuilder = new BlobBuilder(blobReader.Length);
-            
-            var header = blobReader.ReadSignatureHeader();
-            blobBuilder.WriteByte(header.RawValue);
-
-            switch (header.Kind)
+            try
             {
-                case SignatureKind.Method:
-                case SignatureKind.Property:
-                    ImportMethodSignature(header, ref blobReader, blobBuilder);
-                    break;
-                case SignatureKind.Field:
-                    ImportFieldSignature(header, ref blobReader, blobBuilder);
-                    break;
-                case SignatureKind.LocalVariables:
-                    ImportLocalSignature(header, ref blobReader, blobBuilder);
-                    break;
-                case SignatureKind.MethodSpecification:
-                    ImportMethodSpecSignature(header, ref blobReader, blobBuilder);
-                    break;
-                default:
-                    throw new BadImageFormatException();
-            }
+                var blobReader = _reader.GetBlobReader(srcHandle);
+                var blobBuilder = new BlobBuilder(blobReader.Length);
+                
+                var header = blobReader.ReadSignatureHeader();
+                blobBuilder.WriteByte(header.RawValue);
 
-            return _builder.GetOrAddBlob(blobBuilder);
+                switch (header.Kind)
+                {
+                    case SignatureKind.Method:
+                    case SignatureKind.Property:
+                        ImportMethodSignature(header, ref blobReader, blobBuilder);
+                        break;
+                    case SignatureKind.Field:
+                        ImportFieldSignature(header, ref blobReader, blobBuilder);
+                        break;
+                    case SignatureKind.LocalVariables:
+                        ImportLocalSignature(header, ref blobReader, blobBuilder);
+                        break;
+                    case SignatureKind.MethodSpecification:
+                        ImportMethodSpecSignature(header, ref blobReader, blobBuilder);
+                        break;
+                    default:
+                        throw new BadImageFormatException();
+                }
+                return _builder.GetOrAddBlob(blobBuilder);
+            }
+            catch (UnknownTypeInSignature e)
+            {
+                if (e.Handle.Kind != HandleKind.TypeDefinition)
+                    throw;
+
+                var typeDef = _reader.GetTypeDefinition((TypeDefinitionHandle) e.Handle);
+
+                if (Filter?.AllowImport(typeDef, _reader) == true)
+                    throw;
+
+            }
+            return default;
+
         }
 
         private void ImportMethodSignature( SignatureHeader header, ref BlobReader blobReader, BlobBuilder blobBuilder )

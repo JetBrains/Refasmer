@@ -77,9 +77,17 @@ namespace JetBrains.Refasmer
                     continue;
                 }
 
+                var dstSignature = ImportSignatureWithHeader(srcMethod.Signature);
+
+                if (dstSignature.IsNil)
+                {
+                    Trace?.Invoke($"Not imported because of signature {ToString(srcMethod)}");
+                    continue;
+                }
+
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
                     ImportValue(srcMethod.Name),
-                    ImportSignatureWithHeader(srcMethod.Signature), -1, NextParameterHandle());
+                    dstSignature, -1, NextParameterHandle());
                 _methodDefinitionCache.Add(srcMethodHandle, dstMethodHandle);
                 Trace?.Invoke($"Imported {ToString(srcMethod)} -> {RowId(dstMethodHandle):X}");
 
@@ -398,7 +406,7 @@ namespace JetBrains.Refasmer
                 if (checker.HasAttribute(_reader, src, AttributeNames.Embedded) &&
                     checker.HasAttribute(_reader, src, AttributeNames.CompilerGenerated))
                 {
-                    Trace?.Invoke($"Embedded type found: {ToString(srcHandle)}");
+                    Trace?.Invoke($"Embedded type found {ToString(srcHandle)}");
                     shouldImport = true;
                 }
                 else
@@ -412,7 +420,7 @@ namespace JetBrains.Refasmer
                 }
                 else
                 {
-                    Trace?.Invoke($"Type filtered and will not be imported: {ToString(srcHandle)}");
+                    Trace?.Invoke($"Type filtered and will not be imported {ToString(srcHandle)}");
                 }
             }
 
