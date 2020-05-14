@@ -33,10 +33,10 @@ namespace JetBrains.Refasmer
             {
                 case HandleKind.TypeDefinition:
                     var typeDef = reader.GetTypeDefinition((TypeDefinitionHandle) entityHandle);
-                    return $"{reader.GetString(typeDef.Namespace)}.{reader.GetString(typeDef.Name)}";
+                    return $"{reader.GetString(typeDef.Namespace)}::{reader.GetString(typeDef.Name)}";
                 case HandleKind.TypeReference:
                     var typeRef = reader.GetTypeReference((TypeReferenceHandle) entityHandle);
-                    return $"{reader.GetString(typeRef.Namespace)}.{reader.GetString(typeRef.Name)}";
+                    return $"{reader.GetString(typeRef.Namespace)}::{reader.GetString(typeRef.Name)}";
                 default:
                     return null;
             }            

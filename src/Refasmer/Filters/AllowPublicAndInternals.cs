@@ -19,7 +19,7 @@ namespace JetBrains.Refasmer.Filters
             var compilerGeneratedAttr = attrs
                 .Where(attr =>
                     reader.GetFullname(reader.GetCustomAttrClass(attr)) ==
-                    "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
+                    "System.Runtime.CompilerServices::CompilerGeneratedAttribute")
                 .Select(attr => (CustomAttribute?) attr)
                 .FirstOrDefault();
 

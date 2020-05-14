@@ -356,7 +356,7 @@ namespace JetBrains.Refasmer
                 {
                     var attrClassHandle = _reader.GetCustomAttrClass(attr);
                     var attrClassName = _reader.GetFullname(attrClassHandle);
-                    return attrClassName == "System.Runtime.CompilerServices.InternalsVisibleToAttribute";
+                    return attrClassName == "System.Runtime.CompilerServices::InternalsVisibleToAttribute";
                 }).ToList();
             
             return internalsVisibleTo.Any();
