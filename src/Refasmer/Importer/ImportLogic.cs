@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using JetBrains.Refasmer.Filters;
 
 namespace JetBrains.Refasmer
 {
@@ -350,13 +351,14 @@ namespace JetBrains.Refasmer
 
         public bool IsInternalsVisible()
         {
-            var internalsVisibleTo = _reader.GetAssemblyDefinition().GetCustomAttributes()
+            var internalsVisibleTo = 
+                _reader.GetAssemblyDefinition().GetCustomAttributes()
                 .Select(_reader.GetCustomAttribute)
                 .Where(attr =>
                 {
                     var attrClassHandle = _reader.GetCustomAttrClass(attr);
                     var attrClassName = _reader.GetFullname(attrClassHandle);
-                    return attrClassName == "System.Runtime.CompilerServices::InternalsVisibleToAttribute";
+                    return attrClassName == AttributeNames.InternalsVisibleTo;
                 }).ToList();
             
             return internalsVisibleTo.Any();
@@ -385,10 +387,35 @@ namespace JetBrains.Refasmer
 
             var index = 1;
             Debug?.Invoke($"Preparing type list for import");
-            foreach (var srcHandle in _reader.TypeDefinitions)
-                if (Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false)
-                    _typeDefinitionCache[srcHandle] = MetadataTokens.TypeDefinitionHandle(index++);
+
+            var checker = new CachedAttributeChecker();
             
+            foreach (var srcHandle in _reader.TypeDefinitions)
+            {
+                var shouldImport = false;
+                
+                var src = _reader.GetTypeDefinition(srcHandle);
+                if (checker.HasAttribute(_reader, src, AttributeNames.Embedded) &&
+                    checker.HasAttribute(_reader, src, AttributeNames.CompilerGenerated))
+                {
+                    Trace?.Invoke($"Embedded type found: {ToString(srcHandle)}");
+                    shouldImport = true;
+                }
+                else
+                {
+                    shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false;    
+                }
+
+                if (shouldImport)
+                {
+                    _typeDefinitionCache[srcHandle] = MetadataTokens.TypeDefinitionHandle(index++);
+                }
+                else
+                {
+                    Trace?.Invoke($"Type filtered and will not be imported: {ToString(srcHandle)}");
+                }
+            }
+
             Debug?.Invoke($"Importing type definitions");
             foreach (var srcHandle in _reader.TypeDefinitions.Where(_typeDefinitionCache.ContainsKey))
             {
@@ -397,14 +424,15 @@ namespace JetBrains.Refasmer
                     throw new Exception("WTF: type handle mismatch");
             }
 
+            Debug?.Invoke($"Importing type definition accessories");
             foreach (var (srcHandle, dstHandle) in _typeDefinitionCache)
                 ImportTypeDefinitionAccessories(srcHandle, dstHandle);
 
-            Debug?.Invoke($"Importing method definitions");
+            Debug?.Invoke($"Importing method definition accessories");
             foreach (var (srcHandle, dstHandle) in _methodDefinitionCache)
                 ImportMethodDefinitionAccessories(srcHandle, dstHandle);
 
-            Debug?.Invoke($"Importing field definitions");
+            Debug?.Invoke($"Importing field definition accessories");
             foreach (var (srcHandle, dstHandle) in _fieldDefinitionCache)
                 ImportFieldDefinitionAccessories(srcHandle, dstHandle);
 

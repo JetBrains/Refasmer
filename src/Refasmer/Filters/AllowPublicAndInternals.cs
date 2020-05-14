@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 
@@ -7,35 +5,14 @@ namespace JetBrains.Refasmer.Filters
 {
     public class AllowPublicAndInternals: IImportFilter
     {
-        private readonly HashSet<EntityHandle> _compilerGeneratedAttributeHandles = new HashSet<EntityHandle>();
-
-        private bool IsCompilerGenerated( MetadataReader reader, CustomAttributeHandleCollection attrHandles )
-        {
-            var attrs = attrHandles.Select(reader.GetCustomAttribute).ToList();
-                
-            if (attrs.Any(attr => _compilerGeneratedAttributeHandles.Contains(attr.Constructor)))
-                return true;
-
-            var compilerGeneratedAttr = attrs
-                .Where(attr =>
-                    reader.GetFullname(reader.GetCustomAttrClass(attr)) ==
-                    "System.Runtime.CompilerServices::CompilerGeneratedAttribute")
-                .Select(attr => (CustomAttribute?) attr)
-                .FirstOrDefault();
-
-            if (compilerGeneratedAttr == null)
-                return false;
-
-            _compilerGeneratedAttributeHandles.Add(compilerGeneratedAttr.Value.Constructor);
-            return true;
-        }
+        private readonly CachedAttributeChecker _attrChecker = new CachedAttributeChecker();
         
         public virtual bool AllowImport( TypeDefinition type, MetadataReader reader )
         {
             switch (type.Attributes & TypeAttributes.VisibilityMask)
             {
                 case TypeAttributes.NotPublic:
-                    return !IsCompilerGenerated(reader, type.GetCustomAttributes());
+                    return !_attrChecker.HasAttribute(reader, type.GetCustomAttributes(), AttributeNames.CompilerGenerated);
                 case TypeAttributes.Public:
                     return true;
                 case TypeAttributes.NestedPublic:
@@ -58,7 +35,7 @@ namespace JetBrains.Refasmer.Filters
                 case MethodAttributes.Assembly:
                     if ((method.Attributes & MethodAttributes.SpecialName) != 0)
                         return true;
-                    return !IsCompilerGenerated(reader, method.GetCustomAttributes());
+                    return !_attrChecker.HasAttribute(reader, method, AttributeNames.CompilerGenerated);
 
                 case MethodAttributes.Public:
                 case MethodAttributes.FamORAssem:
@@ -77,7 +54,7 @@ namespace JetBrains.Refasmer.Filters
             switch (field.Attributes & FieldAttributes.FieldAccessMask)
             {
                 case FieldAttributes.Assembly:
-                    return !IsCompilerGenerated(reader, field.GetCustomAttributes());
+                    return !_attrChecker.HasAttribute(reader, field, AttributeNames.CompilerGenerated);
                 case FieldAttributes.Public:
                 case FieldAttributes.FamORAssem:
                     return true;
