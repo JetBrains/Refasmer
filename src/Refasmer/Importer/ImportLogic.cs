@@ -104,6 +104,13 @@ namespace JetBrains.Refasmer
 
                     if (!defaultValue.IsNil)
                         ImportDefaultValue(defaultValue, dstParameterHandle);
+
+                    var marshallingDescriptor = srcParameter.GetMarshallingDescriptor();
+                    if (!marshallingDescriptor.IsNil)
+                    {
+                        _builder.AddMarshallingDescriptor(dstParameterHandle, ImportValue(marshallingDescriptor));
+                        Trace?.Invoke($"Imported marshalling descriptor {marshallingDescriptor}");
+                    }
                 }
             }
 
@@ -470,7 +477,6 @@ namespace JetBrains.Refasmer
             foreach (var (dstHandle, genericParams) in generic)
                 ImportGenericConstraints(dstHandle, genericParams);
 
-            
             Debug?.Invoke($"Importing custom attributes");
             foreach (var src in _reader.CustomAttributes)
                 Import(src);
