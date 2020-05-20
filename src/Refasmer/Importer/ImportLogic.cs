@@ -66,7 +66,7 @@ namespace JetBrains.Refasmer
                 .Where(mi => AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
                 .Select(mi => (MethodDefinitionHandle)mi.MethodBody)
                 .ToImmutableHashSet();
-            
+
             foreach (var srcMethodHandle in src.GetMethods())
             {
                 var srcMethod = _reader.GetMethodDefinition(srcMethodHandle);
@@ -86,8 +86,7 @@ namespace JetBrains.Refasmer
                 }
 
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
-                    ImportValue(srcMethod.Name),
-                    dstSignature, -1, NextParameterHandle());
+                    ImportValue(srcMethod.Name), dstSignature, -1, NextParameterHandle());
                 _methodDefinitionCache.Add(srcMethodHandle, dstMethodHandle);
                 Trace?.Invoke($"Imported {ToString(srcMethod)} -> {RowId(dstMethodHandle):X}");
 
@@ -105,11 +104,11 @@ namespace JetBrains.Refasmer
                     if (!defaultValue.IsNil)
                         ImportDefaultValue(defaultValue, dstParameterHandle);
 
-                    var marshallingDescriptor = srcParameter.GetMarshallingDescriptor();
-                    if (!marshallingDescriptor.IsNil)
+
+                    if (!srcParameter.GetMarshallingDescriptor().IsNil)
                     {
-                        _builder.AddMarshallingDescriptor(dstParameterHandle, ImportValue(marshallingDescriptor));
-                        Trace?.Invoke($"Imported marshalling descriptor {marshallingDescriptor}");
+                        _builder.AddMarshallingDescriptor(dstParameterHandle, ImportValue(srcParameter.GetMarshallingDescriptor()));
+                        Trace?.Invoke($"Imported marshalling descriptor {ToString(srcParameter.GetMarshallingDescriptor())}");
                     }
                 }
             }
