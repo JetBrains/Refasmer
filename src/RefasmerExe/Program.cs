@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
@@ -209,12 +210,13 @@ namespace JetBrains.Refasmer
             var culture = metaReader.GetString(assembly.Culture);
             xmlWriter.WriteAttributeString("Culture", string.IsNullOrEmpty(culture) ? "neutral" : culture);
 
-            var sb = new StringBuilder();
 
-            foreach (var b in metaReader.GetBlobContent(assembly.PublicKey))
-                sb.Append(b.ToString("x2"));
+            var publicKey = metaReader.GetBlobBytes(assembly.PublicKey);
+            var publicKeyToken = PublicKeyTokenCalculator.CalculatePublicKeyToken(publicKey); 
             
-            xmlWriter.WriteAttributeString("PublicKeyToken", sb.ToString());
+            var publicKeyTokenStr =  BitConverter.ToString(publicKeyToken).Replace("-", string.Empty).ToLowerInvariant();
+            
+            xmlWriter.WriteAttributeString("PublicKeyToken", publicKeyTokenStr);
 
             xmlWriter.WriteAttributeString("InGac", "false");
             xmlWriter.WriteAttributeString("ProcessorArchitecture", "MSIL");
