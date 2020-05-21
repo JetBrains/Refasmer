@@ -221,7 +221,7 @@ namespace JetBrains.Refasmer
             var srcHandle = blobReader.ReadTypeHandle();
             var dstHandle = Import(srcHandle);
             if (dstHandle.IsNil)
-                throw new UnknownTypeInSignature(srcHandle, $"Unknown type in signature: {ToString(srcHandle)}"); 
+                throw new UnknownTypeInSignature(srcHandle, $"Unknown type in signature: {_reader.ToString(srcHandle)}"); 
             
             blobBuilder.WriteCompressedInteger(CodedIndex.TypeDefOrRefOrSpec(dstHandle));
         }

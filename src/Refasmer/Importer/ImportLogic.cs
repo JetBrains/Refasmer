@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -41,9 +40,9 @@ namespace JetBrains.Refasmer
             var dstHandle = _builder.AddTypeDefinition(src.Attributes, ImportValue(src.Namespace), ImportValue(src.Name),
                 Import(src.BaseType), NextFieldHandle(), NextMethodHandle());
 
-            Trace?.Invoke($"Imported {ToString(src)} -> {RowId(dstHandle):X}");
+            Trace?.Invoke($"Imported {_reader.ToString(src)} -> {RowId(dstHandle):X}");
 
-            using var _ = WithLogPrefix($"[{ToString(src)}]");
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             foreach (var srcFieldHandle in src.GetFields())
             {
@@ -51,14 +50,14 @@ namespace JetBrains.Refasmer
 
                 if (Filter?.AllowImport(srcField, _reader) == false)
                 {
-                    Trace?.Invoke($"Not imported {ToString(srcField)}");
+                    Trace?.Invoke($"Not imported {_reader.ToString(srcField)}");
                     continue;
                 }
 
                 var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name),
                     ImportSignatureWithHeader(srcField.Signature));
                 _fieldDefinitionCache.Add(srcFieldHandle, dstFieldHandle);
-                Trace?.Invoke($"Imported {ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
+                Trace?.Invoke($"Imported {_reader.ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
             }
 
             var implementations = src.GetMethodImplementations()
@@ -73,7 +72,7 @@ namespace JetBrains.Refasmer
 
                 if (!implementations.Contains(srcMethodHandle) && Filter?.AllowImport(srcMethod, _reader) == false)
                 {
-                    Trace?.Invoke($"Not imported {ToString(srcMethod)}");
+                    Trace?.Invoke($"Not imported {_reader.ToString(srcMethod)}");
                     continue;
                 }
 
@@ -81,23 +80,23 @@ namespace JetBrains.Refasmer
 
                 if (dstSignature.IsNil)
                 {
-                    Trace?.Invoke($"Not imported because of signature {ToString(srcMethod)}");
+                    Trace?.Invoke($"Not imported because of signature {_reader.ToString(srcMethod)}");
                     continue;
                 }
 
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
                     ImportValue(srcMethod.Name), dstSignature, -1, NextParameterHandle());
                 _methodDefinitionCache.Add(srcMethodHandle, dstMethodHandle);
-                Trace?.Invoke($"Imported {ToString(srcMethod)} -> {RowId(dstMethodHandle):X}");
+                Trace?.Invoke($"Imported {_reader.ToString(srcMethod)} -> {RowId(dstMethodHandle):X}");
 
-                using var __ = WithLogPrefix($"[{ToString(srcMethod)}]");
+                using var __ = WithLogPrefix($"[{_reader.ToString(srcMethod)}]");
                 foreach (var srcParameterHandle in srcMethod.GetParameters())
                 {
                     var srcParameter = _reader.GetParameter(srcParameterHandle);
                     var dstParameterHandle = _builder.AddParameter(srcParameter.Attributes,
                         ImportValue(srcParameter.Name), srcParameter.SequenceNumber);
                     _parameterCache.Add(srcParameterHandle, dstParameterHandle);
-                    Trace?.Invoke($"Imported {ToString(srcParameter)} -> {RowId(dstParameterHandle):X}");
+                    Trace?.Invoke($"Imported {_reader.ToString(srcParameter)} -> {RowId(dstParameterHandle):X}");
 
                     var defaultValue = srcParameter.GetDefaultValue();
 
@@ -108,7 +107,7 @@ namespace JetBrains.Refasmer
                     if (!srcParameter.GetMarshallingDescriptor().IsNil)
                     {
                         _builder.AddMarshallingDescriptor(dstParameterHandle, ImportValue(srcParameter.GetMarshallingDescriptor()));
-                        Trace?.Invoke($"Imported marshalling descriptor {ToString(srcParameter.GetMarshallingDescriptor())}");
+                        Trace?.Invoke($"Imported marshalling descriptor {_reader.ToString(srcParameter.GetMarshallingDescriptor())}");
                     }
                 }
             }
@@ -120,7 +119,7 @@ namespace JetBrains.Refasmer
         {
             var src = _reader.GetTypeDefinition(srcHandle);
         
-            using var _ = WithLogPrefix($"[{ToString(src)}]");
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             foreach (var srcInterfaceImplHandle in src.GetInterfaceImplementations())
             {
@@ -130,14 +129,14 @@ namespace JetBrains.Refasmer
                 if (dstInterfaceHandle.IsNil)
                 {
                     Trace?.Invoke(
-                        $"Not imported interface implementation {ToString(srcInterfaceImpl)}");
+                        $"Not imported interface implementation {_reader.ToString(srcInterfaceImpl)}");
                 }
                 else
                 {
                     var dstInterfaceImplHandle = _builder.AddInterfaceImplementation(dstHandle, dstInterfaceHandle);
                     _interfaceImplementationCache.Add(srcInterfaceImplHandle, dstInterfaceImplHandle);
                     Trace?.Invoke(
-                        $"Imported interface implementation {ToString(srcInterfaceImpl)} ->  {RowId(dstInterfaceHandle):X} {RowId(dstInterfaceImplHandle):X}");
+                        $"Imported interface implementation {_reader.ToString(srcInterfaceImpl)} ->  {RowId(dstInterfaceHandle):X} {RowId(dstInterfaceImplHandle):X}");
                 }
             }
 
@@ -152,7 +151,7 @@ namespace JetBrains.Refasmer
                             ? default
                             : _builder.AddMethodImplementation(dstHandle, body, decl);
                     },
-                    ToString, IsNil);
+                    _reader.ToString, IsNil);
 
             if (src.GetEvents().Any())
             {
@@ -179,7 +178,7 @@ namespace JetBrains.Refasmer
         {
             var src = _reader.GetFieldDefinition(srcHandle);
 
-            using var _ = WithLogPrefix($"[{ToString(src)}]");
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             if (!src.GetDefaultValue().IsNil)
             {
@@ -188,13 +187,13 @@ namespace JetBrains.Refasmer
 
                 var dstConst = _builder.AddConstant(dstHandle, value);
 
-                Trace?.Invoke($"Imported default value {ToString(srcConst)} -> {RowId(dstConst):X} = {value}");
+                Trace?.Invoke($"Imported default value {_reader.ToString(srcConst)} -> {RowId(dstConst):X} = {value}");
             }
 
             if (!src.GetMarshallingDescriptor().IsNil)
             {
                 _builder.AddMarshallingDescriptor(dstHandle, ImportValue(src.GetMarshallingDescriptor()));
-                Trace?.Invoke($"Imported marshalling descriptor {ToString(src.GetMarshallingDescriptor())}");
+                Trace?.Invoke($"Imported marshalling descriptor {_reader.ToString(src.GetMarshallingDescriptor())}");
             }
 
             if (src.GetOffset() != -1)
@@ -214,7 +213,7 @@ namespace JetBrains.Refasmer
         private void ImportMethodDefinitionAccessories( MethodDefinitionHandle srcHandle, MethodDefinitionHandle dstHandle )
         {
             var src = _reader.GetMethodDefinition(srcHandle);
-            using var _ = WithLogPrefix($"[{ToString(src)}]");
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             var srcImport = src.GetImport();
 
@@ -222,7 +221,7 @@ namespace JetBrains.Refasmer
             {
                 _builder.AddMethodImport(dstHandle, srcImport.Attributes, ImportValue(srcImport.Name),
                     Import(srcImport.Module));
-                Trace?.Invoke($"Imported method import {ToString(srcImport.Module)} {ToString(srcImport.Name)}");
+                Trace?.Invoke($"Imported method import {_reader.ToString(srcImport.Module)} {_reader.ToString(srcImport.Name)}");
             }
         }
 
@@ -243,38 +242,38 @@ namespace JetBrains.Refasmer
 
             if (adder.IsNil && remover.IsNil && raiser.IsNil && !others.Any())
             {
-                Trace?.Invoke($"Not imported event {ToString(src)}");
+                Trace?.Invoke($"Not imported event {_reader.ToString(src)}");
                 return;
             }
 
             var dstHandle = _builder.AddEvent(src.Attributes, ImportValue(src.Name), Import(src.Type));
             _eventDefinitionCache.Add(srcHandle, dstHandle);
-            Trace?.Invoke($"Imported event {ToString(src)} -> {RowId(dstHandle):X}");
+            Trace?.Invoke($"Imported event {_reader.ToString(src)} -> {RowId(dstHandle):X}");
 
-            using var _ = WithLogPrefix($"[{ToString(src)}]");
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             if (!adder.IsNil)
             {
                 _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Adder, adder);
-                Trace?.Invoke($"Imported adder {ToString(accessors.Adder)} -> {RowId(adder):X}");
+                Trace?.Invoke($"Imported adder {_reader.ToString(accessors.Adder)} -> {RowId(adder):X}");
             }
 
             if (!remover.IsNil)
             {
                 _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Remover, remover);
-                Trace?.Invoke($"Imported remover {ToString(accessors.Remover)} -> {RowId(remover):X}");
+                Trace?.Invoke($"Imported remover {_reader.ToString(accessors.Remover)} -> {RowId(remover):X}");
             }
 
             if (!raiser.IsNil)
             {
                 _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Raiser, raiser);
-                Trace?.Invoke($"Imported raiser {ToString(accessors.Raiser)} -> {RowId(raiser):X}");
+                Trace?.Invoke($"Imported raiser {_reader.ToString(accessors.Raiser)} -> {RowId(raiser):X}");
             }
 
             foreach (var (srcAccessor, dstAccessor) in others)
             {
                 _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Other, dstAccessor);
-                Trace?.Invoke($"Imported other {ToString(srcAccessor)} -> {RowId(dstAccessor):X}");
+                Trace?.Invoke($"Imported other {_reader.ToString(srcAccessor)} -> {RowId(dstAccessor):X}");
             }
 
         }
@@ -295,33 +294,33 @@ namespace JetBrains.Refasmer
 
             if (getter.IsNil && setter.IsNil && !others.Any())
             {
-                Trace?.Invoke($"Not imported property {ToString(src)}");
+                Trace?.Invoke($"Not imported property {_reader.ToString(src)}");
                 return;
             }
 
             var dstHandle = _builder.AddProperty(src.Attributes, ImportValue(src.Name), ImportSignatureWithHeader(src.Signature));
             _propertyDefinitionCache.Add(srcHandle, dstHandle);
 
-            Trace?.Invoke($"Imported property {ToString(src)} -> {RowId(dstHandle):X}");
+            Trace?.Invoke($"Imported property {_reader.ToString(src)} -> {RowId(dstHandle):X}");
 
-            using var _ = WithLogPrefix($"[{ToString(src)}]");
+            using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             if (!getter.IsNil)
             {
                 _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Getter, getter);
-                Trace?.Invoke($"Imported getter {ToString(accessors.Getter)} -> {RowId(getter):X}");
+                Trace?.Invoke($"Imported getter {_reader.ToString(accessors.Getter)} -> {RowId(getter):X}");
             }
 
             if (!setter.IsNil)
             {
                 _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Setter, setter);
-                Trace?.Invoke($"Imported setter {ToString(accessors.Setter)} -> {RowId(setter):X}");
+                Trace?.Invoke($"Imported setter {_reader.ToString(accessors.Setter)} -> {RowId(setter):X}");
             }
 
             foreach (var (srcAccessor, dstAccessor) in others)
             {
                 _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Other, dstAccessor);
-                Trace?.Invoke($"Imported other {ToString(srcAccessor)} -> {RowId(dstAccessor):X}");
+                Trace?.Invoke($"Imported other {_reader.ToString(srcAccessor)} -> {RowId(dstAccessor):X}");
             }
 
             var defaultValue = src.GetDefaultValue();
@@ -341,14 +340,14 @@ namespace JetBrains.Refasmer
                 _genericParameterCache.Add(srcParamHandle, dstParamHandle);
                 srcConstraints.AddRange(srcParam.GetConstraints().Select(x => Tuple.Create(dstParamHandle, x)));
 
-                Trace?.Invoke($"Imported generic parameter {ToString(srcParam)} -> {RowId(dstParamHandle):X}");
+                Trace?.Invoke($"Imported generic parameter {_reader.ToString(srcParam)} -> {RowId(dstParamHandle):X}");
             }
 
             foreach (var (dstParam, srcConstraintHandle) in srcConstraints)
                 ImportEntity(srcConstraintHandle, _genericParameterConstraintCache,
                     _reader.GetGenericParameterConstraint,
                     src => _builder.AddGenericParameterConstraint(dstParam, Import(src.Type)),
-                    ToString, IsNil);
+                    _reader.ToString, IsNil);
         }
  
         private void ImportDefaultValue( ConstantHandle defaultValue, EntityHandle dstHandle )
@@ -359,7 +358,7 @@ namespace JetBrains.Refasmer
                 var value = _reader.GetBlobReader(srcConst.Value).ReadConstant(srcConst.TypeCode);
                 var dstConst = _builder.AddConstant(dstHandle, value);
 
-                Trace?.Invoke($"Imported default value {ToString(srcConst)} -> {RowId(dstConst):X} = {value}");
+                Trace?.Invoke($"Imported default value {_reader.ToString(srcConst)} -> {RowId(dstConst):X} = {value}");
             }
         }
 
@@ -383,9 +382,8 @@ namespace JetBrains.Refasmer
             var srcAssembly = _reader.GetAssemblyDefinition();
 
             _builder.AddAssembly(ImportValue(srcAssembly.Name), srcAssembly.Version, ImportValue(srcAssembly.Culture),
-                ImportValue(srcAssembly.PublicKey),
-                srcAssembly.Flags, srcAssembly.HashAlgorithm);
-            Debug?.Invoke($"Imported assembly {ToString(srcAssembly)}");
+                ImportValue(srcAssembly.PublicKey), srcAssembly.Flags, srcAssembly.HashAlgorithm);
+            Debug?.Invoke($"Imported assembly {_reader.ToString(srcAssembly)}");
 
 
             var srcModule = _reader.GetModuleDefinition();
@@ -393,7 +391,7 @@ namespace JetBrains.Refasmer
             _builder.AddModule(srcModule.Generation, ImportValue(srcModule.Name), ImportValue(srcModule.Mvid),
                 ImportValue(srcModule.GenerationId),
                 ImportValue(srcModule.BaseGenerationId));
-            Debug?.Invoke($"Imported module {ToString(srcModule)}");
+            Debug?.Invoke($"Imported module {_reader.ToString(srcModule)}");
 
             Debug?.Invoke($"Importing assembly files");
             foreach (var srcHandle in _reader.AssemblyFiles)
@@ -406,13 +404,13 @@ namespace JetBrains.Refasmer
             
             foreach (var srcHandle in _reader.TypeDefinitions)
             {
-                var shouldImport = false;
+                bool shouldImport;
                 
                 var src = _reader.GetTypeDefinition(srcHandle);
                 if (checker.HasAttribute(_reader, src, AttributeNames.Embedded) &&
                     checker.HasAttribute(_reader, src, AttributeNames.CompilerGenerated))
                 {
-                    Trace?.Invoke($"Embedded type found {ToString(srcHandle)}");
+                    Trace?.Invoke($"Embedded type found {_reader.ToString(srcHandle)}");
                     shouldImport = true;
                 }
                 else
@@ -426,7 +424,7 @@ namespace JetBrains.Refasmer
                 }
                 else
                 {
-                    Trace?.Invoke($"Type filtered and will not be imported {ToString(srcHandle)}");
+                    Trace?.Invoke($"Type filtered and will not be imported {_reader.ToString(srcHandle)}");
                 }
             }
 
@@ -461,7 +459,7 @@ namespace JetBrains.Refasmer
             foreach (var (dstHandle, srcNested, dstNested) in nestedTypes)
             {
                 _builder.AddNestedType(dstNested, dstHandle);
-                Trace?.Invoke($"Imported nested type {ToString(srcNested)} -> {RowId(dstNested):X}");
+                Trace?.Invoke($"Imported nested type {_reader.ToString(srcNested)} -> {RowId(dstNested):X}");
             }
 
             

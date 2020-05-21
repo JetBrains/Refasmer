@@ -11,23 +11,23 @@ namespace JetBrains.Refasmer
             ImportEntity(srcHandle, _assemblyReferenceCache, _reader.GetAssemblyReference,
                 src => _builder.AddAssemblyReference(ImportValue(src.Name), src.Version, ImportValue(src.Culture),
                     ImportValue(src.PublicKeyOrToken), src.Flags, ImportValue(src.HashValue)),
-                    ToString, IsNil);
+                _reader.ToString, IsNil);
         
         private AssemblyFileHandle Import( AssemblyFileHandle srcHandle ) => 
             ImportEntity(srcHandle, _assemblyFileCache, _reader.GetAssemblyFile,
                 src => _builder.AddAssemblyFile(ImportValue(src.Name), ImportValue(src.HashValue), src.ContainsMetadata),    
-                ToString, IsNil);
+                _reader.ToString, IsNil);
 
         private TypeReferenceHandle Import( TypeReferenceHandle srcHandle ) =>
             ImportEntity(srcHandle, _typeReferenceCache, _reader.GetTypeReference,
                 src => _builder.AddTypeReference(Import(src.ResolutionScope), ImportValue(src.Namespace),
                     ImportValue(src.Name)),
-                ToString, IsNil);
+                _reader.ToString, IsNil);
 
         private ModuleReferenceHandle Import( ModuleReferenceHandle srcHandle ) =>
             ImportEntity(srcHandle, _moduleReferenceCache, _reader.GetModuleReference,
                 src => _builder.AddModuleReference(ImportValue(src.Name)),
-                ToString, IsNil);
+                _reader.ToString, IsNil);
 
         private TypeSpecificationHandle Import( TypeSpecificationHandle srcHandle ) =>
             ImportEntity(srcHandle, _typeSpecificationCache, _reader.GetTypeSpecification,
@@ -35,7 +35,7 @@ namespace JetBrains.Refasmer
                 {
                     var dstSignature = ImportTypeSignature(src.Signature);
                     return dstSignature.IsNil ? default : _builder.AddTypeSpecification(dstSignature);
-                }, ToString, IsNil);
+                }, _reader.ToString, IsNil);
 
         
         private CustomAttributeHandle Import( CustomAttributeHandle srcHandle ) =>
@@ -48,7 +48,7 @@ namespace JetBrains.Refasmer
                         ? default
                         : _builder.AddCustomAttribute(parent, constructor, ImportValue(src.Value));
                 },
-                ToString, IsNil);
+                _reader.ToString, IsNil);
         
         private ExportedTypeHandle Import( ExportedTypeHandle srcHandle ) =>
             ImportEntity(srcHandle, _exportedTypeCache, _reader.GetExportedType,
@@ -60,7 +60,7 @@ namespace JetBrains.Refasmer
                         : _builder.AddExportedType(src.Attributes, ImportValue(src.Namespace), ImportValue(src.Name),
                             impl, src.GetTypeDefinitionId());
                 },
-                ToString, IsNil);
+                _reader.ToString, IsNil);
 
         private DeclarativeSecurityAttributeHandle Import( DeclarativeSecurityAttributeHandle srcHandle ) =>
             ImportEntity(srcHandle, _declarativeSecurityAttributeCache, _reader.GetDeclarativeSecurityAttribute,
@@ -71,13 +71,13 @@ namespace JetBrains.Refasmer
                         ? default
                         : _builder.AddDeclarativeSecurityAttribute(parent, src.Action, ImportValue(src.PermissionSet));
                 },
-                ToString, IsNil);
+                _reader.ToString, IsNil);
 
         private MemberReferenceHandle Import( MemberReferenceHandle srcHandle ) => 
             ImportEntity(srcHandle, _memberReferenceCache, _reader.GetMemberReference,
                 src => _builder.AddMemberReference(Import(src.Parent), ImportValue(src.Name),
                     ImportSignatureWithHeader(src.Signature)),
-                ToString, IsNil);
+                _reader.ToString, IsNil);
         
         
 

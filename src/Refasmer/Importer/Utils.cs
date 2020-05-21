@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -24,5 +24,7 @@ namespace JetBrains.Refasmer
 
         private PropertyDefinitionHandle NextPropertyHandle() =>
             MetadataTokens.PropertyDefinitionHandle(GetNextToken(TableIndex.Property));
+
+        private static readonly Func<object, int?> RowId = MetaUtil.RowId;
     }
 }

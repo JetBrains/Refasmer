@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -86,5 +87,13 @@ namespace JetBrains.Refasmer
                     return default;
             }
         }
+ 
+        public static int? RowId(object definition) =>
+            (int?)definition.GetType()
+                .GetProperty("RowId", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
+                ?.GetMethod?.Invoke(definition, new object[0])
+            ?? (int?)definition.GetType()
+                .GetField("_rowId", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
+                ?.GetValue(definition);
     }
 }
