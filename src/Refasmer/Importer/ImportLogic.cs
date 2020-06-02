@@ -364,6 +364,9 @@ namespace JetBrains.Refasmer
 
         public bool IsInternalsVisible()
         {
+            if (!_reader.IsAssembly)
+                return false;
+            
             var internalsVisibleTo = 
                 _reader.GetAssemblyDefinition().GetCustomAttributes()
                 .Select(_reader.GetCustomAttribute)
@@ -379,12 +382,15 @@ namespace JetBrains.Refasmer
         
         public void Import()
         {
-            var srcAssembly = _reader.GetAssemblyDefinition();
+            if (_reader.IsAssembly)
+            {
+                var srcAssembly = _reader.GetAssemblyDefinition();
 
-            _builder.AddAssembly(ImportValue(srcAssembly.Name), srcAssembly.Version, ImportValue(srcAssembly.Culture),
-                ImportValue(srcAssembly.PublicKey), srcAssembly.Flags, srcAssembly.HashAlgorithm);
-            Debug?.Invoke($"Imported assembly {_reader.ToString(srcAssembly)}");
-
+                _builder.AddAssembly(ImportValue(srcAssembly.Name), srcAssembly.Version,
+                    ImportValue(srcAssembly.Culture),
+                    ImportValue(srcAssembly.PublicKey), srcAssembly.Flags, srcAssembly.HashAlgorithm);
+                Debug?.Invoke($"Imported assembly {_reader.ToString(srcAssembly)}");
+            }
 
             var srcModule = _reader.GetModuleDefinition();
             

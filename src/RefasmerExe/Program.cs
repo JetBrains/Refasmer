@@ -133,6 +133,8 @@ namespace JetBrains.Refasmer
 
                     foreach (var (key, value) in fileListAttr)
                         xmlWriter.WriteAttributeString(key, value);
+
+                    inputs.Sort();
                 }
                 
                 _logger.Info?.Invoke($"Processing {inputs.Count} assemblies");
@@ -151,12 +153,7 @@ namespace JetBrains.Refasmer
                             metaReader = peReader.GetMetadataReader();
 
                             if (!metaReader.IsAssembly)
-                            {
-                                _logger.Error?.Invoke("File format is not supported");
-                                if (continueOnErrors)
-                                    continue;
-                                return 1;
-                            }
+                                _logger.Warning?.Invoke($"Dll has no assembly: {input}");
                         }
                         catch (InvalidOperationException e)
                         {
@@ -201,6 +198,9 @@ namespace JetBrains.Refasmer
 
         private static void WriteAssemblyToXml(MetadataReader metaReader, XmlTextWriter xmlWriter)
         {
+            if (!metaReader.IsAssembly)
+                return;
+            
             var assembly = metaReader.GetAssemblyDefinition();
             
             xmlWriter.WriteStartElement("File");

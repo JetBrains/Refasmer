@@ -1,4 +1,5 @@
 using System;
+using System.Drawing.Printing;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -72,7 +73,8 @@ namespace JetBrains.Refasmer
                 );
             
             var ilStream = new BlobBuilder();
-            var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream);
+            var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream, 
+                    deterministicIdProvider: _ => new BlobContentId(Guid.NewGuid(), (uint)peReader.PEHeaders.CoffHeader.TimeDateStamp));
             var blobBuilder = new BlobBuilder();
             peBuilder.Serialize(blobBuilder);
 
