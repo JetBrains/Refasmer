@@ -1,7 +1,7 @@
 # Refasmer
 
-Simple tool to make reference assembly. Strips method bodies, private class fields etc. Also can generate xml files like FrameworkList.xml and dump some dll meta info to JSON.
-Also can be used as library.
+Simple tool to make reference assembly. Strips method bodies, private class fields etc. Also can generate xml files like FrameworkList.xml.
+Can be used as library (Refasmer.dll).
 
 ## Usage:
 ```
