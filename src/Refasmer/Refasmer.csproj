@@ -6,11 +6,15 @@
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>Refasmer.snk</AssemblyOriginatorKeyFile>
         <LangVersion>latest</LangVersion>
-        <TargetFramework>net461</TargetFramework>
+        <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.3" />
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net461" Version="1.0.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="System.Reflection.Metadata" Version="1.7.0" />
     </ItemGroup>
 </Project>
