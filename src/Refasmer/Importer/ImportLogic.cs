@@ -380,7 +380,7 @@ namespace JetBrains.Refasmer
             return internalsVisibleTo.Any();
         }
         
-        public void Import()
+        public ReservedBlob<GuidHandle> Import()
         {
             if (_reader.IsAssembly)
             {
@@ -393,8 +393,10 @@ namespace JetBrains.Refasmer
             }
 
             var srcModule = _reader.GetModuleDefinition();
+
+            var mvidBlob = _builder.ReserveGuid();
             
-            _builder.AddModule(srcModule.Generation, ImportValue(srcModule.Name), ImportValue(srcModule.Mvid),
+            _builder.AddModule(srcModule.Generation, ImportValue(srcModule.Name), mvidBlob.Handle,
                 ImportValue(srcModule.GenerationId),
                 ImportValue(srcModule.BaseGenerationId));
             Debug?.Invoke($"Imported module {_reader.ToString(srcModule)}");
@@ -493,6 +495,8 @@ namespace JetBrains.Refasmer
                 Import(src);
             
             Debug?.Invoke($"Importing done");
+
+            return mvidBlob;
         }
         
     }

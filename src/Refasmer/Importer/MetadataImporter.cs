@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using System.Security.Cryptography;
 using JetBrains.Refasmer.Filters;
 
 namespace JetBrains.Refasmer
@@ -43,12 +45,12 @@ namespace JetBrains.Refasmer
                 logger.Info?.Invoke("Using AllowPublic entity filter");
             }
             
-            importer.Import();
+            var mvidBlob = importer.Import();
             
             logger.Debug?.Invoke($"Building reference assembly");
             
             var metaRootBuilder = new MetadataRootBuilder(metaBuilder, metaReader.MetadataVersion, true);
-
+            
             var peHeaderBuilder = new PEHeaderBuilder(
                 peReader.PEHeaders.CoffHeader.Machine, 
                 peReader.PEHeaders.PEHeader.SectionAlignment,
@@ -70,12 +72,24 @@ namespace JetBrains.Refasmer
                 peReader.PEHeaders.PEHeader.SizeOfHeapReserve,
                 peReader.PEHeaders.PEHeader.SizeOfHeapCommit
                 );
-            
+
             var ilStream = new BlobBuilder();
+            
             var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream, 
-                    deterministicIdProvider: _ => new BlobContentId(Guid.NewGuid(), (uint)peReader.PEHeaders.CoffHeader.TimeDateStamp));
+                deterministicIdProvider: blobs =>
+                {
+                    var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256) ?? throw new Exception("Cannot create hasher");
+                    
+                    foreach (var segment in blobs.Select(b => b.GetBytes()))
+                        hasher.AppendData(segment.Array, segment.Offset, segment.Count);
+                    
+                    return BlobContentId.FromHash(hasher.GetHashAndReset());
+                });
+            
             var blobBuilder = new BlobBuilder();
-            peBuilder.Serialize(blobBuilder);
+            var contentId = peBuilder.Serialize(blobBuilder);
+            
+            mvidBlob.CreateWriter().WriteGuid(contentId.Guid);
 
             return blobBuilder.ToArray();
         }
