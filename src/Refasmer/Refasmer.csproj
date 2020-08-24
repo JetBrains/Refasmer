@@ -7,6 +7,16 @@
         <AssemblyOriginatorKeyFile>Refasmer.snk</AssemblyOriginatorKeyFile>
         <LangVersion>latest</LangVersion>
         <TargetFramework>netstandard2.0</TargetFramework>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>JetBrains.Refasmer</PackageId>
+        <Title>JetBrains :: Refasmer — strip assembly to public API</Title>
+        <Authors>JetBrains</Authors>
+        <Description>JetBrains :: Refasmer — strip assembly to public API</Description>
+        <Copyright>JetBrains</Copyright>
+        <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/JetBrains/Refasmer</RepositoryUrl>
+        <PackageVersion>1.0.0$(VERSION_POSTFIX)</PackageVersion>
+        <PackageLicenseUrl>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicenseUrl>
     </PropertyGroup>
 
     <ItemGroup>
