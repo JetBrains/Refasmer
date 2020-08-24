@@ -23,3 +23,9 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
       working-directory: src
+    - name: Pack
+      run: |
+        cd rc/Refasmer
+        nuget pack Refasmer.nuspec
+        
+      
