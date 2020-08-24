@@ -21,7 +21,7 @@ jobs:
       working-directory: src
       run: dotnet restore
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
       working-directory: src
        
 

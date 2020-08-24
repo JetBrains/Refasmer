@@ -16,7 +16,7 @@
         <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
         <RepositoryUrl>https://github.com/JetBrains/Refasmer</RepositoryUrl>
         <PackageVersion>1.0.0$(VERSION_POSTFIX)</PackageVersion>
-        <PackageLicenseUrl>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicenseUrl>
+        <PackageLicense>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicense>
     </PropertyGroup>
 
     <ItemGroup>
