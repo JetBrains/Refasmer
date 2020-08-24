@@ -23,11 +23,5 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
       working-directory: src
-    - name: Install NuGet client
-      uses: warrenbuckley/Setup-Nuget@v1
-    - name: Pack
-      run: |
-        cd src/Refasmer
-        nuget pack Refasmer.nuspec
-        
-      
+       
+
