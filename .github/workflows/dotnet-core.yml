@@ -24,6 +24,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
       working-directory: src
     - name: Create Release
+      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
