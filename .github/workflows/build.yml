@@ -3,8 +3,6 @@ name: .NET Core
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   build:
@@ -17,9 +15,28 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.301
+    
     - name: Install dependencies
+      working-directory: src
       run: dotnet restore
+    
     - name: Build
-      run: dotnet build --configuration Release --no-restore
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: dotnet build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
+      working-directory: src
+    
+    - name: Publish net461
+      run: dotnet publish --framework net461 --configuration Release --no-restore 
+      working-directory: src/RefasmerExe
+    
+    - name: Publish netcoreapp
+      run: dotnet publish --framework netcoreapp2.1 --configuration Release --no-restore 
+      working-directory: src/RefasmerExe
+    
+    - name: Zip net461
+      run: zip Refasmer.net461.1.0.0.${{ github.run_number }}.zip *
+      working-directory: src/RefasmerExe/bin/Release/net461
+    
+    - name: Zip netcoreapp
+      run: zip Refasmer.netcoreapp.1.0.0.${{ github.run_number }}.zip *
+      working-directory: src/RefasmerExe/bin/Release/netcoreapp2.1/publish
+    
