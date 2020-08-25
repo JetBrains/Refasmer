@@ -17,12 +17,31 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.301
+    
     - name: Install dependencies
       working-directory: src
       run: dotnet restore
+    
     - name: Build
       run: dotnet build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
       working-directory: src
+    
+    - name: Publish net461
+      run: dotnet publish --framework net461 --configuration Release --no-restore 
+      working-directory: src/RefasmerExe
+    
+    - name: Publish netcoreapp
+      run: dotnet publish --framework netcoreapp2.1 --configuration Release --no-restore 
+      working-directory: src/RefasmerExe
+    
+    - name: Zip net461
+      run: zip --junk-paths Refasmer.net461.1.0.0.${{ github.run_number }} *
+      working-directory: src/RefasmerExe/bin/Release/net461
+    
+    - name: Zip netcoreapp
+      run: zip --junk-paths Refasmer.netcoreapp.1.0.0.${{ github.run_number }} *
+      working-directory: src/RefasmerExe/bin/Release/netcoreapp2.1/publish
+    
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -33,13 +52,34 @@ jobs:
         release_name: Release 1.0.0.${{ github.run_number }}
         draft: false
         prerelease: false
-    - name: Upload Release Asset
+    
+    - name: Upload nupkg
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: src/Refasmer/bin/Release/JetBrains.Refasmer.1.0.0.${{ github.run_number }}.nupkg
+        asset_name: JetBrains.Refasmer.1.0.0.${{ github.run_number }}.nupkg
+        asset_content_type: application/zip
+
+    - name: Upload zip net461
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
+        asset_path: src/Refasmer/bin/Release/net461/Refasmer.net461.1.0.0.${{ github.run_number }}.zip
+        asset_name: Refasmer.net461.1.0.0.${{ github.run_number }}.zip
+        asset_content_type: application/zip
+
+    - name: Upload zip netcoreapp
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: src/Refasmer/bin/Release/JetBrains.Refasmer.1.0.0.${{ github.run_number }}.nupkg
-        asset_name: JetBrains.Refasmer.1.0.0.${{ github.run_number }}.nupkg
+        asset_path: src/RefasmerExe/bin/Release/netcoreapp2.1/publish/Refasmer.netcoreapp.1.0.0.${{ github.run_number }}.zip
+        asset_name: Refasmer.netcoreapp.1.0.0.${{ github.run_number }}.zip
         asset_content_type: application/zip
 
