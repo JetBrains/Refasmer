@@ -19,7 +19,6 @@
         <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
         <RepositoryUrl>https://github.com/JetBrains/Refasmer</RepositoryUrl>
         <PackageVersion>1.0.0$(VERSION_POSTFIX)</PackageVersion>
-        <PackageLicense>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicense>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="2.10.0" />

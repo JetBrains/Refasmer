@@ -11,11 +11,13 @@
         <ToolCommandName>refasmer</ToolCommandName>
         <PackAsTool>true</PackAsTool>
         <PackageVersion>1.0.0$(VERSION_POSTFIX)</PackageVersion>
-        <PackageLicense>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicense>
         <RepositoryUrl>https://github.com/JetBrains/Refasmer</RepositoryUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <Copyright>Copyright © JetBrains 2020</Copyright>
         <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
+        <Title>JetBrains :: Refasmer — strip assembly to public API</Title>
+        <Authors>JetBrains</Authors>
+        <Description>JetBrains :: Refasmer — strip assembly to public API</Description>
+        <Copyright>Copyright © JetBrains 2020</Copyright>
     </PropertyGroup>
 
     <ItemGroup>
