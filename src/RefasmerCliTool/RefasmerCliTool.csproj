@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <RootNamespace>JetBrains.Refasmer.CliTool</RootNamespace>
+    </PropertyGroup>
+    <PropertyGroup>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IsPackable>true</IsPackable>
+        <ToolCommandName>refasmer</ToolCommandName>
+        <PackAsTool>true</PackAsTool>
+        <PackageVersion>1.0.0$(VERSION_POSTFIX)</PackageVersion>
+        <PackageLicense>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicense>
+        <RepositoryUrl>https://github.com/JetBrains/Refasmer</RepositoryUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <Copyright>Copyright © JetBrains 2020</Copyright>
+        <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\RefasmerExe\RefasmerExe.csproj" />
+    </ItemGroup>
+
+</Project>
