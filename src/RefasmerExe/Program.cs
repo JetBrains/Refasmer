@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
-using JetBrains.Refasmer.Filters;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 
