@@ -94,7 +94,7 @@ namespace JetBrains.Refasmer
             if (quiet)
                 verbosity = LogLevel.None;
             
-            if (showHelp)
+            if (showHelp || args.Length == 0)
             {
                 var selfName = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
                 
