@@ -12,7 +12,7 @@
     <PropertyGroup>
         <PackageId>JetBrains.Refasmer</PackageId>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <Title>JetBrains :: Refasmer — strip assembly to public API</Title>
+        <Title>Refasmer</Title>
         <Authors>JetBrains</Authors>
         <Description>JetBrains :: Refasmer — strip assembly to public API</Description>
         <Copyright>Copyright © JetBrains 2020</Copyright>
