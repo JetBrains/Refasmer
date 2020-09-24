@@ -33,10 +33,10 @@ jobs:
       working-directory: src/RefasmerExe
     
     - name: Zip net461
-      run: zip Refasmer.net461.1.0.0.${{ github.run_number }}.zip *
+      run: zip Refasmer.net461.1.0.${{ github.run_number }}.zip *
       working-directory: src/RefasmerExe/bin/Release/net461
     
     - name: Zip netcoreapp
-      run: zip Refasmer.netcoreapp.1.0.0.${{ github.run_number }}.zip *
+      run: zip Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip *
       working-directory: src/RefasmerExe/bin/Release/netcoreapp2.1/publish
     

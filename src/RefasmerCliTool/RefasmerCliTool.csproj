@@ -6,22 +6,26 @@
         <RootNamespace>JetBrains.Refasmer.CliTool</RootNamespace>
     </PropertyGroup>
     <PropertyGroup>
+        <PackageId>JetBrains.Refasmer.CliTool</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IsPackable>true</IsPackable>
         <ToolCommandName>refasmer</ToolCommandName>
+        <Title>RefasmerCliTool</Title>
+        <Description>JetBrains :: Refasmer — strip assembly to public API</Description>
+        <Copyright>Copyright © JetBrains 2020</Copyright>
+        <Authors>JetBrains</Authors>
         <PackAsTool>true</PackAsTool>
-        <PackageVersion>1.0.0$(VERSION_POSTFIX)</PackageVersion>
+        <PackageVersion>1.0$(VERSION_POSTFIX)</PackageVersion>
+        <PackageLicense>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicense>
         <RepositoryUrl>https://github.com/JetBrains/Refasmer</RepositoryUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
-        <Title>JetBrains :: Refasmer — strip assembly to public API</Title>
-        <Authors>JetBrains</Authors>
-        <Description>JetBrains :: Refasmer — strip assembly to public API</Description>
-        <Copyright>Copyright © JetBrains 2020</Copyright>
+        <PackageIcon>icon.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\RefasmerExe\RefasmerExe.csproj" />
+      <None Include="..\Refasmer\icon.png" Pack="true" PackagePath="" />
     </ItemGroup>
 
 </Project>
