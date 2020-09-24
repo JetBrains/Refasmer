@@ -29,7 +29,7 @@ jobs:
       working-directory: src/RefasmerExe
     
     - name: Publish netcoreapp
-      run: dotnet publish --framework netcoreapp2.1 --configuration Release --no-restore 
+      run: dotnet publish --framework netcoreapp3.1 --configuration Release --no-restore 
       working-directory: src/RefasmerExe
     
     - name: Zip net461
@@ -38,5 +38,5 @@ jobs:
     
     - name: Zip netcoreapp
       run: zip Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/netcoreapp2.1/publish
+      working-directory: src/RefasmerExe/bin/Release/netcoreapp3.1/publish
     

@@ -29,7 +29,7 @@ jobs:
       working-directory: src/RefasmerExe
     
     - name: Publish netcoreapp
-      run: dotnet publish --framework netcoreapp2.1 --configuration Release --no-restore 
+      run: dotnet publish --framework netcoreapp3.1 --configuration Release --no-restore 
       working-directory: src/RefasmerExe
     
     - name: Zip net461
@@ -38,7 +38,7 @@ jobs:
     
     - name: Zip netcoreapp
       run: zip Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/netcoreapp2.1/publish
+      working-directory: src/RefasmerExe/bin/Release/netcoreapp3.1/publish
     
     - name: Create Release
       id: create_release
@@ -77,7 +77,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: src/RefasmerExe/bin/Release/netcoreapp2.1/publish/Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip
+        asset_path: src/RefasmerExe/bin/Release/netcoreapp3.1/publish/Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip
         asset_name: Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip
         asset_content_type: application/zip
 
