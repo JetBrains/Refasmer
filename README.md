@@ -3,6 +3,10 @@
 Simple tool to make reference assembly. Strips method bodies, private class fields etc. Also can generate xml files like FrameworkList.xml.
 Can be used as library (Refasmer.dll).
 
+## Installation
+You could download refasmer from GitHub: https://github.com/JetBrains/Refasmer/releases or install as .NET Tool:
+```dotnet tool install -g JetBrains.Refasmer.CliTool```
+
 ## Usage:
 ```
 RefasmerExe.exe [options] <dll> [<dll> ...]
