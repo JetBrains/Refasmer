@@ -9,7 +9,7 @@ You could download refasmer from GitHub: https://github.com/JetBrains/Refasmer/r
 
 ## Usage:
 ```
-RefasmerExe.exe [options] <dll> [<dll> ...]
+refasmer [options] <dll> [<dll> ...]
 Options:
   -v                         increase verbosity
   -q, --quiet                be quiet
@@ -23,15 +23,17 @@ Options:
   -a, --attr=VALUE           add FileList tag attribute
 ```
 
+(note the executable is called `RefasmerExe` if built locally; `refasmer` is a name of an executable installed by `dotnet tool install`)
+
 ## Examples:
 
-```RefasmerExe.exe -v -O ref -c *.dll```
+```refasmer -v -O ref -c a.dll b.dll c.dll```
 
-will handle all DLLs in current dir continuing on errors. Output dlls will be placed to **./ref** directory
+will handle all passed DLL files continuing on errors. Output dlls will be placed to **./ref** directory
 
-```RefasmerExe.exe -l -a Redist="Microsoft-Windows-CLRCoreComp.3.5" -a Name=".NET Framework 3.5" -a RuntimeVersion="3.5" -a ShortName="Full" *.dll > FrameworkList.xml```
+```refasmer -l -a Redist="Microsoft-Windows-CLRCoreComp.3.5" -a Name=".NET Framework 3.5" -a RuntimeVersion="3.5" -a ShortName="Full" a.dll b.dll c.dll > FrameworkList.xml```
 
-will generate FrameworkList for all DLLs in current dir with root tag
+will generate FrameworkList for all passed DLL files with root tag
 
 ```xml
 <FileList Redist="Microsoft-Windows-CLRCoreComp.3.5" Name=".NET Framework 3.5" RuntimeVersion="3.5" ShortName="Full">
