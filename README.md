@@ -23,7 +23,7 @@ Options:
   -a, --attr=VALUE           add FileList tag attribute
 ```
 
-(note the executable is called `RefasmerExe` if built locally; `refasmer` is a name of an executable installed by `dotnet tool install`)
+(note the executable is called `RefasmerExe.exe` if built locally; `refasmer` is a name of an executable installed by `dotnet tool install`)
 
 ## Examples:
 
