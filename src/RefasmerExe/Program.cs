@@ -61,7 +61,7 @@ namespace JetBrains.Refasmer
             {
                 { "v", "increase verbosity", v => { if (v != null && verbosity > LogLevel.Trace) verbosity--; } },
                 { "q|quiet", "be quiet", v => quiet = v != null },
-                { "h|help", "show help", v => showHelp = v != null },
+                { "h|?|help", "show help", v => showHelp = v != null },
                 { "c|continue", "continue on errors", v => continueOnErrors = v != null },
                 
                 { "O|outputdir=", "set output directory", v => _outputDir = v },
