@@ -4,6 +4,7 @@
         <OutputType>Exe</OutputType>
         <RootNamespace>JetBrains.Refasmer</RootNamespace>
         <TargetFrameworks>net461;netcoreapp3.1</TargetFrameworks>
+        <LangVersion>Latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
