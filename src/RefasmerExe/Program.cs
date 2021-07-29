@@ -5,6 +5,9 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
+
+using JetBrains.Refasmer.Filters;
+
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 
@@ -23,6 +26,7 @@ namespace JetBrains.Refasmer
         private static string _outputDir;
         private static string _outputFile;
         private static LoggerBase _logger;
+        private static bool _publicOnly;
 
         class InvalidOptionException : Exception
         {
@@ -69,6 +73,7 @@ namespace JetBrains.Refasmer
 
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
+                { "p|publiconly", "drop non-public types even with InternalsVisibleTo", p => _publicOnly = p != null },
                 
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
@@ -224,7 +229,7 @@ namespace JetBrains.Refasmer
 
         private static void MakeRefasm(MetadataReader metaReader, PEReader peReader, string input )
         {
-            var result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger);
+            var result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null);
             
             string output;
 
