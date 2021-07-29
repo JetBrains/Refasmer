@@ -146,17 +146,19 @@ namespace JetBrains.Refasmer
                     _logger.Info?.Invoke($"Processing {input}");
                     using (_logger.WithLogPrefix($"[{Path.GetFileName(input)}]"))
                     {
-                        MetadataReader metaReader;
-
-                        PEReader peReader;
                         try
                         {
-                            _logger.Debug?.Invoke($"Reading assembly {input}");
-                            peReader = new PEReader(new FileStream(input, FileMode.Open)); 
-                            metaReader = peReader.GetMetadataReader();
-
-                            if (!metaReader.IsAssembly)
-                                _logger.Warning?.Invoke($"Dll has no assembly: {input}");
+                            switch (operation)
+                            {
+                            case Operation.MakeRefasm:
+                                MakeRefasm(input);
+                                break;
+                            case Operation.MakeXmlList:
+                                WriteAssemblyToXml(input, xmlWriter);
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                            }
                         }
                         catch (InvalidOperationException e)
                         {
@@ -165,19 +167,6 @@ namespace JetBrains.Refasmer
                                 continue;
                             return 1;
                         }
-
-                        switch (operation)
-                        {
-                            case Operation.MakeRefasm:
-                                MakeRefasm(metaReader, peReader, input);
-                                break;
-                            case Operation.MakeXmlList:
-                                WriteAssemblyToXml(metaReader, xmlWriter);
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
-                        }
-
                     }
                 }
 
@@ -199,8 +188,9 @@ namespace JetBrains.Refasmer
             }
         }
 
-        private static void WriteAssemblyToXml(MetadataReader metaReader, XmlTextWriter xmlWriter)
+        private static void WriteAssemblyToXml(string input, XmlTextWriter xmlWriter)
         {
+            using PEReader _ = ReadAssembly(input, out MetadataReader metaReader);
             if (!metaReader.IsAssembly)
                 return;
             
@@ -227,10 +217,12 @@ namespace JetBrains.Refasmer
             xmlWriter.WriteEndElement();
         }
 
-        private static void MakeRefasm(MetadataReader metaReader, PEReader peReader, string input )
+        private static void MakeRefasm(string input)
         {
-            var result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null);
-            
+            byte[] result;
+            using(PEReader peReader = ReadAssembly(input, out MetadataReader metaReader))
+                result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null);
+
             string output;
 
             if (!string.IsNullOrEmpty(_outputFile))
@@ -255,6 +247,21 @@ namespace JetBrains.Refasmer
                 File.Delete(output);
 
             File.WriteAllBytes(output, result);
+        }
+        
+        private static PEReader ReadAssembly(string input, out MetadataReader metaReader)
+        {
+            if(input == null)
+                throw new ArgumentNullException(nameof(input));
+            
+            _logger.Debug?.Invoke($"Reading assembly {input}");
+            var peReader = new PEReader(new FileStream(input, FileMode.Open) /* stream closed by memory block provider within PEReader when the latter is disposed of */); 
+            metaReader = peReader.GetMetadataReader();
+
+            if (!metaReader.IsAssembly)
+                _logger.Warning?.Invoke($"Dll has no assembly: {input}");
+            
+            return peReader;
         }
    }
 }
