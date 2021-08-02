@@ -10,7 +10,9 @@ namespace JetBrains.Refasmer
         public static string ToString( this MetadataReader reader, GuidHandle x) => reader.GetGuid(x).ToString();
         public static string ToString( this MetadataReader reader, BlobHandle x) => BitConverter.ToString(reader.GetBlobBytes(x)).Replace("-", string.Empty);
 
+        public static string ToString( this MetadataReader reader, AssemblyDefinitionHandle _) => reader.ToString(reader.GetAssemblyDefinition());
         public static string ToString( this MetadataReader reader, AssemblyDefinition x) => $"{{AssemblyDef[{RowId(x):X}]: {reader.ToString( x.Name)} {x.Version}}}";
+        public static string ToString( this MetadataReader reader, ModuleDefinitionHandle _) => reader.ToString(reader.GetModuleDefinition());
         public static string ToString( this MetadataReader reader, ModuleDefinition x) => $"{{ModuleDef[{RowId(x):X}]: {reader.ToString(x.Name)} {reader.ToString(x.Mvid)} }}";
         
         public static string ToString( this MetadataReader reader, AssemblyReferenceHandle x)  => reader.ToString( reader.GetAssemblyReference(x));

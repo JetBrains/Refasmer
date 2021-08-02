@@ -6,8 +6,8 @@
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>Refasmer.snk</AssemblyOriginatorKeyFile>
         <LangVersion>latest</LangVersion>
-        <TargetFramework>netstandard2.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <TargetFrameworks>net5.0;netstandard2.1</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup>
         <PackageId>JetBrains.Refasmer</PackageId>

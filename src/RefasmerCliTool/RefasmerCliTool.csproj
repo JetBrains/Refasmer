@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
         <RootNamespace>JetBrains.Refasmer.CliTool</RootNamespace>
+        <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup>
         <PackageId>JetBrains.Refasmer.CliTool</PackageId>

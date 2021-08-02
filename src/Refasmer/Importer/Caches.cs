@@ -46,6 +46,5 @@ namespace JetBrains.Refasmer
             new Dictionary<EventDefinitionHandle, EventDefinitionHandle>();
         private readonly Dictionary<ParameterHandle, ParameterHandle> _parameterCache =
             new Dictionary<ParameterHandle, ParameterHandle>();
-        
    }
 }

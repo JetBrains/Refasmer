@@ -362,24 +362,20 @@ namespace JetBrains.Refasmer
             }
         }
 
-        public bool IsInternalsVisible()
-        {
-            if (!_reader.IsAssembly)
-                return false;
-            
-            var internalsVisibleTo = 
-                _reader.GetAssemblyDefinition().GetCustomAttributes()
+        public bool IsInternalsVisible() =>
+            _reader.IsAssembly && _reader.GetAssemblyDefinition().GetCustomAttributes()
                 .Select(_reader.GetCustomAttribute)
-                .Where(attr =>
-                {
-                    var attrClassHandle = _reader.GetCustomAttrClass(attr);
-                    var attrClassName = _reader.GetFullname(attrClassHandle);
-                    return attrClassName == AttributeNames.InternalsVisibleTo;
-                }).ToList();
-            
-            return internalsVisibleTo.Any();
-        }
-        
+                .Select(_reader.GetCustomAttrClass)
+                .Select(_reader.GetFullname)
+                .Any(name => name == AttributeNames.InternalsVisibleTo);
+
+        public bool IsReferenceAssembly() =>
+            _reader.IsAssembly && _reader.GetAssemblyDefinition().GetCustomAttributes()
+                .Select(_reader.GetCustomAttribute)
+                .Select(_reader.GetCustomAttrClass)
+                .Select(_reader.GetFullname)
+                .Any(name => name == AttributeNames.ReferenceAssembly);
+
         public ReservedBlob<GuidHandle> Import()
         {
             if (_reader.IsAssembly)
@@ -493,6 +489,9 @@ namespace JetBrains.Refasmer
             Debug?.Invoke($"Importing exported types");
             foreach (var src in _reader.ExportedTypes)
                 Import(src);
+
+            if (!IsReferenceAssembly())
+                AddReferenceAssemblyAttribute();
             
             Debug?.Invoke($"Importing done");
 
