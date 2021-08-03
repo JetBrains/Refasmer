@@ -7,7 +7,7 @@
         <AssemblyOriginatorKeyFile>Refasmer.snk</AssemblyOriginatorKeyFile>
         <LangVersion>latest</LangVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <TargetFrameworks>net461;net5.0;netstandard2.1</TargetFrameworks>
+        <TargetFrameworks>net5.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup>
         <PackageId>JetBrains.Refasmer</PackageId>
