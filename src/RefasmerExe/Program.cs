@@ -129,8 +129,8 @@ namespace JetBrains.Refasmer
                     xmlWriter.WriteStartDocument();
                     xmlWriter.WriteStartElement("FileList");
 
-                    foreach (var (key, value) in fileListAttr)
-                        xmlWriter.WriteAttributeString(key, value);
+                    foreach (var kv in fileListAttr)
+                        xmlWriter.WriteAttributeString(kv.Key, kv.Value);
 
                     inputs.Sort();
                 }

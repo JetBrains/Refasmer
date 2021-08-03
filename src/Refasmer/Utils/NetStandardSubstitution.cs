@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace JetBrains.Refasmer
 {
-    public static class NetStandardSubstitution
+    internal static class NetStandardSubstitution
     {
         public static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> pair, out TKey key, out TValue value)
         {
@@ -18,7 +18,7 @@ namespace JetBrains.Refasmer
 
         public static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue) where TKey : notnull
         {
-            if(dictionary == null)
+            if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary));
             TValue obj;
             return !dictionary.TryGetValue(key, out obj) ? defaultValue : obj;
