@@ -30,13 +30,13 @@ namespace JetBrains.Refasmer
                     MethodSignatureToString(reader, header, ref blobReader, stringBuilder);
                     break;
                 case SignatureKind.Field:
-                    FieldSignatureToString(reader, header, ref blobReader, stringBuilder);
+                    FieldSignatureToString(reader, ref blobReader, stringBuilder);
                     break;
                 case SignatureKind.LocalVariables:
-                    LocalSignatureToString(reader, header, ref blobReader, stringBuilder);
+                    LocalSignatureToString(reader, ref blobReader, stringBuilder);
                     break;
                 case SignatureKind.MethodSpecification:
-                    MethodSpecSignatureToString(reader, header, ref blobReader, stringBuilder);
+                    MethodSpecSignatureToString(reader, ref blobReader, stringBuilder);
                     break;
                 default:
                     throw new BadImageFormatException();
@@ -49,7 +49,8 @@ namespace JetBrains.Refasmer
         {
             if (header.IsGeneric)
             {
-                var genericParameterCount = blobReader.ReadCompressedInteger();
+                //genericParameterCount
+                blobReader.ReadCompressedInteger();
             }
 
             var parameterCount = blobReader.ReadCompressedInteger();
@@ -65,17 +66,17 @@ namespace JetBrains.Refasmer
             stringBuilder.Append(" )");
         }
 
-        private static void FieldSignatureToString( MetadataReader reader, SignatureHeader header, ref BlobReader blobReader, StringBuilder stringBuilder )
+        private static void FieldSignatureToString( MetadataReader reader, ref BlobReader blobReader, StringBuilder stringBuilder )
         {
             TypeSignatureToString(reader, ref blobReader, stringBuilder);
         }
 
-        private static void LocalSignatureToString( MetadataReader reader, SignatureHeader header, ref BlobReader blobReader, StringBuilder stringBuilder )
+        private static void LocalSignatureToString( MetadataReader reader, ref BlobReader blobReader, StringBuilder stringBuilder )
         {
             TypeSequenceSignatureToString(reader, ref blobReader, stringBuilder);
         }
 
-        private static void MethodSpecSignatureToString( MetadataReader reader, SignatureHeader header, ref BlobReader blobReader, StringBuilder stringBuilder )
+        private static void MethodSpecSignatureToString( MetadataReader reader, ref BlobReader blobReader, StringBuilder stringBuilder )
         {
             TypeSequenceSignatureToString(reader, ref blobReader, stringBuilder);
         }
@@ -157,7 +158,8 @@ namespace JetBrains.Refasmer
             // Element type
             TypeSignatureToString(reader, ref blobReader, stringBuilder);
             
-            var rank = blobReader.ReadCompressedInteger();
+            // Rank
+            blobReader.ReadCompressedInteger();
             
             var sizesCount = blobReader.ReadCompressedInteger();
             

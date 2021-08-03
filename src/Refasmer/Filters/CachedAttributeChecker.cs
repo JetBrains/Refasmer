@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Security;
 
 namespace JetBrains.Refasmer.Filters
 {
     public class CachedAttributeChecker
     {
-        private readonly Dictionary<string, HashSet<EntityHandle>> _attributeConstructors = new Dictionary<string, HashSet<EntityHandle>>();
+        private readonly Dictionary<string, HashSet<EntityHandle>> _attributeConstructors = new();
 
         public bool HasAttribute( MetadataReader reader, TypeDefinitionHandle typeHandle, string attributeFullName ) =>
             HasAttribute(reader, reader.GetTypeDefinition(typeHandle), attributeFullName);

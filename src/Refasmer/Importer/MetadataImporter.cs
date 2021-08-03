@@ -47,7 +47,7 @@ namespace JetBrains.Refasmer
             
             var mvidBlob = importer.Import();
             
-            logger.Debug?.Invoke($"Building reference assembly");
+            logger.Debug?.Invoke("Building reference assembly");
             
             var metaRootBuilder = new MetadataRootBuilder(metaBuilder, metaReader.MetadataVersion, true);
             

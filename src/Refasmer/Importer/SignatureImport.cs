@@ -58,13 +58,13 @@ namespace JetBrains.Refasmer
                         ImportMethodSignature(header, ref blobReader, blobBuilder);
                         break;
                     case SignatureKind.Field:
-                        ImportFieldSignature(header, ref blobReader, blobBuilder);
+                        ImportFieldSignature(ref blobReader, blobBuilder);
                         break;
                     case SignatureKind.LocalVariables:
-                        ImportLocalSignature(header, ref blobReader, blobBuilder);
+                        ImportLocalSignature(ref blobReader, blobBuilder);
                         break;
                     case SignatureKind.MethodSpecification:
-                        ImportMethodSpecSignature(header, ref blobReader, blobBuilder);
+                        ImportMethodSpecSignature(ref blobReader, blobBuilder);
                         break;
                     default:
                         throw new BadImageFormatException();
@@ -104,17 +104,17 @@ namespace JetBrains.Refasmer
                 ImportTypeSignature(ref blobReader, blobBuilder);
         }
 
-        private void ImportFieldSignature( SignatureHeader header, ref BlobReader blobReader, BlobBuilder blobBuilder )
+        private void ImportFieldSignature(ref BlobReader blobReader, BlobBuilder blobBuilder )
         {
             ImportTypeSignature(ref blobReader, blobBuilder);
         }
 
-        private void ImportLocalSignature( SignatureHeader header, ref BlobReader blobReader, BlobBuilder blobBuilder )
+        private void ImportLocalSignature(ref BlobReader blobReader, BlobBuilder blobBuilder )
         {
             ImportTypeSequenceSignature(ref blobReader, blobBuilder);
         }
 
-        private void ImportMethodSpecSignature( SignatureHeader header, ref BlobReader blobReader, BlobBuilder blobBuilder )
+        private void ImportMethodSpecSignature(ref BlobReader blobReader, BlobBuilder blobBuilder )
         {
             ImportTypeSequenceSignature(ref blobReader, blobBuilder);
         }

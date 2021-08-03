@@ -5,7 +5,7 @@ namespace JetBrains.Refasmer.Filters
 {
     public class AllowPublicAndInternals: IImportFilter
     {
-        private readonly CachedAttributeChecker _attrChecker = new CachedAttributeChecker();
+        private readonly CachedAttributeChecker _attrChecker = new();
         
         public virtual bool AllowImport( TypeDefinition type, MetadataReader reader )
         {

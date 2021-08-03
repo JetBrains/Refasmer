@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace JetBrains.Refasmer
@@ -11,17 +10,10 @@ namespace JetBrains.Refasmer
             value = pair.Value;
         }
 
-        public static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key) where TKey : notnull
-        {
-            return dictionary.GetValueOrDefault(key, default);
-        }
+        public static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key) where TKey : notnull 
+            => dictionary.GetValueOrDefault(key, default);
 
-        public static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue) where TKey : notnull
-        {
-            if (dictionary == null)
-                throw new ArgumentNullException(nameof(dictionary));
-            TValue obj;
-            return !dictionary.TryGetValue(key, out obj) ? defaultValue : obj;
-        }
+        public static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue) where TKey : notnull 
+            => dictionary.TryGetValue(key, out var obj) ? obj : defaultValue;
     }
 }

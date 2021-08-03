@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -91,7 +90,7 @@ namespace JetBrains.Refasmer
         public static int? RowId(object definition) =>
             (int?)definition.GetType()
                 .GetProperty("RowId", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
-                ?.GetMethod?.Invoke(definition, new object[0])
+                ?.GetMethod?.Invoke(definition, Array.Empty<object>())
             ?? (int?)definition.GetType()
                 .GetField("_rowId", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
                 ?.GetValue(definition);

@@ -27,7 +27,7 @@ namespace JetBrains.Refasmer
         
         private void AddReferenceAssemblyAttribute()
         {
-            Debug?.Invoke($"Adding ReferenceAssembly attribute");
+            Debug?.Invoke("Adding ReferenceAssembly attribute");
             EntityHandle ctorHandle = default;
             
             var attrTypeRefHandle = _reader.TypeReferences
@@ -102,7 +102,7 @@ namespace JetBrains.Refasmer
                 }
                 else
                 {
-                    Trace?.Invoke($"Not found System::Object type");
+                    Trace?.Invoke("Not found System::Object type");
                 }
             }
 
