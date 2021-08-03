@@ -13,15 +13,15 @@ refasmer [options] <dll> [<dll> ...]
 Options:
   -v                         increase verbosity
   -q, --quiet                be quiet
-  -h, --help                 show help
+  -h, -?, --help             show help
   -c, --continue             continue on errors
   -O, --outputdir=VALUE      set output directory
   -o, --output=VALUE         set output file, for single file only
   -r, --refasm               make reference assembly, default action
   -w, --overwrite            overwrite source files
+  -p, --publiconly           drop non-public types even with InternalsVisibleTo
   -l, --list                 make file list xml
-  -a, --attr=VALUE           add FileList tag attribute
-```
+  -a, --attr=VALUE           add FileList tag attribute```
 
 (note the executable is called `RefasmerExe.exe` if built locally; `refasmer` is a name of an executable installed by `dotnet tool install`)
 
