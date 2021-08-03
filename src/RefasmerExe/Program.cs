@@ -165,8 +165,6 @@ namespace JetBrains.Refasmer
                                 continue;
                             return 1;
                         }
-
-
                     }
                 }
 
@@ -218,10 +216,9 @@ namespace JetBrains.Refasmer
             xmlWriter.WriteEndElement();
         }
 
-        private static void MakeRefasm(string input )
+        private static void MakeRefasm(string input)
         {
             byte[] result;
-            
             using (var peReader = ReadAssembly(input, out var metaReader))
                 result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null);            
             
