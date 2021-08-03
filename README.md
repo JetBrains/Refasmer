@@ -21,7 +21,8 @@ Options:
   -w, --overwrite            overwrite source files
   -p, --publiconly           drop non-public types even with InternalsVisibleTo
   -l, --list                 make file list xml
-  -a, --attr=VALUE           add FileList tag attribute```
+  -a, --attr=VALUE           add FileList tag attribute
+```
 
 (note the executable is called `RefasmerExe.exe` if built locally; `refasmer` is a name of an executable installed by `dotnet tool install`)
 
