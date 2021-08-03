@@ -4,7 +4,7 @@
     {
         static int Main( string[] args )
         {
-            return JetBrains.Refasmer.Program.Main(args);
+            return Refasmer.Program.Main(args);
         }
     }
 }

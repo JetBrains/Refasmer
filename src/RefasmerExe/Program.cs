@@ -7,8 +7,6 @@ using System.Text;
 using System.Xml;
 
 using JetBrains.Refasmer.Filters;
-
-using Microsoft.Extensions.Logging;
 using Mono.Options;
 
 namespace JetBrains.Refasmer
@@ -134,8 +132,8 @@ namespace JetBrains.Refasmer
                     xmlWriter.WriteStartDocument();
                     xmlWriter.WriteStartElement("FileList");
 
-                    foreach (var (key, value) in fileListAttr)
-                        xmlWriter.WriteAttributeString(key, value);
+                    foreach (var kv in fileListAttr)
+                        xmlWriter.WriteAttributeString(kv.Key, kv.Value);
 
                     inputs.Sort();
                 }
@@ -191,6 +189,7 @@ namespace JetBrains.Refasmer
         private static void WriteAssemblyToXml(string input, XmlTextWriter xmlWriter)
         {
             using PEReader _ = ReadAssembly(input, out MetadataReader metaReader);
+            
             if (!metaReader.IsAssembly)
                 return;
             
@@ -253,14 +252,14 @@ namespace JetBrains.Refasmer
         {
             if(input == null)
                 throw new ArgumentNullException(nameof(input));
-            
             _logger.Debug?.Invoke($"Reading assembly {input}");
+            
+            // stream closed by memory block provider within PEReader when the latter is disposed of 
             var peReader = new PEReader(new FileStream(input, FileMode.Open) /* stream closed by memory block provider within PEReader when the latter is disposed of */); 
             metaReader = peReader.GetMetadataReader();
 
             if (!metaReader.IsAssembly)
                 _logger.Warning?.Invoke($"Dll has no assembly: {input}");
-            
             return peReader;
         }
    }

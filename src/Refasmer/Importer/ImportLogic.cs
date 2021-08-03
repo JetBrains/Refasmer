@@ -362,24 +362,20 @@ namespace JetBrains.Refasmer
             }
         }
 
-        public bool IsInternalsVisible()
-        {
-            if (!_reader.IsAssembly)
-                return false;
-            
-            var internalsVisibleTo = 
-                _reader.GetAssemblyDefinition().GetCustomAttributes()
+        public bool IsInternalsVisible() =>
+            _reader.IsAssembly && _reader.GetAssemblyDefinition().GetCustomAttributes()
                 .Select(_reader.GetCustomAttribute)
-                .Where(attr =>
-                {
-                    var attrClassHandle = _reader.GetCustomAttrClass(attr);
-                    var attrClassName = _reader.GetFullname(attrClassHandle);
-                    return attrClassName == AttributeNames.InternalsVisibleTo;
-                }).ToList();
-            
-            return internalsVisibleTo.Any();
-        }
-        
+                .Select(_reader.GetCustomAttrClass)
+                .Select(_reader.GetFullname)
+                .Any(name => name == AttributeNames.InternalsVisibleTo);
+
+        public bool IsReferenceAssembly() =>
+            _reader.IsAssembly && _reader.GetAssemblyDefinition().GetCustomAttributes()
+                .Select(_reader.GetCustomAttribute)
+                .Select(_reader.GetCustomAttrClass)
+                .Select(_reader.GetFullname)
+                .Any(name => name == AttributeNames.ReferenceAssembly);
+
         public ReservedBlob<GuidHandle> Import()
         {
             if (_reader.IsAssembly)
@@ -401,12 +397,12 @@ namespace JetBrains.Refasmer
                 ImportValue(srcModule.BaseGenerationId));
             Debug?.Invoke($"Imported module {_reader.ToString(srcModule)}");
 
-            Debug?.Invoke($"Importing assembly files");
+            Debug?.Invoke("Importing assembly files");
             foreach (var srcHandle in _reader.AssemblyFiles)
                 Import(srcHandle);
 
             var index = 1;
-            Debug?.Invoke($"Preparing type list for import");
+            Debug?.Invoke("Preparing type list for import");
 
             var checker = new CachedAttributeChecker();
             
@@ -436,7 +432,7 @@ namespace JetBrains.Refasmer
                 }
             }
 
-            Debug?.Invoke($"Importing type definitions");
+            Debug?.Invoke("Importing type definitions");
             foreach (var srcHandle in _reader.TypeDefinitions.Where(_typeDefinitionCache.ContainsKey))
             {
                 var dstHandle = ImportTypeDefinitionSkeleton(srcHandle);
@@ -444,19 +440,19 @@ namespace JetBrains.Refasmer
                     throw new Exception("WTF: type handle mismatch");
             }
 
-            Debug?.Invoke($"Importing type definition accessories");
+            Debug?.Invoke("Importing type definition accessories");
             foreach (var (srcHandle, dstHandle) in _typeDefinitionCache)
                 ImportTypeDefinitionAccessories(srcHandle, dstHandle);
 
-            Debug?.Invoke($"Importing method definition accessories");
+            Debug?.Invoke("Importing method definition accessories");
             foreach (var (srcHandle, dstHandle) in _methodDefinitionCache)
                 ImportMethodDefinitionAccessories(srcHandle, dstHandle);
 
-            Debug?.Invoke($"Importing field definition accessories");
+            Debug?.Invoke("Importing field definition accessories");
             foreach (var (srcHandle, dstHandle) in _fieldDefinitionCache)
                 ImportFieldDefinitionAccessories(srcHandle, dstHandle);
 
-            Debug?.Invoke($"Importing nested classes");
+            Debug?.Invoke("Importing nested classes");
             var nestedTypes = _typeDefinitionCache
                 .Select(kv => Tuple.Create(kv.Value, _reader.GetTypeDefinition(kv.Key).GetNestedTypes()))
                 .SelectMany(x => x.Item2.Select(y => Tuple.Create(x.Item1, y, Import(y))))
@@ -478,23 +474,26 @@ namespace JetBrains.Refasmer
                 .OrderBy(x => CodedIndex.TypeOrMethodDef(x.Item1))
                 .ToList();
 
-            Debug?.Invoke($"Importing generic constraints");
+            Debug?.Invoke("Importing generic constraints");
             foreach (var (dstHandle, genericParams) in generic)
                 ImportGenericConstraints(dstHandle, genericParams);
 
-            Debug?.Invoke($"Importing custom attributes");
+            Debug?.Invoke("Importing custom attributes");
             foreach (var src in _reader.CustomAttributes)
                 Import(src);
 
-            Debug?.Invoke($"Importing declarative security attributes");
+            Debug?.Invoke("Importing declarative security attributes");
             foreach (var src in _reader.DeclarativeSecurityAttributes)
                 Import(src);
 
-            Debug?.Invoke($"Importing exported types");
+            Debug?.Invoke("Importing exported types");
             foreach (var src in _reader.ExportedTypes)
                 Import(src);
+
+            if (!IsReferenceAssembly())
+                AddReferenceAssemblyAttribute();
             
-            Debug?.Invoke($"Importing done");
+            Debug?.Invoke("Importing done");
 
             return mvidBlob;
         }

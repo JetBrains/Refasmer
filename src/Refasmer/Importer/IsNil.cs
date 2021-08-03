@@ -1,4 +1,3 @@
-using System;
 using System.Reflection.Metadata;
 
 namespace JetBrains.Refasmer
@@ -9,6 +8,8 @@ namespace JetBrains.Refasmer
         private static bool IsNil(GuidHandle x) => x.IsNil;
         private static bool IsNil(BlobHandle x) => x.IsNil;
 
+        private static bool IsNil(AssemblyDefinitionHandle x) => x.IsNil;
+        private static bool IsNil(ModuleDefinitionHandle x) => x.IsNil;
         private static bool IsNil(AssemblyReferenceHandle x) => x.IsNil;
         private static bool IsNil(ModuleReferenceHandle x) => x.IsNil;
         private static bool IsNil(AssemblyFileHandle x) => x.IsNil;

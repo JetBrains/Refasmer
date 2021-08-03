@@ -115,6 +115,16 @@ namespace JetBrains.Refasmer
         private GenericParameterHandle Import( GenericParameterHandle srcHandle ) => _genericParameterCache.GetValueOrDefault(srcHandle);
         private GenericParameterConstraintHandle Import( GenericParameterConstraintHandle srcHandle ) => _genericParameterConstraintCache.GetValueOrDefault(srcHandle);
         private MethodImplementationHandle Import( MethodImplementationHandle srcHandle ) => _methodImplementationCache.GetValueOrDefault(srcHandle);
+
+        //------------------
+        private AssemblyDefinitionHandle Import(AssemblyDefinitionHandle srcHandle) =>
+            srcHandle == EntityHandle.AssemblyDefinition
+                ? EntityHandle.AssemblyDefinition
+                : throw new ArgumentException("Invalid assembly definition handle");
+
+        private ModuleDefinitionHandle Import(ModuleDefinitionHandle srcHandle) =>
+            srcHandle == EntityHandle.ModuleDefinition ? EntityHandle.ModuleDefinition :
+                throw new ArgumentException("Invalid module definition handle");
         
         //------------------
 
@@ -167,14 +177,9 @@ namespace JetBrains.Refasmer
 
                 //Globals
                 case HandleKind.ModuleDefinition:
-                    if (srcHandle != EntityHandle.ModuleDefinition)
-                        throw new ArgumentException("Invalid module definition handle");
-                    return EntityHandle.ModuleDefinition;
+                    return Import((ModuleDefinitionHandle) srcHandle);
                 case HandleKind.AssemblyDefinition:
-                    if (srcHandle != EntityHandle.AssemblyDefinition)
-                        throw new ArgumentException("Invalid assembly definition handle");
-                    return EntityHandle.AssemblyDefinition;
-
+                    return Import((AssemblyDefinitionHandle) srcHandle);
 
                 //Not supported                        
                 case HandleKind.MethodSpecification:

@@ -14,7 +14,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.301
+        dotnet-version: 5.0.x
     
     - name: Install dependencies
       working-directory: src
@@ -31,6 +31,10 @@ jobs:
     - name: Publish netcoreapp
       run: dotnet publish --framework netcoreapp3.1 --configuration Release --no-restore 
       working-directory: src/RefasmerExe
+
+    - name: Publish net5.0
+      run: dotnet publish --framework net5.0 --configuration Release --no-restore 
+      working-directory: src/RefasmerExe
     
     - name: Zip net461
       run: zip Refasmer.net461.1.0.${{ github.run_number }}.zip *
@@ -39,4 +43,8 @@ jobs:
     - name: Zip netcoreapp
       run: zip Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip *
       working-directory: src/RefasmerExe/bin/Release/netcoreapp3.1/publish
+
+    - name: Zip net5.0
+      run: zip Refasmer.net50.1.0.${{ github.run_number }}.zip *
+      working-directory: src/RefasmerExe/bin/Release/net5.0/publish
     
