@@ -5,6 +5,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
+using JetBrains.Refasmer.Filters;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 
@@ -23,6 +24,7 @@ namespace JetBrains.Refasmer
         private static string _outputDir;
         private static string _outputFile;
         private static LoggerBase _logger;
+        private static bool _publicOnly;
 
         class InvalidOptionException : Exception
         {
@@ -61,7 +63,7 @@ namespace JetBrains.Refasmer
             {
                 { "v", "increase verbosity", v => { if (v != null && verbosity > LogLevel.Trace) verbosity--; } },
                 { "q|quiet", "be quiet", v => quiet = v != null },
-                { "h|help", "show help", v => showHelp = v != null },
+                { "h|?|help", "show help", v => showHelp = v != null },
                 { "c|continue", "continue on errors", v => continueOnErrors = v != null },
                 
                 { "O|outputdir=", "set output directory", v => _outputDir = v },
@@ -69,6 +71,7 @@ namespace JetBrains.Refasmer
 
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
+                { "p|publiconly", "drop non-public types even with InternalsVisibleTo", p => _publicOnly = p != null },
                 
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
@@ -141,17 +144,19 @@ namespace JetBrains.Refasmer
                     _logger.Info?.Invoke($"Processing {input}");
                     using (_logger.WithLogPrefix($"[{Path.GetFileName(input)}]"))
                     {
-                        MetadataReader metaReader;
-
-                        PEReader peReader;
                         try
                         {
-                            _logger.Debug?.Invoke($"Reading assembly {input}");
-                            peReader = new PEReader(new FileStream(input, FileMode.Open)); 
-                            metaReader = peReader.GetMetadataReader();
-
-                            if (!metaReader.IsAssembly)
-                                _logger.Warning?.Invoke($"Dll has no assembly: {input}");
+                            switch (operation)
+                            {
+                                case Operation.MakeRefasm:
+                                    MakeRefasm(input);
+                                    break;
+                                case Operation.MakeXmlList:
+                                    WriteAssemblyToXml(input, xmlWriter);
+                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException();
+                            }
                         }
                         catch (InvalidOperationException e)
                         {
@@ -161,17 +166,6 @@ namespace JetBrains.Refasmer
                             return 1;
                         }
 
-                        switch (operation)
-                        {
-                            case Operation.MakeRefasm:
-                                MakeRefasm(metaReader, peReader, input);
-                                break;
-                            case Operation.MakeXmlList:
-                                WriteAssemblyToXml(metaReader, xmlWriter);
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
-                        }
 
                     }
                 }
@@ -194,8 +188,10 @@ namespace JetBrains.Refasmer
             }
         }
 
-        private static void WriteAssemblyToXml(MetadataReader metaReader, XmlTextWriter xmlWriter)
+        private static void WriteAssemblyToXml(string input, XmlTextWriter xmlWriter)
         {
+            using var _ = ReadAssembly(input, out var metaReader);
+            
             if (!metaReader.IsAssembly)
                 return;
             
@@ -222,9 +218,12 @@ namespace JetBrains.Refasmer
             xmlWriter.WriteEndElement();
         }
 
-        private static void MakeRefasm(MetadataReader metaReader, PEReader peReader, string input )
+        private static void MakeRefasm(string input )
         {
-            var result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger);
+            byte[] result;
+            
+            using (var peReader = ReadAssembly(input, out var metaReader))
+                result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null);            
             
             string output;
 
@@ -251,5 +250,22 @@ namespace JetBrains.Refasmer
 
             File.WriteAllBytes(output, result);
         }
+        
+        private static PEReader ReadAssembly(string input, out MetadataReader metaReader)
+        {
+            if(input == null)
+                throw new ArgumentNullException(nameof(input));
+
+            _logger.Debug?.Invoke($"Reading assembly {input}");
+            
+            // stream closed by memory block provider within PEReader when the latter is disposed of 
+            var peReader = new PEReader(new FileStream(input, FileMode.Open)); 
+            metaReader = peReader.GetMetadataReader();
+
+            if (!metaReader.IsAssembly)
+                _logger.Warning?.Invoke($"Dll has no assembly: {input}");
+
+            return peReader;
+        }        
    }
 }
