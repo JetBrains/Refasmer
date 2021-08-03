@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Microsoft.Extensions.Logging;
 
 namespace JetBrains.Refasmer
 {
@@ -8,7 +7,6 @@ namespace JetBrains.Refasmer
     {
         private readonly TextWriter _writer;
         private readonly LogLevel _level;
-        
 
         public VerySimpleLogger(Stream stream, LogLevel level = LogLevel.Trace)
         {
@@ -23,14 +21,12 @@ namespace JetBrains.Refasmer
 
         }
         
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log(LogLevel logLevel, string message)
         {
             if (IsEnabled(logLevel))
-                _writer.WriteLine(formatter(state, exception));
+                _writer.WriteLine(message);
         }
 
         public bool IsEnabled(LogLevel logLevel) => logLevel >= _level;
-
-        public IDisposable BeginScope<TState>(TState state) => null;
     }
 }

@@ -6,7 +6,6 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
 using JetBrains.Refasmer.Filters;
-using Microsoft.Extensions.Logging;
 using Mono.Options;
 
 namespace JetBrains.Refasmer
