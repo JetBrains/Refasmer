@@ -188,7 +188,7 @@ namespace JetBrains.Refasmer
 
         private static void WriteAssemblyToXml(string input, XmlTextWriter xmlWriter)
         {
-            using PEReader _ = ReadAssembly(input, out MetadataReader metaReader);
+            using var _ = ReadAssembly(input, out var metaReader);
             
             if (!metaReader.IsAssembly)
                 return;
@@ -219,7 +219,7 @@ namespace JetBrains.Refasmer
         private static void MakeRefasm(string input)
         {
             byte[] result;
-            using(PEReader peReader = ReadAssembly(input, out MetadataReader metaReader))
+            using (var peReader = ReadAssembly(input, out var metaReader))
                 result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null);
 
             string output;
