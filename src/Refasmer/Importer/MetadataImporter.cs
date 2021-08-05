@@ -52,7 +52,7 @@ namespace JetBrains.Refasmer
             var metaRootBuilder = new MetadataRootBuilder(metaBuilder, metaReader.MetadataVersion, true);
             
             var peHeaderBuilder = new PEHeaderBuilder(
-                peReader.PEHeaders.CoffHeader.Machine, 
+                Machine.I386, // override machine to force AnyCPU assembly 
                 peReader.PEHeaders.PEHeader.SectionAlignment,
                 peReader.PEHeaders.PEHeader.FileAlignment,
                 peReader.PEHeaders.PEHeader.ImageBase,
