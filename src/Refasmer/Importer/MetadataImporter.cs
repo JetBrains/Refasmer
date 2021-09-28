@@ -13,21 +13,25 @@ namespace JetBrains.Refasmer
     {
         private readonly MetadataReader _reader;
         private readonly MetadataBuilder _builder;
+        private readonly BlobBuilder _ilStream;
 
         public IImportFilter Filter;
         
-        public MetadataImporter( MetadataReader reader, MetadataBuilder builder, LoggerBase logger) : base(logger)
+        public MetadataImporter( MetadataReader reader, MetadataBuilder builder, BlobBuilder ilStream, LoggerBase logger) : base(logger)
         {
             _reader = reader;
             _builder = builder;
+            _ilStream = ilStream;
         }
 
 
-        public static byte[] MakeRefasm(MetadataReader metaReader, PEReader peReader, LoggerBase logger, IImportFilter filter = null )
+        public static byte[] MakeRefasm(MetadataReader metaReader, PEReader peReader, LoggerBase logger, IImportFilter filter = null, bool makeMock = false )
         {
             var metaBuilder = new MetadataBuilder();
+            var ilStream = new BlobBuilder();
+            ilStream.Align(4);
 
-            var importer = new MetadataImporter(metaReader, metaBuilder, logger);
+            var importer = new MetadataImporter(metaReader, metaBuilder, ilStream, logger);
 
             if (filter != null)
             {
@@ -45,9 +49,10 @@ namespace JetBrains.Refasmer
                 logger.Info?.Invoke("Using AllowPublic entity filter");
             }
             
-            var mvidBlob = importer.Import();
+
+            var mvidBlob = importer.Import(makeMock);
             
-            logger.Debug?.Invoke("Building reference assembly");
+            logger.Debug?.Invoke($"Building {(makeMock ? "mockup" : "reference")} assembly");
             
             var metaRootBuilder = new MetadataRootBuilder(metaBuilder, metaReader.MetadataVersion, true);
             
@@ -73,8 +78,6 @@ namespace JetBrains.Refasmer
                 peReader.PEHeaders.PEHeader.SizeOfHeapCommit
                 );
 
-            var ilStream = new BlobBuilder();
-            
             var peBuilder = new ManagedPEBuilder(peHeaderBuilder, metaRootBuilder, ilStream, 
                 deterministicIdProvider: blobs =>
                 {
@@ -94,7 +97,7 @@ namespace JetBrains.Refasmer
             return blobBuilder.ToArray();
         }
 
-        public static void MakeRefasm( string inputPath, string outputPath, LoggerBase logger, IImportFilter filter = null )
+        public static void MakeRefasm( string inputPath, string outputPath, LoggerBase logger, IImportFilter filter = null, bool makeMock = false )
         {
             logger.Debug?.Invoke($"Reading assembly {inputPath}");
             var peReader = new PEReader(new FileStream(inputPath, FileMode.Open, FileAccess.Read)); 
@@ -103,7 +106,7 @@ namespace JetBrains.Refasmer
             if (!metaReader.IsAssembly)
                 throw new Exception("File format is not supported"); 
             
-            var result = MakeRefasm(metaReader, peReader, logger, filter);
+            var result = MakeRefasm(metaReader, peReader, logger, filter, makeMock);
 
             logger.Debug?.Invoke($"Writing result to {outputPath}");
             if (File.Exists(outputPath))

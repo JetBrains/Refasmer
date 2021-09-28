@@ -25,6 +25,7 @@ namespace JetBrains.Refasmer
         private static string _outputFile;
         private static LoggerBase _logger;
         private static bool _publicOnly;
+        private static bool _makeMock;
 
         class InvalidOptionException : Exception
         {
@@ -73,6 +74,8 @@ namespace JetBrains.Refasmer
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
                 { "p|publiconly", "drop non-public types even with InternalsVisibleTo", p => _publicOnly = p != null },
                 
+                { "m|mock", "make mock assembly instead of reference assembly", p => _makeMock = p != null },
+
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
                 
@@ -220,7 +223,7 @@ namespace JetBrains.Refasmer
         {
             byte[] result;
             using (var peReader = ReadAssembly(input, out var metaReader))
-                result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null);
+                result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null, _makeMock);
 
             string output;
 
@@ -238,7 +241,7 @@ namespace JetBrains.Refasmer
             }
             else
             {
-                output = $"{Path.GetFileName(input)}.refasm.dll";
+                output = $"{Path.GetFileName(input)}.{(_makeMock ? "mock" : "refasm")}.dll";
             }
             
             _logger.Debug?.Invoke($"Writing result to {output}");

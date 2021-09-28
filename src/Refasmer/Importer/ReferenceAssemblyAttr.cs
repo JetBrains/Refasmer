@@ -9,11 +9,13 @@ namespace JetBrains.Refasmer
         private static readonly byte[] VoidValueBlob = { 1, 0, 0, 0 };
         private static readonly byte[] VoidCtorSignatureBlob = { 20, 0, 1 };
         
-        private static bool CheckRefASmAttrConstructorSignature( BlobReader blobReader )
+        private static bool CheckRefAsmAttrCtorSignature( BlobReader blobReader )
         {
             var header = blobReader.ReadSignatureHeader();
 
             if (header.Kind != SignatureKind.Method)
+                return false;
+            if (!header.IsInstance)
                 return false;
             if (header.IsGeneric)
                 return false;
@@ -28,45 +30,12 @@ namespace JetBrains.Refasmer
         private void AddReferenceAssemblyAttribute()
         {
             Debug?.Invoke("Adding ReferenceAssembly attribute");
-            EntityHandle ctorHandle = default;
-            
-            var attrTypeRefHandle = _reader.TypeReferences
-                .SingleOrDefault(h => _reader.GetFullname(h) == AttributeNames.ReferenceAssembly);
 
-            var attrTypeDefHandle = _reader.TypeDefinitions
-                .SingleOrDefault(h => _reader.GetFullname(h) == AttributeNames.ReferenceAssembly);
+            var ctorHandle = FindMethod(AttributeNames.ReferenceAssembly, ".ctor", CheckRefAsmAttrCtorSignature);
 
-            if (!IsNil(attrTypeRefHandle))
+            if (!IsNil(ctorHandle))
             {
-                Trace?.Invoke($"Found attribute type {_reader.ToString(attrTypeRefHandle)}");
-                ctorHandle = _reader.MemberReferences
-                    .Select(mrh => new { mrh, mr = _reader.GetMemberReference(mrh)})
-                    .Where(x => x.mr.Parent == attrTypeRefHandle)
-                    .Where(x => _reader.GetString(x.mr.Name) == ".ctor")
-                    .Where(x => CheckRefASmAttrConstructorSignature(_reader.GetBlobReader(x.mr.Signature)))
-                    .Select(x => x.mrh)
-                    .SingleOrDefault();
-
-                Trace?.Invoke(IsNil(ctorHandle)
-                    ? "Not found attribute constructor with void signature"
-                    : $"Found attribute constructor with void signature {_reader.ToString(ctorHandle)}");
-                
-                ctorHandle = Import(ctorHandle);
-            }
-            else if (!IsNil(attrTypeDefHandle))
-            {
-                Trace?.Invoke($"Found attribute type {_reader.ToString(attrTypeRefHandle)}");
-                ctorHandle = _reader.GetTypeDefinition(attrTypeDefHandle).GetMethods()
-                    .Select(mdh => new { mdh, md = _reader.GetMethodDefinition(mdh)})
-                    .Where(x => _reader.GetString(x.md.Name) == ".ctor")
-                    .Where(x => CheckRefASmAttrConstructorSignature(_reader.GetBlobReader(x.md.Signature)))
-                    .Select(x => x.mdh)
-                    .SingleOrDefault();
-                
-                Trace?.Invoke(IsNil(ctorHandle)
-                    ? "Not found attribute constructor with void signature"
-                    : $"Found attribute constructor with void signature {_reader.ToString(ctorHandle)}");
-
+                Trace?.Invoke($"Found attribute constructor with void signature {_reader.ToString(ctorHandle)}");                
                 ctorHandle = Import(ctorHandle);
             }
             else
@@ -114,7 +83,6 @@ namespace JetBrains.Refasmer
             {
                 var attrHandle = _builder.AddCustomAttribute(Import(EntityHandle.AssemblyDefinition), ctorHandle, _builder.GetOrAddBlob(VoidValueBlob));
                 Debug?.Invoke($"Added ReferenceAssembly attribute {RowId(attrHandle):X}");
-                
             }
         }   
     }

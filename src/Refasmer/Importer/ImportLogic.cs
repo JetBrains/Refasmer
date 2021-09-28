@@ -33,7 +33,7 @@ namespace JetBrains.Refasmer
             }
         }
         
-        private TypeDefinitionHandle ImportTypeDefinitionSkeleton( TypeDefinitionHandle srcHandle )
+        private TypeDefinitionHandle ImportTypeDefinitionSkeleton( TypeDefinitionHandle srcHandle, bool makeMock )
         {
             var src = _reader.GetTypeDefinition(srcHandle);
             
@@ -84,8 +84,10 @@ namespace JetBrains.Refasmer
                     continue;
                 }
 
+                var bodyOffset = makeMock ? MakeMockBody(srcMethodHandle) : -1;
+                
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
-                    ImportValue(srcMethod.Name), dstSignature, -1, NextParameterHandle());
+                    ImportValue(srcMethod.Name), dstSignature, bodyOffset, NextParameterHandle());
                 _methodDefinitionCache.Add(srcMethodHandle, dstMethodHandle);
                 Trace?.Invoke($"Imported {_reader.ToString(srcMethod)} -> {RowId(dstMethodHandle):X}");
 
@@ -376,7 +378,7 @@ namespace JetBrains.Refasmer
                 .Select(_reader.GetFullname)
                 .Any(name => name == AttributeNames.ReferenceAssembly);
 
-        public ReservedBlob<GuidHandle> Import()
+        public ReservedBlob<GuidHandle> Import( bool makeMock = false )
         {
             if (_reader.IsAssembly)
             {
@@ -391,7 +393,7 @@ namespace JetBrains.Refasmer
             var srcModule = _reader.GetModuleDefinition();
 
             var mvidBlob = _builder.ReserveGuid();
-            
+
             _builder.AddModule(srcModule.Generation, ImportValue(srcModule.Name), mvidBlob.Handle,
                 ImportValue(srcModule.GenerationId),
                 ImportValue(srcModule.BaseGenerationId));
@@ -405,11 +407,11 @@ namespace JetBrains.Refasmer
             Debug?.Invoke("Preparing type list for import");
 
             var checker = new CachedAttributeChecker();
-            
+
             foreach (var srcHandle in _reader.TypeDefinitions)
             {
                 bool shouldImport;
-                
+
                 var src = _reader.GetTypeDefinition(srcHandle);
                 if (checker.HasAttribute(_reader, src, AttributeNames.Embedded) &&
                     checker.HasAttribute(_reader, src, AttributeNames.CompilerGenerated))
@@ -419,7 +421,7 @@ namespace JetBrains.Refasmer
                 }
                 else
                 {
-                    shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false;    
+                    shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false;
                 }
 
                 if (shouldImport)
@@ -435,7 +437,7 @@ namespace JetBrains.Refasmer
             Debug?.Invoke("Importing type definitions");
             foreach (var srcHandle in _reader.TypeDefinitions.Where(_typeDefinitionCache.ContainsKey))
             {
-                var dstHandle = ImportTypeDefinitionSkeleton(srcHandle);
+                var dstHandle = ImportTypeDefinitionSkeleton(srcHandle, makeMock);
                 if (dstHandle != _typeDefinitionCache[srcHandle])
                     throw new Exception("WTF: type handle mismatch");
             }
@@ -466,11 +468,12 @@ namespace JetBrains.Refasmer
                 Trace?.Invoke($"Imported nested type {_reader.ToString(srcNested)} -> {RowId(dstNested):X}");
             }
 
-            
             var generic = _typeDefinitionCache
-                .Select(kv => Tuple.Create((EntityHandle) kv.Value, _reader.GetTypeDefinition(kv.Key).GetGenericParameters()))
+                .Select(kv =>
+                    Tuple.Create((EntityHandle)kv.Value, _reader.GetTypeDefinition(kv.Key).GetGenericParameters()))
                 .Concat(_methodDefinitionCache
-                    .Select(kv => Tuple.Create((EntityHandle) kv.Value, _reader.GetMethodDefinition(kv.Key).GetGenericParameters())))
+                    .Select(kv => Tuple.Create((EntityHandle)kv.Value,
+                        _reader.GetMethodDefinition(kv.Key).GetGenericParameters())))
                 .OrderBy(x => CodedIndex.TypeOrMethodDef(x.Item1))
                 .ToList();
 
@@ -490,13 +493,16 @@ namespace JetBrains.Refasmer
             foreach (var src in _reader.ExportedTypes)
                 Import(src);
 
-            if (!IsReferenceAssembly())
+            if (!makeMock && !IsReferenceAssembly())
                 AddReferenceAssemblyAttribute();
+
+            if (makeMock)
+                _builder.GetOrAddBlob(_ilStream);
             
             Debug?.Invoke("Importing done");
 
             return mvidBlob;
         }
-        
+
     }
 }
