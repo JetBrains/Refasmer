@@ -20,11 +20,15 @@ Options:
   -r, --refasm               make reference assembly, default action
   -w, --overwrite            overwrite source files
   -p, --publiconly           drop non-public types even with InternalsVisibleTo
+  -m, --mock                 make mock assembly instead of reference assembly
   -l, --list                 make file list xml
   -a, --attr=VALUE           add FileList tag attribute
 ```
 
 (note the executable is called `RefasmerExe.exe` if built locally; `refasmer` is a name of an executable installed by `dotnet tool install`)
+
+Mock assembly throws System.NotImplementedException in each imported method.
+Reference assembly contains only type definition and method signatures with no method bodies.
 
 ## Examples:
 
