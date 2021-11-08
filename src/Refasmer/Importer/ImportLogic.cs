@@ -84,7 +84,8 @@ namespace JetBrains.Refasmer
                     continue;
                 }
 
-                var bodyOffset = makeMock ? MakeMockBody(srcMethodHandle) : -1;
+                var isAbstract = srcMethod.Attributes.HasFlag(MethodAttributes.Abstract);
+                var bodyOffset = !isAbstract && makeMock ? MakeMockBody(srcMethodHandle) : -1;
                 
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
                     ImportValue(srcMethod.Name), dstSignature, bodyOffset, NextParameterHandle());
@@ -413,7 +414,13 @@ namespace JetBrains.Refasmer
                 bool shouldImport;
 
                 var src = _reader.GetTypeDefinition(srcHandle);
-                if (checker.HasAttribute(_reader, src, AttributeNames.Embedded) &&
+
+                // Special <Module> type 
+                if (srcHandle.GetHashCode() == 1 && _reader.GetString(src.Name) == "<Module>")
+                {
+                    shouldImport = true;
+                }
+                else if (checker.HasAttribute(_reader, src, AttributeNames.Embedded) &&
                     checker.HasAttribute(_reader, src, AttributeNames.CompilerGenerated))
                 {
                     Trace?.Invoke($"Embedded type found {_reader.ToString(srcHandle)}");

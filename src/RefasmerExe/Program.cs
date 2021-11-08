@@ -24,7 +24,11 @@ namespace JetBrains.Refasmer
         private static string _outputDir;
         private static string _outputFile;
         private static LoggerBase _logger;
-        private static bool _publicOnly;
+        
+        private static bool _public;
+        private static bool _internals;
+        private static bool _all;
+
         private static bool _makeMock;
 
         class InvalidOptionException : Exception
@@ -72,7 +76,10 @@ namespace JetBrains.Refasmer
 
                 { "r|refasm", "make reference assembly, default action", v => {  if (v != null) operation = Operation.MakeRefasm; } },
                 { "w|overwrite", "overwrite source files", v => _overwrite = v != null },
-                { "p|publiconly", "drop non-public types even with InternalsVisibleTo", p => _publicOnly = p != null },
+
+                { "p|public", "drop non-public types even with InternalsVisibleTo", v => _public = v != null },
+                { "i|internals", "import public and internal types", v => _internals = v != null },
+                { "all", "ignore visibility and import all", v => _all = v != null },
                 
                 { "m|mock", "make mock assembly instead of reference assembly", p => _makeMock = p != null },
 
@@ -221,9 +228,18 @@ namespace JetBrains.Refasmer
 
         private static void MakeRefasm(string input)
         {
+            IImportFilter filter = null;
+
+            if (_public)
+                filter = new AllowPublic();
+            else if (_internals)
+                filter = new AllowPublicAndInternals();
+            else if (_all)
+                filter = new AllowAll();
+            
             byte[] result;
             using (var peReader = ReadAssembly(input, out var metaReader))
-                result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, _publicOnly ? new AllowPublic() : null, _makeMock);
+                result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, filter, _makeMock);
 
             string output;
 
