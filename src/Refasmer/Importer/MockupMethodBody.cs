@@ -69,7 +69,7 @@ namespace JetBrains.Refasmer
 
             var ctor = new BlobBuilder();
 
-            new BlobEncoder(ctor).MethodSignature(isInstanceMethod: true).Parameters(1, t => t.TypedReference(),
+            new BlobEncoder(ctor).MethodSignature(isInstanceMethod: true).Parameters(1, t => t.Void(),
                 p => { p.AddParameter().Type().String(); });
 
             var ctorBlob = _builder.GetOrAddBlob(ctor);
