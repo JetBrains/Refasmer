@@ -29,7 +29,7 @@ namespace JetBrains.Refasmer
 
             // return type
             var typeCode = blobReader.ReadCompressedInteger();
-            if (typeCode != (int)SignatureTypeCode.TypedReference)
+            if (typeCode != (int)SignatureTypeCode.Void)
                 return false;
             
             // first param
