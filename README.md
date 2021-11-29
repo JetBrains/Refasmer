@@ -23,6 +23,7 @@ Options:
   -i, --internals            import public and internal types
       --all                  ignore visibility and import all
   -m, --mock                 make mock assembly instead of reference assembly
+  -n, --noattr               omit reference assembly attribute
   -l, --list                 make file list xml
   -a, --attr=VALUE           add FileList tag attribute
 ```
