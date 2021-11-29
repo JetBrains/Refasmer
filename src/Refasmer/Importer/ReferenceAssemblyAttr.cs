@@ -44,11 +44,11 @@ namespace JetBrains.Refasmer
                 
                 if (IsNil(objectHandle))
                     objectHandle = _reader.TypeReferences
-                    .SingleOrDefault(h => _reader.GetFullname(h) == "System::Object");
+                    .FirstOrDefault(h => _reader.GetFullname(h) == "System::Object");
 
                 if (IsNil(objectHandle))
                     objectHandle = _reader.TypeDefinitions
-                    .SingleOrDefault(h => _reader.GetFullname(h) == "System::Object");
+                    .FirstOrDefault(h => _reader.GetFullname(h) == "System::Object");
 
                 if (!IsNil(objectHandle))
                 {

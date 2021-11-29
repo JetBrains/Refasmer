@@ -33,7 +33,7 @@ namespace JetBrains.Refasmer
             }
         }
         
-        private TypeDefinitionHandle ImportTypeDefinitionSkeleton( TypeDefinitionHandle srcHandle, bool makeMock )
+        private TypeDefinitionHandle ImportTypeDefinitionSkeleton( TypeDefinitionHandle srcHandle )
         {
             var src = _reader.GetTypeDefinition(srcHandle);
             
@@ -85,7 +85,7 @@ namespace JetBrains.Refasmer
                 }
 
                 var isAbstract = srcMethod.Attributes.HasFlag(MethodAttributes.Abstract);
-                var bodyOffset = !isAbstract && makeMock ? MakeMockBody(srcMethodHandle) : -1;
+                var bodyOffset = !isAbstract && MakeMock ? MakeMockBody(srcMethodHandle) : -1;
                 
                 var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
                     ImportValue(srcMethod.Name), dstSignature, bodyOffset, NextParameterHandle());
@@ -379,7 +379,7 @@ namespace JetBrains.Refasmer
                 .Select(_reader.GetFullname)
                 .Any(name => name == AttributeNames.ReferenceAssembly);
 
-        public ReservedBlob<GuidHandle> Import( bool makeMock = false )
+        public ReservedBlob<GuidHandle> Import()
         {
             if (_reader.IsAssembly)
             {
@@ -444,7 +444,7 @@ namespace JetBrains.Refasmer
             Debug?.Invoke("Importing type definitions");
             foreach (var srcHandle in _reader.TypeDefinitions.Where(_typeDefinitionCache.ContainsKey))
             {
-                var dstHandle = ImportTypeDefinitionSkeleton(srcHandle, makeMock);
+                var dstHandle = ImportTypeDefinitionSkeleton(srcHandle);
                 if (dstHandle != _typeDefinitionCache[srcHandle])
                     throw new Exception("WTF: type handle mismatch");
             }
@@ -500,10 +500,10 @@ namespace JetBrains.Refasmer
             foreach (var src in _reader.ExportedTypes)
                 Import(src);
 
-            if (!makeMock && !IsReferenceAssembly())
+            if (!OmitReferenceAssemblyAttr && !MakeMock && !IsReferenceAssembly())
                 AddReferenceAssemblyAttribute();
 
-            if (makeMock)
+            if (MakeMock)
                 _builder.GetOrAddBlob(_ilStream);
             
             Debug?.Invoke("Importing done");

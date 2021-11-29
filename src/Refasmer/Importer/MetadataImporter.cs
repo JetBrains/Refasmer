@@ -16,6 +16,9 @@ namespace JetBrains.Refasmer
         private readonly BlobBuilder _ilStream;
 
         public IImportFilter Filter;
+
+        public bool MakeMock;
+        public bool OmitReferenceAssemblyAttr;
         
         public MetadataImporter( MetadataReader reader, MetadataBuilder builder, BlobBuilder ilStream, LoggerBase logger) : base(logger)
         {
@@ -25,13 +28,18 @@ namespace JetBrains.Refasmer
         }
 
 
-        public static byte[] MakeRefasm(MetadataReader metaReader, PEReader peReader, LoggerBase logger, IImportFilter filter = null, bool makeMock = false )
+        public static byte[] MakeRefasm(MetadataReader metaReader, PEReader peReader, LoggerBase logger, IImportFilter filter = null, 
+            bool makeMock = false, bool omitReferenceAssemblyAttr = false )
         {
             var metaBuilder = new MetadataBuilder();
             var ilStream = new BlobBuilder();
             ilStream.Align(4);
 
-            var importer = new MetadataImporter(metaReader, metaBuilder, ilStream, logger);
+            var importer = new MetadataImporter(metaReader, metaBuilder, ilStream, logger)
+            {
+                MakeMock = makeMock,
+                OmitReferenceAssemblyAttr = omitReferenceAssemblyAttr
+            };
 
             if (filter != null)
             {
@@ -50,7 +58,7 @@ namespace JetBrains.Refasmer
             }
             
 
-            var mvidBlob = importer.Import(makeMock);
+            var mvidBlob = importer.Import();
             
             logger.Debug?.Invoke($"Building {(makeMock ? "mockup" : "reference")} assembly");
             

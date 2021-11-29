@@ -30,6 +30,7 @@ namespace JetBrains.Refasmer
         private static bool _all;
 
         private static bool _makeMock;
+        private static bool _omitReferenceAssemblyAttr;
 
         class InvalidOptionException : Exception
         {
@@ -82,6 +83,7 @@ namespace JetBrains.Refasmer
                 { "all", "ignore visibility and import all", v => _all = v != null },
                 
                 { "m|mock", "make mock assembly instead of reference assembly", p => _makeMock = p != null },
+                { "n|noattr", "omit reference assembly attribute", p => _omitReferenceAssemblyAttr = p != null },
 
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
@@ -239,7 +241,7 @@ namespace JetBrains.Refasmer
             
             byte[] result;
             using (var peReader = ReadAssembly(input, out var metaReader))
-                result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, filter, _makeMock);
+                result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, filter, _makeMock, _omitReferenceAssemblyAttr);
 
             string output;
 
