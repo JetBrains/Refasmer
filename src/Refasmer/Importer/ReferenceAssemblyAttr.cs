@@ -7,7 +7,7 @@ namespace JetBrains.Refasmer
     public partial class MetadataImporter
     {
         private static readonly byte[] VoidValueBlob = { 1, 0, 0, 0 };
-        private static readonly byte[] VoidCtorSignatureBlob = { 20, 0, 1 };
+        private static readonly byte[] VoidCtorSignatureBlob = { 0x20, 0, 1 };
         
         private static bool CheckRefAsmAttrCtorSignature( BlobReader blobReader )
         {
