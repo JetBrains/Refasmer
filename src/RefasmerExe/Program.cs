@@ -38,6 +38,8 @@ namespace JetBrains.Refasmer
         private static bool _makeMock;
         private static bool _omitReferenceAssemblyAttr;
 
+        private static bool _expandGlobs;
+
         class InvalidOptionException : Exception
         {
             public InvalidOptionException(string message) : base(message)
@@ -94,7 +96,9 @@ namespace JetBrains.Refasmer
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
                 
-                { "<>", "one or more input files, globbing supported", v => inputs.Add(v) },
+                { "g|globs", "expand globs internally: ?, *, **", p => _expandGlobs = p != null },                
+                
+                { "<>", "one or more input files", v => inputs.Add(v) },
             };
 
             try
@@ -139,10 +143,10 @@ namespace JetBrains.Refasmer
 
                 // Apply input globbing
                 var dirCurrent = new DirectoryInfo(Environment.CurrentDirectory);
-                ImmutableArray<(string Path, string RelativeForOutput)> inputsExpanded = inputs.SelectMany(input => ExpandInput(input, dirCurrent, _logger)).OrderBy(t => t.Path, StringComparer.OrdinalIgnoreCase).ToImmutableArray();
+                var inputsExpanded = inputs.SelectMany(input => ExpandInput(input, dirCurrent, _logger)).OrderBy(t => t.Path, StringComparer.OrdinalIgnoreCase).ToImmutableArray();
 
                 // Re-check for the second time, after expanding globs
-                if(!string.IsNullOrEmpty(_outputFile) && inputs.Count > 1)
+                if (!string.IsNullOrEmpty(_outputFile) && inputs.Count > 1)
                 {
                     Console.Error.WriteLine("Output file should not be specified for many inputs");
                     return 2;
@@ -166,7 +170,7 @@ namespace JetBrains.Refasmer
                 }
                 
                 _logger.Info?.Invoke($"Processing {inputs.Count} assemblies");
-                for(int nInput = 0; nInput < inputsExpanded.Length; nInput++)
+                for (var nInput = 0; nInput < inputsExpanded.Length; nInput++)
                 {
                     var input = inputsExpanded[nInput];
                     _logger.Info?.Invoke($"Processing {input.Path}");
@@ -186,12 +190,12 @@ namespace JetBrains.Refasmer
                                 throw new ArgumentOutOfRangeException();
                             }
                         }
-                        catch(InvalidOperationException e)
+                        catch (InvalidOperationException e)
                         {
                             _logger.Error?.Invoke(e.Message);
-                            if(continueOnErrors)
+                            if (continueOnErrors)
                                 continue;
-                            if(nInput < inputsExpanded.Length - 1) // When doing multiple files, let user know some might be left undone
+                            if (nInput < inputsExpanded.Length - 1) // When doing multiple files, let user know some might be left undone
                                 _logger.Error?.Invoke($"Aborted on first error, {inputsExpanded.Length - nInput + 1:N0} files left unprocessed; pass “--continue” to try them anyway");
                             return 1;
                         }
@@ -282,9 +286,13 @@ namespace JetBrains.Refasmer
             }
             
             _logger.Debug?.Invoke($"Writing result to {output}");
+            
             if (File.Exists(output))
                 File.Delete(output);
-            if(Path.GetDirectoryName(output) is {} outdir)
+
+            var outdir = Path.GetDirectoryName(output);
+            
+            if (!string.IsNullOrEmpty(outdir))
                 Directory.CreateDirectory(outdir);
 
             File.WriteAllBytes(output, result);
@@ -307,18 +315,21 @@ namespace JetBrains.Refasmer
 
         private static ImmutableArray<(string Path, string RelativeForOutput)> ExpandInput(string input, DirectoryInfo baseForRelativeInput, LoggerBase logger)
         {
+            if (!_expandGlobs)
+                return ImmutableArray.Create((input, Path.GetFileName(input)));
+
             // Is this item globbing?
-            int indexOfGlob = input.IndexOfAny(new[] {'*', '?'});
-            if(indexOfGlob < 0)
+            var indexOfGlob = input.IndexOfAny(new[] {'*', '?'});
+            if (indexOfGlob < 0)
                 return ImmutableArray.Create((input, Path.GetFileName(input)));
 
             // Cut into non-globbing base dir and globbing mask (if input is an abs path, otherwise we use currentdir)
             DirectoryInfo basedir;
-            int indexOfSepBeforeGlob = input.LastIndexOfAny(new[] {'\\', '/'}, indexOfGlob, indexOfGlob);
+            var indexOfSepBeforeGlob = input.LastIndexOfAny(new[] {'\\', '/'}, indexOfGlob, indexOfGlob);
             string mask;
             if(indexOfSepBeforeGlob >= 0)
             {
-                string beforemask = input.Substring(0, indexOfSepBeforeGlob + 1);
+                var beforemask = input.Substring(0, indexOfSepBeforeGlob + 1);
                 basedir = Path.IsPathRooted(beforemask) ? new DirectoryInfo(beforemask) : new DirectoryInfo(Path.Combine(baseForRelativeInput.FullName, beforemask));
                 mask = input.Substring(indexOfSepBeforeGlob + 1);
             }
@@ -328,11 +339,11 @@ namespace JetBrains.Refasmer
                 mask = input;
             }
 
-            PatternMatchingResult result = new Matcher(StringComparison.OrdinalIgnoreCase).AddInclude(mask).Execute(new DirectoryInfoWrapper(basedir));
+            var result = new Matcher(StringComparison.OrdinalIgnoreCase).AddInclude(mask).Execute(new DirectoryInfoWrapper(basedir));
             if(!result.HasMatches)
                 throw new InvalidOperationException($"The pattern “{input}” didn't match any files at all. Were looking for “{mask}” under the “{basedir.FullName}” directory.");
 
-            ImmutableArray<(string, string Path)> expanded = result.Files.Select(match => (Path.Combine(basedir.FullName, match.Path), match.Path)).ToImmutableArray();
+            var expanded = result.Files.Select(match => (Path.Combine(basedir.FullName, match.Path), match.Path)).ToImmutableArray();
             
             logger.Info?.Invoke($"Expanded “{input}” into {expanded.Length:N0} files.");
             return expanded;
