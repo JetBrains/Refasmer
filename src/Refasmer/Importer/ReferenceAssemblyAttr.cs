@@ -28,7 +28,6 @@ namespace JetBrains.Refasmer
             return true;
         }
 
-        // Legacy
         private MethodDefinitionHandle CreateCustomReferenceAssemblyAttributeCtor()
         {
             MethodDefinitionHandle ctorHandle = default;
@@ -80,21 +79,28 @@ namespace JetBrains.Refasmer
                 return Import(ctorHandle);
             }
 
-            var mscorlibRef = FindOrCreateMscorlibReference();
-            
-            var referenceAssemblyAttrTypeRef = _builder.AddTypeReference(mscorlibRef, _builder.GetOrAddString("System.Runtime.CompilerServices"), 
-                _builder.GetOrAddString("ReferenceAssemblyAttribute"));
+            var mscorlibRef = FindMscorlibReference();
 
-            var ctor = new BlobBuilder();
+            if (!IsNil(mscorlibRef))
+            {
+                var referenceAssemblyAttrTypeRef = _builder.AddTypeReference(mscorlibRef,
+                    _builder.GetOrAddString("System.Runtime.CompilerServices"),
+                    _builder.GetOrAddString("ReferenceAssemblyAttribute"));
 
-            new BlobEncoder(ctor).MethodSignature(isInstanceMethod: true).Parameters(0, t => t.Void(), p => { });
+                var ctor = new BlobBuilder();
 
-            var ctorBlob = _builder.GetOrAddBlob(ctor);
+                new BlobEncoder(ctor).MethodSignature(isInstanceMethod: true).Parameters(0, t => t.Void(), p => { });
 
-            ctorHandle = _builder.AddMemberReference(referenceAssemblyAttrTypeRef, _builder.GetOrAddString(".ctor"), ctorBlob);
-            Trace?.Invoke($"Created ReferenceAssemblyAttribute constructor reference {RowId(ctorHandle)}");
+                var ctorBlob = _builder.GetOrAddBlob(ctor);
 
-            return ctorHandle;
+                ctorHandle = _builder.AddMemberReference(referenceAssemblyAttrTypeRef, _builder.GetOrAddString(".ctor"),
+                    ctorBlob);
+                Trace?.Invoke($"Created ReferenceAssemblyAttribute constructor reference {RowId(ctorHandle)}");
+
+                return ctorHandle;
+            }
+
+            return CreateCustomReferenceAssemblyAttributeCtor();
         }
         
         private void AddReferenceAssemblyAttribute()

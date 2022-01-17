@@ -61,21 +61,25 @@ namespace JetBrains.Refasmer
         }
 
         private static readonly byte[] MscorlibPublicKeyBlob = { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 };
+
+        private AssemblyReferenceHandle FindMscorlibReference() =>
+            _reader.AssemblyReferences
+                .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == "mscorlib");
+
         private AssemblyReferenceHandle FindOrCreateMscorlibReference()
         {
-            var mscorlibRef = _reader.AssemblyReferences
-                .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == "mscorlib");
+            var mscorlibRef = FindMscorlibReference();
+
+            if (!IsNil(mscorlibRef)) 
+                return mscorlibRef;
             
-            if (IsNil(mscorlibRef))
-            {
-                mscorlibRef = _builder.AddAssemblyReference(
-                    _builder.GetOrAddString("mscorlib"),
-                    new Version(4, 0, 0, 0),
-                    default, _builder.GetOrAddBlob(MscorlibPublicKeyBlob),
-                    default, default);
+            mscorlibRef = _builder.AddAssemblyReference(
+                _builder.GetOrAddString("mscorlib"),
+                new Version(4, 0, 0, 0),
+                default, _builder.GetOrAddBlob(MscorlibPublicKeyBlob),
+                default, default);
                 
-                Trace?.Invoke($"Created mscorlib assembly reference {RowId(mscorlibRef)}");
-            }
+            Trace?.Invoke($"Created mscorlib assembly reference {RowId(mscorlibRef)}");
 
             return mscorlibRef;
         }
