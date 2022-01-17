@@ -8,7 +8,6 @@ namespace JetBrains.Refasmer
     public partial class MetadataImporter
     {
         private EntityHandle _notImplementedStringCtor;
-        private static readonly byte[] MscorlibPublicKeyBlob = { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 };
 
         private const string NotImplementedExceptionName = "System::NotImplementedException";
 
@@ -49,20 +48,8 @@ namespace JetBrains.Refasmer
                 Trace?.Invoke($"Found NotImplementedException constructor {_reader.ToString(ctorHandle)}");                
                 return Import(ctorHandle);
             }
-                
-            var mscorlibRef = _reader.AssemblyReferences
-                .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == "mscorlib");
-            
-            if (IsNil(mscorlibRef))
-            {
-                mscorlibRef = _builder.AddAssemblyReference(
-                    _builder.GetOrAddString("mscorlib"),
-                    new Version(4, 0, 0, 0),
-                    default, _builder.GetOrAddBlob(MscorlibPublicKeyBlob),
-                    default, default);
-                
-                Trace?.Invoke($"Created mscorlib assembly reference {RowId(mscorlibRef)}");
-            }
+
+            var mscorlibRef = FindOrCreateMscorlibReference();
 
             var notImplExceptionTypeRef = _builder.AddTypeReference(mscorlibRef, _builder.GetOrAddString("System"), 
                 _builder.GetOrAddString("NotImplementedException"));
