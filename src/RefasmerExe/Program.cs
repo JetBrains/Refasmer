@@ -1,12 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
 
 using JetBrains.Refasmer.Filters;
+
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
+
 using Mono.Options;
 
 namespace JetBrains.Refasmer
@@ -31,6 +37,8 @@ namespace JetBrains.Refasmer
 
         private static bool _makeMock;
         private static bool _omitReferenceAssemblyAttr;
+
+        private static bool _expandGlobs;
 
         class InvalidOptionException : Exception
         {
@@ -88,7 +96,9 @@ namespace JetBrains.Refasmer
                 { "l|list", "make file list xml", v => {  if (v != null) operation = Operation.MakeXmlList; } },
                 { "a|attr=", "add FileList tag attribute", v =>  AddFileListAttr(v, fileListAttr) },
                 
-                { "<>", v => inputs.Add(v) },
+                { "g|globs", "expand globs internally: ?, *, **", p => _expandGlobs = p != null },                
+                
+                { "<>", "one or more input files", v => inputs.Add(v) },
             };
 
             try
@@ -113,7 +123,7 @@ namespace JetBrains.Refasmer
             {
                 var selfName = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
                 
-                Console.Out.WriteLine($"Usage: {selfName} [options] <dll> [<dll> ...]");
+                Console.Out.WriteLine($"Usage: {selfName} [options] <dll> [<**/*.dll> ...]");
                 Console.Out.WriteLine("Options:");
                 options.WriteOptionDescriptions(Console.Out);
                 return 0;
@@ -131,6 +141,17 @@ namespace JetBrains.Refasmer
             {
                 _logger.Trace?.Invoke($"Program arguments: {string.Join(" ", args)}");
 
+                // Apply input globbing
+                var dirCurrent = new DirectoryInfo(Environment.CurrentDirectory);
+                var inputsExpanded = inputs.SelectMany(input => ExpandInput(input, dirCurrent, _logger)).OrderBy(t => t.Path, StringComparer.OrdinalIgnoreCase).ToImmutableArray();
+
+                // Re-check for the second time, after expanding globs
+                if (!string.IsNullOrEmpty(_outputFile) && inputs.Count > 1)
+                {
+                    Console.Error.WriteLine("Output file should not be specified for many inputs");
+                    return 2;
+                }
+                
                 XmlTextWriter xmlWriter = null;
                 
                 if (operation == Operation.MakeXmlList)
@@ -146,15 +167,14 @@ namespace JetBrains.Refasmer
 
                     foreach (var kv in fileListAttr)
                         xmlWriter.WriteAttributeString(kv.Key, kv.Value);
-
-                    inputs.Sort();
                 }
                 
                 _logger.Info?.Invoke($"Processing {inputs.Count} assemblies");
-                foreach (var input in inputs)
+                for (var nInput = 0; nInput < inputsExpanded.Length; nInput++)
                 {
-                    _logger.Info?.Invoke($"Processing {input}");
-                    using (_logger.WithLogPrefix($"[{Path.GetFileName(input)}]"))
+                    var input = inputsExpanded[nInput];
+                    _logger.Info?.Invoke($"Processing {input.Path}");
+                    using(_logger.WithLogPrefix($"[{Path.GetFileName(input.RelativeForOutput)}]"))
                     {
                         try
                         {
@@ -175,6 +195,8 @@ namespace JetBrains.Refasmer
                             _logger.Error?.Invoke(e.Message);
                             if (continueOnErrors)
                                 continue;
+                            if (nInput < inputsExpanded.Length - 1) // When doing multiple files, let user know some might be left undone
+                                _logger.Error?.Invoke($"Aborted on first error, {inputsExpanded.Length - nInput + 1:N0} files left unprocessed; pass “--continue” to try them anyway");
                             return 1;
                         }
                     }
@@ -194,13 +216,14 @@ namespace JetBrains.Refasmer
             catch (Exception e)
             {
                 _logger.Error?.Invoke($"{e}");
+                _logger.Error?.Invoke("ABORTED"); // When doing multiple files, let user know some might be left undone
                 return 1;
             }
         }
 
-        private static void WriteAssemblyToXml(string input, XmlTextWriter xmlWriter)
+        private static void WriteAssemblyToXml((string Path, string RelativeForOutput) input, XmlTextWriter xmlWriter)
         {
-            using var _ = ReadAssembly(input, out var metaReader);
+            using var _ = ReadAssembly(input.Path, out var metaReader);
             
             if (!metaReader.IsAssembly)
                 return;
@@ -228,7 +251,7 @@ namespace JetBrains.Refasmer
             xmlWriter.WriteEndElement();
         }
 
-        private static void MakeRefasm(string input)
+        private static void MakeRefasm((string Path, string RelativeForOutput) input)
         {
             IImportFilter filter = null;
 
@@ -240,7 +263,7 @@ namespace JetBrains.Refasmer
                 filter = new AllowAll();
             
             byte[] result;
-            using (var peReader = ReadAssembly(input, out var metaReader))
+            using (var peReader = ReadAssembly(input.Path, out var metaReader))
                 result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, filter, _makeMock, _omitReferenceAssemblyAttr);
 
             string output;
@@ -251,20 +274,26 @@ namespace JetBrains.Refasmer
             }
             else if (!string.IsNullOrEmpty(_outputDir))
             {
-                output = Path.Combine(_outputDir, Path.GetFileName(input));
+                output = Path.Combine(_outputDir, input.RelativeForOutput);
             }
             else if (_overwrite)
             {
-                output = input;
+                output = input.Path;
             }
             else
             {
-                output = $"{Path.GetFileName(input)}.{(_makeMock ? "mock" : "refasm")}.dll";
+                output = $"{input.Path}.{(_makeMock ? "mock" : "refasm")}.dll";
             }
             
             _logger.Debug?.Invoke($"Writing result to {output}");
+            
             if (File.Exists(output))
                 File.Delete(output);
+
+            var outdir = Path.GetDirectoryName(output);
+            
+            if (!string.IsNullOrEmpty(outdir))
+                Directory.CreateDirectory(outdir);
 
             File.WriteAllBytes(output, result);
         }
@@ -282,6 +311,42 @@ namespace JetBrains.Refasmer
             if (!metaReader.IsAssembly)
                 _logger.Warning?.Invoke($"Dll has no assembly: {input}");
             return peReader;
+        }
+
+        private static ImmutableArray<(string Path, string RelativeForOutput)> ExpandInput(string input, DirectoryInfo baseForRelativeInput, LoggerBase logger)
+        {
+            if (!_expandGlobs)
+                return ImmutableArray.Create((input, Path.GetFileName(input)));
+
+            // Is this item globbing?
+            var indexOfGlob = input.IndexOfAny(new[] {'*', '?'});
+            if (indexOfGlob < 0)
+                return ImmutableArray.Create((input, Path.GetFileName(input)));
+
+            // Cut into non-globbing base dir and globbing mask (if input is an abs path, otherwise we use currentdir)
+            DirectoryInfo basedir;
+            var indexOfSepBeforeGlob = input.LastIndexOfAny(new[] {'\\', '/'}, indexOfGlob, indexOfGlob);
+            string mask;
+            if(indexOfSepBeforeGlob >= 0)
+            {
+                var beforemask = input.Substring(0, indexOfSepBeforeGlob + 1);
+                basedir = Path.IsPathRooted(beforemask) ? new DirectoryInfo(beforemask) : new DirectoryInfo(Path.Combine(baseForRelativeInput.FullName, beforemask));
+                mask = input.Substring(indexOfSepBeforeGlob + 1);
+            }
+            else
+            {
+                basedir = baseForRelativeInput;
+                mask = input;
+            }
+
+            var result = new Matcher(StringComparison.OrdinalIgnoreCase).AddInclude(mask).Execute(new DirectoryInfoWrapper(basedir));
+            if(!result.HasMatches)
+                throw new InvalidOperationException($"The pattern “{input}” didn't match any files at all. Were looking for “{mask}” under the “{basedir.FullName}” directory.");
+
+            var expanded = result.Files.Select(match => (Path.Combine(basedir.FullName, match.Path), match.Path)).ToImmutableArray();
+            
+            logger.Info?.Invoke($"Expanded “{input}” into {expanded.Length:N0} files.");
+            return expanded;
         }
    }
 }
