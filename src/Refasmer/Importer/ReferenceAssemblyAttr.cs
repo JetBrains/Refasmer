@@ -82,7 +82,7 @@ namespace JetBrains.Refasmer
 
             var mscorlibRef = FindOrCreateMscorlibReference();
             
-            var notImplExceptionTypeRef = _builder.AddTypeReference(mscorlibRef, _builder.GetOrAddString("System.Runtime.CompilerServices"), 
+            var referenceAssemblyAttrTypeRef = _builder.AddTypeReference(mscorlibRef, _builder.GetOrAddString("System.Runtime.CompilerServices"), 
                 _builder.GetOrAddString("ReferenceAssemblyAttribute"));
 
             var ctor = new BlobBuilder();
@@ -91,7 +91,7 @@ namespace JetBrains.Refasmer
 
             var ctorBlob = _builder.GetOrAddBlob(ctor);
 
-            ctorHandle = _builder.AddMemberReference(notImplExceptionTypeRef, _builder.GetOrAddString(".ctor"), ctorBlob);
+            ctorHandle = _builder.AddMemberReference(referenceAssemblyAttrTypeRef, _builder.GetOrAddString(".ctor"), ctorBlob);
             Trace?.Invoke($"Created ReferenceAssemblyAttribute constructor reference {RowId(ctorHandle)}");
 
             return ctorHandle;
