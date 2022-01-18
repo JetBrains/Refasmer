@@ -47,9 +47,9 @@ namespace JetBrains.Refasmer
                 return Import(ctorHandle);
             }
 
-            var mscorlibRef = FindOrCreateMscorlibReference();
+            var runtimeRef = FindOrCreateRuntimeReference();
 
-            var notImplExceptionTypeRef = _builder.AddTypeReference(mscorlibRef, _builder.GetOrAddString("System"), 
+            var notImplExceptionTypeRef = _builder.AddTypeReference(runtimeRef, _builder.GetOrAddString("System"), 
                 _builder.GetOrAddString("NotImplementedException"));
 
             var ctor = new BlobBuilder();

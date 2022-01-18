@@ -78,22 +78,25 @@ namespace JetBrains.Refasmer
             return FindSystemRuntimeReference();
         }
         
-        private AssemblyReferenceHandle FindOrCreateMscorlibReference()
+        private AssemblyReferenceHandle FindOrCreateRuntimeReference()
         {
-            var mscorlibRef = FindMscorlibReference();
+            var runtimeRef = FindRuntimeReference();
 
-            if (!IsNil(mscorlibRef))
-                return mscorlibRef;
+            if (!IsNil(runtimeRef))
+                return runtimeRef;
+            
+            // For now always creating ref to mscorlib
+            // TODO: try to detect which runtime should be referenced
 
-            mscorlibRef = _builder.AddAssemblyReference(
+            runtimeRef = _builder.AddAssemblyReference(
                 _builder.GetOrAddString("mscorlib"),
                 new Version(4, 0, 0, 0),
                 default, _builder.GetOrAddBlob(MscorlibPublicKeyBlob),
                 default, default);
                 
-            Trace?.Invoke($"Created mscorlib assembly reference {RowId(mscorlibRef)}");
+            Trace?.Invoke($"Created mscorlib assembly reference {RowId(runtimeRef)}");
 
-            return mscorlibRef;
+            return runtimeRef;
         }
     }
 }
