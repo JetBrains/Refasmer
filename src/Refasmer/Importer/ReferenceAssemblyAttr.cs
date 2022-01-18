@@ -45,7 +45,6 @@ namespace JetBrains.Refasmer
             if (!IsNil(objectHandle))
             {
                 Trace?.Invoke($"Found System::Object type {_reader.ToString(objectHandle)}");
-
                 objectHandle = Import(objectHandle);
                     
                 _builder.AddTypeDefinition(TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.NotPublic,
@@ -75,15 +74,18 @@ namespace JetBrains.Refasmer
 
             if (!IsNil(ctorHandle))
             {
-                Trace?.Invoke($"Found attribute constructor with void signature {_reader.ToString(ctorHandle)}");                
+                Trace?.Invoke($"Found {AttributeNames.ReferenceAssembly} constructor with void signature {_reader.ToString(ctorHandle)}");                
                 return Import(ctorHandle);
             }
 
-            var mscorlibRef = FindMscorlibReference();
+            Trace?.Invoke($"Not found {AttributeNames.ReferenceAssembly} constructor");                
+            var runtimeRef = FindRuntimeReference();
 
-            if (!IsNil(mscorlibRef))
+            if (!IsNil(runtimeRef))
             {
-                var referenceAssemblyAttrTypeRef = _builder.AddTypeReference(mscorlibRef,
+                Trace?.Invoke($"Found runtime reference {_reader.ToString(runtimeRef)}");
+
+                var referenceAssemblyAttrTypeRef = _builder.AddTypeReference(runtimeRef,
                     _builder.GetOrAddString("System.Runtime.CompilerServices"),
                     _builder.GetOrAddString("ReferenceAssemblyAttribute"));
 
@@ -99,6 +101,7 @@ namespace JetBrains.Refasmer
 
                 return ctorHandle;
             }
+            Trace?.Invoke($"Not found runtime reference");
 
             return CreateCustomReferenceAssemblyAttributeCtor();
         }

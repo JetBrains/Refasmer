@@ -66,13 +66,25 @@ namespace JetBrains.Refasmer
             _reader.AssemblyReferences
                 .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == "mscorlib");
 
+        private AssemblyReferenceHandle FindSystemRuntimeReference() =>
+            _reader.AssemblyReferences
+                .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == "System.Runtime");
+
+        private AssemblyReferenceHandle FindRuntimeReference()
+        {
+            var result = FindMscorlibReference();
+            if (!IsNil(result))
+                return result;
+            return FindSystemRuntimeReference();
+        }
+        
         private AssemblyReferenceHandle FindOrCreateMscorlibReference()
         {
             var mscorlibRef = FindMscorlibReference();
 
-            if (!IsNil(mscorlibRef)) 
+            if (!IsNil(mscorlibRef))
                 return mscorlibRef;
-            
+
             mscorlibRef = _builder.AddAssemblyReference(
                 _builder.GetOrAddString("mscorlib"),
                 new Version(4, 0, 0, 0),
