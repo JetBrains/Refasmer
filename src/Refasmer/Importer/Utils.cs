@@ -62,20 +62,20 @@ namespace JetBrains.Refasmer
 
         private static readonly byte[] MscorlibPublicKeyBlob = { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 };
 
-        private AssemblyReferenceHandle FindMscorlibReference() =>
-            _reader.AssemblyReferences
-                .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == "mscorlib");
-
-        private AssemblyReferenceHandle FindSystemRuntimeReference() =>
-            _reader.AssemblyReferences
-                .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == "System.Runtime");
-
+        private static readonly string[] RuntimeNames = { "mscorlib", "System.Runtime", "System.Private.CoreLib", "netstandard" };
+        
         private AssemblyReferenceHandle FindRuntimeReference()
         {
-            var result = FindMscorlibReference();
-            if (!IsNil(result))
-                return result;
-            return FindSystemRuntimeReference();
+            foreach (var runtimeName in RuntimeNames)
+            {
+                var runtimeRef = _reader.AssemblyReferences
+                    .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == runtimeName);
+
+                if (!IsNil(runtimeRef))
+                    return runtimeRef;
+            }
+
+            return default;
         }
         
         private AssemblyReferenceHandle FindOrCreateRuntimeReference()
