@@ -435,7 +435,7 @@ namespace JetBrains.Refasmer
                 else if (_reader.GetString(src.Namespace) == FullNames.CodeAnalysis &&
                          _reader.GetFullname(src.BaseType) == FullNames.Attribute)
                 {
-                    Trace?.Invoke($"CodeAnalysisNamespace attribute found {_reader.ToString(srcHandle)}");
+                    Trace?.Invoke($"CodeAnalysis attribute found {_reader.ToString(srcHandle)}");
                     shouldImport = true;
                 }
                 else
