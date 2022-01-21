@@ -7,8 +7,7 @@ namespace JetBrains.Refasmer
     {
         private EntityHandle _notImplementedStringCtor;
 
-        private const string NotImplementedExceptionName = "System::NotImplementedException";
-
+        
         private static bool CheckNotImplementedCtorSignature( BlobReader blobReader )
         {
             var header = blobReader.ReadSignatureHeader();
@@ -39,7 +38,7 @@ namespace JetBrains.Refasmer
         
         private EntityHandle FindOrCreateNotImplementedStringCtor()
         {
-            var ctorHandle = FindMethod(NotImplementedExceptionName, ".ctor", CheckNotImplementedCtorSignature);
+            var ctorHandle = FindMethod(FullNames.NotImplementedException, ".ctor", CheckNotImplementedCtorSignature);
             
             if (!IsNil(ctorHandle))
             {

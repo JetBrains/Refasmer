@@ -36,11 +36,11 @@ namespace JetBrains.Refasmer
                 
             if (IsNil(objectHandle))
                 objectHandle = _reader.TypeReferences
-                    .FirstOrDefault(h => _reader.GetFullname(h) == "System::Object");
+                    .FirstOrDefault(h => _reader.GetFullname(h) == FullNames.Object);
 
             if (IsNil(objectHandle))
                 objectHandle = _reader.TypeDefinitions
-                    .FirstOrDefault(h => _reader.GetFullname(h) == "System::Object");
+                    .FirstOrDefault(h => _reader.GetFullname(h) == FullNames.Object);
 
             if (!IsNil(objectHandle))
             {
@@ -48,7 +48,7 @@ namespace JetBrains.Refasmer
                 objectHandle = Import(objectHandle);
                     
                 _builder.AddTypeDefinition(TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.NotPublic,
-                    _builder.GetOrAddString("System.Runtime.CompilerServices"),
+                    _builder.GetOrAddString(FullNames.CompilerServices),
                     _builder.GetOrAddString("ReferenceAssemblyAttribute"),
                     objectHandle, NextFieldHandle(), NextMethodHandle());
 
@@ -70,15 +70,15 @@ namespace JetBrains.Refasmer
 
         private EntityHandle FindOrCreateReferenceAssemblyAttributeCtor()
         {
-            var ctorHandle = FindMethod(AttributeNames.ReferenceAssembly, ".ctor", CheckRefAsmAttrCtorSignature);
+            var ctorHandle = FindMethod(FullNames.ReferenceAssembly, ".ctor", CheckRefAsmAttrCtorSignature);
 
             if (!IsNil(ctorHandle))
             {
-                Trace?.Invoke($"Found {AttributeNames.ReferenceAssembly} constructor with void signature {_reader.ToString(ctorHandle)}");                
+                Trace?.Invoke($"Found {FullNames.ReferenceAssembly} constructor with void signature {_reader.ToString(ctorHandle)}");                
                 return Import(ctorHandle);
             }
 
-            Trace?.Invoke($"Not found {AttributeNames.ReferenceAssembly} constructor");                
+            Trace?.Invoke($"Not found {FullNames.ReferenceAssembly} constructor");                
             var runtimeRef = FindRuntimeReference();
 
             if (!IsNil(runtimeRef))
@@ -86,7 +86,7 @@ namespace JetBrains.Refasmer
                 Trace?.Invoke($"Found runtime reference {_reader.ToString(runtimeRef)}");
 
                 var referenceAssemblyAttrTypeRef = _builder.AddTypeReference(runtimeRef,
-                    _builder.GetOrAddString("System.Runtime.CompilerServices"),
+                    _builder.GetOrAddString(FullNames.CompilerServices),
                     _builder.GetOrAddString("ReferenceAssemblyAttribute"));
 
                 var ctor = new BlobBuilder();

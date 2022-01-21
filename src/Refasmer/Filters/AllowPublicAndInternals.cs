@@ -12,7 +12,7 @@ namespace JetBrains.Refasmer.Filters
             switch (type.Attributes & TypeAttributes.VisibilityMask)
             {
                 case TypeAttributes.NotPublic:
-                    return !_attrChecker.HasAttribute(reader, type.GetCustomAttributes(), AttributeNames.CompilerGenerated);
+                    return !_attrChecker.HasAttribute(reader, type.GetCustomAttributes(), FullNames.CompilerGenerated);
                 case TypeAttributes.Public:
                     return true;
                 case TypeAttributes.NestedPublic:
@@ -35,7 +35,7 @@ namespace JetBrains.Refasmer.Filters
                 case MethodAttributes.Assembly:
                     if ((method.Attributes & MethodAttributes.SpecialName) != 0)
                         return true;
-                    return !_attrChecker.HasAttribute(reader, method, AttributeNames.CompilerGenerated);
+                    return !_attrChecker.HasAttribute(reader, method, FullNames.CompilerGenerated);
 
                 case MethodAttributes.Public:
                 case MethodAttributes.FamORAssem:
@@ -54,7 +54,7 @@ namespace JetBrains.Refasmer.Filters
             switch (field.Attributes & FieldAttributes.FieldAccessMask)
             {
                 case FieldAttributes.Assembly:
-                    return !_attrChecker.HasAttribute(reader, field, AttributeNames.CompilerGenerated);
+                    return !_attrChecker.HasAttribute(reader, field, FullNames.CompilerGenerated);
                 case FieldAttributes.Public:
                 case FieldAttributes.FamORAssem:
                     return true;

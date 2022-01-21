@@ -370,14 +370,14 @@ namespace JetBrains.Refasmer
                 .Select(_reader.GetCustomAttribute)
                 .Select(_reader.GetCustomAttrClass)
                 .Select(_reader.GetFullname)
-                .Any(name => name == AttributeNames.InternalsVisibleTo);
+                .Any(name => name == FullNames.InternalsVisibleTo);
 
         public bool IsReferenceAssembly() =>
             _reader.IsAssembly && _reader.GetAssemblyDefinition().GetCustomAttributes()
                 .Select(_reader.GetCustomAttribute)
                 .Select(_reader.GetCustomAttrClass)
                 .Select(_reader.GetFullname)
-                .Any(name => name == AttributeNames.ReferenceAssembly);
+                .Any(name => name == FullNames.ReferenceAssembly);
 
         public ReservedBlob<GuidHandle> Import()
         {
@@ -420,10 +420,22 @@ namespace JetBrains.Refasmer
                 {
                     shouldImport = true;
                 }
-                else if (checker.HasAttribute(_reader, src, AttributeNames.Embedded) &&
-                    checker.HasAttribute(_reader, src, AttributeNames.CompilerGenerated))
+                else if (checker.HasAttribute(_reader, src, FullNames.Embedded) &&
+                    checker.HasAttribute(_reader, src, FullNames.CompilerGenerated))
                 {
                     Trace?.Invoke($"Embedded type found {_reader.ToString(srcHandle)}");
+                    shouldImport = true;
+                }
+                else if (_reader.GetString(src.Namespace) == FullNames.CompilerServices &&
+                         _reader.GetFullname(src.BaseType) == FullNames.Attribute)
+                {
+                    Trace?.Invoke($"CompilerServices attribute found {_reader.ToString(srcHandle)}");
+                    shouldImport = true;
+                }
+                else if (_reader.GetString(src.Namespace) == FullNames.CodeAnalysis &&
+                         _reader.GetFullname(src.BaseType) == FullNames.Attribute)
+                {
+                    Trace?.Invoke($"CodeAnalysisNamespace attribute found {_reader.ToString(srcHandle)}");
                     shouldImport = true;
                 }
                 else
