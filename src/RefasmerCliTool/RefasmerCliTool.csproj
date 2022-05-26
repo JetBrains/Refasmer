@@ -4,6 +4,7 @@
         <OutputType>Exe</OutputType>
         <RootNamespace>JetBrains.Refasmer.CliTool</RootNamespace>
         <TargetFrameworks>net5.0;net6.0;netcoreapp3.1</TargetFrameworks>
+        <RollForward>Major</RollForward>
     </PropertyGroup>
     <PropertyGroup>
         <PackageId>JetBrains.Refasmer.CliTool</PackageId>
