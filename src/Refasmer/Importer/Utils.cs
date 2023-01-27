@@ -69,7 +69,9 @@ namespace JetBrains.Refasmer
             foreach (var runtimeName in RuntimeNames)
             {
                 var runtimeRef = _reader.AssemblyReferences
-                    .SingleOrDefault(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == runtimeName);
+                    .Where(r => _reader.GetString(_reader.GetAssemblyReference(r).Name) == runtimeName)
+                    .OrderByDescending(r => _reader.GetAssemblyReference(r).Version)
+                    .FirstOrDefault();
 
                 if (!IsNil(runtimeRef))
                     return runtimeRef;
