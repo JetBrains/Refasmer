@@ -21,10 +21,12 @@
         <PackageVersion>1.0$(VERSION_POSTFIX)</PackageVersion>
         <PackageLicense>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicense>
         <PackageIcon>icon.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="2.10.0" />
         <PackageReference Include="System.Reflection.Metadata" Version="1.7.0" />
         <None Include="icon.png" Pack="true" PackagePath="icon.png" />
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>

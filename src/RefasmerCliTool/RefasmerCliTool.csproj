@@ -22,11 +22,13 @@
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
         <PackageIcon>icon.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RefasmerExe\RefasmerExe.csproj" />
-      <None Include="..\Refasmer\icon.png" Pack="true" PackagePath="" />
+        <ProjectReference Include="..\RefasmerExe\RefasmerExe.csproj"/>
+        <None Include="..\Refasmer\icon.png" Pack="true" PackagePath=""/>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>
