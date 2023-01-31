@@ -7,6 +7,13 @@ Can be used as library (Refasmer.dll).
 You could download refasmer from GitHub: https://github.com/JetBrains/Refasmer/releases or install as .NET Tool:
 ```dotnet tool install -g JetBrains.Refasmer.CliTool```
 
+### NuGet packages
+
+| Package                        | Version                                                             |
+|--------------------------------|---------------------------------------------------------------------|
+| **JetBrains.Refasmer**         | ![Nuget](https://img.shields.io/nuget/v/JetBrains.Refasmer)         |
+| **JetBrains.Refasmer.CliTool** | ![Nuget](https://img.shields.io/nuget/v/JetBrains.Refasmer.CliTool) |
+
 ## Usage:
 ```
 refasmer [options] <dll> [<dll> ...]
