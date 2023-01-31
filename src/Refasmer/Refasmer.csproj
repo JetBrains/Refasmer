@@ -11,17 +11,7 @@
     </PropertyGroup>
     <PropertyGroup>
         <PackageId>JetBrains.Refasmer</PackageId>
-        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <Title>Refasmer</Title>
-        <Authors>JetBrains</Authors>
-        <Description>JetBrains :: Refasmer — strip assembly to public API</Description>
-        <Copyright>Copyright © JetBrains 2020</Copyright>
-        <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/JetBrains/Refasmer</RepositoryUrl>
-        <PackageVersion>1.0$(VERSION_POSTFIX)</PackageVersion>
-        <PackageLicense>https://github.com/JetBrains/Refasmer/blob/master/LICENSE</PackageLicense>
-        <PackageIcon>icon.png</PackageIcon>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="2.10.0" />

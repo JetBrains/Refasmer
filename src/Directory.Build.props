@@ -1,0 +1,15 @@
+﻿<Project>
+    <PropertyGroup Label="Packaging">
+        <PackageVersion>1.0$(VERSION_POSTFIX)</PackageVersion>
+        <Copyright>Copyright © JetBrains 2023</Copyright>
+
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <Authors>JetBrains</Authors>
+        <Description>JetBrains :: Refasmer — strip assembly to public API</Description>
+        <PackageProjectUrl>https://github.com/JetBrains/Refasmer</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/JetBrains/Refasmer</RepositoryUrl>
+        <PackageLicense>https://github.com/JetBrains/Refasmer/blob/HEAD/LICENSE</PackageLicense>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+</Project>
