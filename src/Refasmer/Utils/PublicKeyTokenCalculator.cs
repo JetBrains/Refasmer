@@ -7,7 +7,7 @@ namespace JetBrains.Refasmer
     {
         public static byte[] CalculatePublicKeyToken( byte[] publicKey )
         {
-            var sha1Algo = new SHA1Managed();
+            using var sha1Algo = SHA1.Create();
             var hash = sha1Algo.ComputeHash(publicKey);
             
             var publicKeyToken = new byte [8];
