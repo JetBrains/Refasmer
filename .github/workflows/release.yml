@@ -14,7 +14,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 7.0.x
 
     - name: Install dependencies
       working-directory: src
@@ -40,6 +40,10 @@ jobs:
       run: dotnet publish --framework net6.0 --configuration Release --no-restore 
       working-directory: src/RefasmerExe
 
+    - name: Publish net7.0
+      run: dotnet publish --framework net7.0 --configuration Release --no-restore 
+      working-directory: src/RefasmerExe
+
     - name: Zip net461
       run: zip Refasmer.net461.1.0.${{ github.run_number }}.zip *
       working-directory: src/RefasmerExe/bin/Release/net461
@@ -55,6 +59,10 @@ jobs:
     - name: Zip net6.0
       run: zip Refasmer.net60.1.0.${{ github.run_number }}.zip *
       working-directory: src/RefasmerExe/bin/Release/net6.0/publish
+
+    - name: Zip net7.0
+      run: zip Refasmer.net70.1.0.${{ github.run_number }}.zip *
+      working-directory: src/RefasmerExe/bin/Release/net7.0/publish
 
     - name: Create Release
       id: create_release
@@ -115,6 +123,16 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
         asset_path: src/RefasmerExe/bin/Release/net6.0/publish/Refasmer.net60.1.0.${{ github.run_number }}.zip
         asset_name: Refasmer.net60.1.0.${{ github.run_number }}.zip
+        asset_content_type: application/zip
+
+    - name: Upload zip net7.0
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: src/RefasmerExe/bin/Release/net7.0/publish/Refasmer.net70.1.0.${{ github.run_number }}.zip
+        asset_name: Refasmer.net70.1.0.${{ github.run_number }}.zip
         asset_content_type: application/zip
 
     - name: Upload cli tool
