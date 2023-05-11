@@ -3,7 +3,7 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <RootNamespace>JetBrains.Refasmer</RootNamespace>
-        <TargetFrameworks>net461;net5.0;net6.0;netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks>net5.0;net6.0;netcoreapp3.1;net461;net7.0</TargetFrameworks>
         <LangVersion>Latest</LangVersion>
     </PropertyGroup>
 
@@ -13,7 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="6.0.0" />
-      <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net461" Version="1.0.2">
+      <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net461" Version="1.0.3">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
