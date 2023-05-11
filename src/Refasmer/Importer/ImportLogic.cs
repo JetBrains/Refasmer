@@ -44,11 +44,17 @@ namespace JetBrains.Refasmer
 
             using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
+            var isValueType = _reader.GetFullname(src.BaseType) == "System::ValueType";
+
+            if (isValueType)
+                Trace?.Invoke($"{_reader.ToString(src)} is ValueType, all fields should be imported");
+            
+            
             foreach (var srcFieldHandle in src.GetFields())
             {
                 var srcField = _reader.GetFieldDefinition(srcFieldHandle);
 
-                if (Filter?.AllowImport(srcField, _reader) == false)
+                if (!isValueType && Filter?.AllowImport(srcField, _reader) == false)
                 {
                     Trace?.Invoke($"Not imported {_reader.ToString(srcField)}");
                     continue;
