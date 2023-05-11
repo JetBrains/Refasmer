@@ -157,6 +157,7 @@ namespace JetBrains.Refasmer
 
                 case (int)SignatureTypeCode.FunctionPointer:
                     var header = blobReader.ReadSignatureHeader();
+                    blobBuilder.WriteByte(header.RawValue);
                     ImportMethodSignature(header, ref blobReader, blobBuilder);
                     break;
 
