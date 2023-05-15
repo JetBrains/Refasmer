@@ -9,10 +9,10 @@ You could download refasmer from GitHub: https://github.com/JetBrains/Refasmer/r
 
 ### NuGet packages
 
-| Package                        | Version                                                             |
-|--------------------------------|---------------------------------------------------------------------|
-| **JetBrains.Refasmer**         | ![Nuget](https://img.shields.io/nuget/v/JetBrains.Refasmer)         |
-| **JetBrains.Refasmer.CliTool** | ![Nuget](https://img.shields.io/nuget/v/JetBrains.Refasmer.CliTool) |
+| Package                        | Version                                                                                                                          |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| **JetBrains.Refasmer**         | [![Nuget](https://img.shields.io/nuget/v/JetBrains.Refasmer)](https://www.nuget.org/packages/JetBrains.Refasmer)                 |
+| **JetBrains.Refasmer.CliTool** | [![Nuget](https://img.shields.io/nuget/v/JetBrains.Refasmer.CliTool)](https://www.nuget.org/packages/JetBrains.Refasmer.CliTool) |
 
 ## Usage:
 ```
