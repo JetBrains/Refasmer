@@ -1,4 +1,4 @@
-# Refasmer
+# Refasmer [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
 Simple tool to make reference assembly. Strips method bodies, private class fields etc. Also can generate xml files like FrameworkList.xml.
 Can be used as library (Refasmer.dll).
