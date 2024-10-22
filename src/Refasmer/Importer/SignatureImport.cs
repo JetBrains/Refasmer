@@ -19,71 +19,40 @@ namespace JetBrains.Refasmer
 
         private BlobHandle ImportTypeSignature( BlobHandle srcHandle )
         {
-            try
-            {
-                var blobReader = _reader.GetBlobReader(srcHandle);
-                var blobBuilder = new BlobBuilder(blobReader.Length);
+            var blobReader = _reader.GetBlobReader(srcHandle);
+            var blobBuilder = new BlobBuilder(blobReader.Length);
 
-                ImportTypeSignature(ref blobReader, blobBuilder);
-                return _builder.GetOrAddBlob(blobBuilder);
-            }
-            catch (UnknownTypeInSignature e)
-            {
-                if (e.Handle.Kind != HandleKind.TypeDefinition)
-                    throw;
-
-                var typeDef = _reader.GetTypeDefinition((TypeDefinitionHandle) e.Handle);
-
-                if (Filter?.AllowImport(typeDef, _reader) == true)
-                    throw;
-
-            }
-            return default;
+            ImportTypeSignature(ref blobReader, blobBuilder);
+            return _builder.GetOrAddBlob(blobBuilder);
         }
 
         private BlobHandle ImportSignatureWithHeader( BlobHandle srcHandle )
         {
-            try
+            var blobReader = _reader.GetBlobReader(srcHandle);
+            var blobBuilder = new BlobBuilder(blobReader.Length);
+            
+            var header = blobReader.ReadSignatureHeader();
+            blobBuilder.WriteByte(header.RawValue);
+
+            switch (header.Kind)
             {
-                var blobReader = _reader.GetBlobReader(srcHandle);
-                var blobBuilder = new BlobBuilder(blobReader.Length);
-                
-                var header = blobReader.ReadSignatureHeader();
-                blobBuilder.WriteByte(header.RawValue);
-
-                switch (header.Kind)
-                {
-                    case SignatureKind.Method:
-                    case SignatureKind.Property:
-                        ImportMethodSignature(header, ref blobReader, blobBuilder);
-                        break;
-                    case SignatureKind.Field:
-                        ImportFieldSignature(ref blobReader, blobBuilder);
-                        break;
-                    case SignatureKind.LocalVariables:
-                        ImportLocalSignature(ref blobReader, blobBuilder);
-                        break;
-                    case SignatureKind.MethodSpecification:
-                        ImportMethodSpecSignature(ref blobReader, blobBuilder);
-                        break;
-                    default:
-                        throw new BadImageFormatException();
-                }
-                return _builder.GetOrAddBlob(blobBuilder);
+                case SignatureKind.Method:
+                case SignatureKind.Property:
+                    ImportMethodSignature(header, ref blobReader, blobBuilder);
+                    break;
+                case SignatureKind.Field:
+                    ImportFieldSignature(ref blobReader, blobBuilder);
+                    break;
+                case SignatureKind.LocalVariables:
+                    ImportLocalSignature(ref blobReader, blobBuilder);
+                    break;
+                case SignatureKind.MethodSpecification:
+                    ImportMethodSpecSignature(ref blobReader, blobBuilder);
+                    break;
+                default:
+                    throw new BadImageFormatException();
             }
-            catch (UnknownTypeInSignature e)
-            {
-                if (e.Handle.Kind != HandleKind.TypeDefinition)
-                    throw;
-
-                var typeDef = _reader.GetTypeDefinition((TypeDefinitionHandle) e.Handle);
-
-                if (Filter?.AllowImport(typeDef, _reader) == true)
-                    throw;
-
-            }
-            return default;
-
+            return _builder.GetOrAddBlob(blobBuilder);
         }
 
         private void ImportMethodSignature( SignatureHeader header, ref BlobReader blobReader, BlobBuilder blobBuilder )
