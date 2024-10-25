@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RefasmerCliTool", "Refasmer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RefasmerTestAssembly", "RefasmerTestAssembly\RefasmerTestAssembly.csproj", "{B23C2DDC-7FEC-4C37-ABBF-9C16AEABF911}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Refasmer.Tests", "..\tests\Refasmer.Tests\Refasmer.Tests.csproj", "{58090E13-68B1-4D20-B316-B9A9154E6AE2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,5 +36,9 @@ Global
 		{B23C2DDC-7FEC-4C37-ABBF-9C16AEABF911}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B23C2DDC-7FEC-4C37-ABBF-9C16AEABF911}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B23C2DDC-7FEC-4C37-ABBF-9C16AEABF911}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58090E13-68B1-4D20-B316-B9A9154E6AE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58090E13-68B1-4D20-B316-B9A9154E6AE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58090E13-68B1-4D20-B316-B9A9154E6AE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58090E13-68B1-4D20-B316-B9A9154E6AE2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

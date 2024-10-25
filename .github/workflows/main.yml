@@ -1,4 +1,4 @@
-name: Build
+name: Main
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  main:
 
     runs-on: ubuntu-latest
 
@@ -24,6 +24,10 @@ jobs:
 
     - name: Build
       run: dotnet build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
+      working-directory: src
+      
+    - name: Test
+      run: dotnet test --configuration Release --no-build
       working-directory: src
 
     - name: Publish net461
