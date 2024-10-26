@@ -57,3 +57,10 @@ will generate FrameworkList for all passed DLL files with root tag
 ## Links
 
 * [Reference assembly specs](https://docs.microsoft.com/en-us/dotnet/standard/assembly/reference-assemblies)
+
+## Documentation
+- [Contributor Guide][docs.contributing]
+- [License (Apache-2.0)][docs.license]
+
+[docs.contributing]: CONTRIBUTING.md
+[docs.license]: LICENSE

@@ -1,0 +1,5 @@
+﻿type: RefasmerTestAssembly.PublicStructWithPrivateFields
+fields:
+- PrivateInt: System.Int32
+- PrivateInt2: System.Int32
+- PublicInt: System.Int32
