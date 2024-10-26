@@ -5,11 +5,34 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using JetBrains.Refasmer.Filters;
 
 namespace JetBrains.Refasmer
 {
     public partial class MetadataImporter
     {
+        private bool AllowImportType( EntityHandle typeHandle )
+        {
+            if (typeHandle.IsNil)
+                return false;
+                
+            if (Filter == null)
+                return true;
+            
+            switch (typeHandle.Kind)
+            {
+                case HandleKind.TypeDefinition:
+                    return Filter.AllowImport(_reader.GetTypeDefinition((TypeDefinitionHandle) typeHandle), _reader);
+                case HandleKind.TypeReference:
+                    return true;
+                case HandleKind.TypeSpecification:
+                    return AllowImportType(_reader.GetGenericType((TypeSpecificationHandle)typeHandle));
+                    
+                default:
+                    throw new ArgumentOutOfRangeException(nameof (typeHandle));
+            }
+        }
+        
         private TypeDefinitionHandle ImportTypeDefinitionSkeleton( TypeDefinitionHandle srcHandle )
         {
             var src = _reader.GetTypeDefinition(srcHandle);
@@ -45,6 +68,7 @@ namespace JetBrains.Refasmer
 
             var implementations = src.GetMethodImplementations()
                 .Select(_reader.GetMethodImplementation)
+                .Where(mi => AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
                 .Select(mi => (MethodDefinitionHandle)mi.MethodBody)
                 .ToImmutableHashSet();
 
@@ -389,9 +413,50 @@ namespace JetBrains.Refasmer
             var index = 1;
             Debug?.Invoke("Preparing type list for import");
 
+            var checker = new CachedAttributeChecker();
+
             foreach (var srcHandle in _reader.TypeDefinitions)
             {
-                _typeDefinitionCache[srcHandle] = MetadataTokens.TypeDefinitionHandle(index++);
+                bool shouldImport;
+
+                var src = _reader.GetTypeDefinition(srcHandle);
+
+                // Special <Module> type 
+                if (srcHandle.GetHashCode() == 1 && _reader.GetString(src.Name) == "<Module>")
+                {
+                    shouldImport = true;
+                }
+                else if (checker.HasAttribute(_reader, src, FullNames.Embedded) &&
+                    checker.HasAttribute(_reader, src, FullNames.CompilerGenerated))
+                {
+                    Trace?.Invoke($"Embedded type found {_reader.ToString(srcHandle)}");
+                    shouldImport = true;
+                }
+                else if (_reader.GetString(src.Namespace) == FullNames.CompilerServices &&
+                         _reader.GetFullname(src.BaseType) == FullNames.Attribute)
+                {
+                    Trace?.Invoke($"CompilerServices attribute found {_reader.ToString(srcHandle)}");
+                    shouldImport = true;
+                }
+                else if (_reader.GetString(src.Namespace) == FullNames.CodeAnalysis &&
+                         _reader.GetFullname(src.BaseType) == FullNames.Attribute)
+                {
+                    Trace?.Invoke($"CodeAnalysis attribute found {_reader.ToString(srcHandle)}");
+                    shouldImport = true;
+                }
+                else
+                {
+                    shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false;
+                }
+
+                if (shouldImport)
+                {
+                    _typeDefinitionCache[srcHandle] = MetadataTokens.TypeDefinitionHandle(index++);
+                }
+                else
+                {
+                    Trace?.Invoke($"Type filtered and will not be imported {_reader.ToString(srcHandle)}");
+                }
             }
 
             Debug?.Invoke("Importing type definitions");

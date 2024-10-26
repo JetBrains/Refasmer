@@ -7,12 +7,9 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
-
 using JetBrains.Refasmer.Filters;
-
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
-
 using Mono.Options;
 
 namespace JetBrains.Refasmer
@@ -34,6 +31,7 @@ namespace JetBrains.Refasmer
         private static bool _public;
         private static bool _internals;
         private static bool _all;
+        private static bool _omitNonApiTypes;
 
         private static bool _makeMock;
         private static bool _omitReferenceAssemblyAttr;
@@ -89,6 +87,7 @@ namespace JetBrains.Refasmer
                 { "p|public", "drop non-public types even with InternalsVisibleTo", v => _public = v != null },
                 { "i|internals", "import public and internal types", v => _internals = v != null },
                 { "all", "ignore visibility and import all", v => _all = v != null },
+                { "omit-non-api-types", "omit private types not participating in the public API (will transform the private fields of value types to preserve semantics but omit types when possible)", x => _omitNonApiTypes = x != null },
                 
                 { "m|mock", "make mock assembly instead of reference assembly", p => _makeMock = p != null },
                 { "n|noattr", "omit reference assembly attribute", p => _omitReferenceAssemblyAttr = p != null },
@@ -256,13 +255,19 @@ namespace JetBrains.Refasmer
             IImportFilter filter = null;
 
             if (_public)
-                filter = new AllowPublic();
+                filter = new AllowPublic(_omitNonApiTypes);
             else if (_internals)
-                filter = new AllowPublicAndInternals();
+                filter = new AllowPublicAndInternals(_omitNonApiTypes);
             else if (_all)
                 filter = new AllowAll();
             
             byte[] result;
+            if (filter?.RequiresPreprocessing == true)
+            {
+                using var peReader = ReadAssembly(input.Path, out var metaReader);
+                filter.PreprocessAssembly(metaReader);
+            }
+            
             using (var peReader = ReadAssembly(input.Path, out var metaReader))
                 result = MetadataImporter.MakeRefasm(metaReader, peReader, _logger, filter, _makeMock, _omitReferenceAssemblyAttr);
 

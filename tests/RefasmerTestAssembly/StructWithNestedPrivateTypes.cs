@@ -8,4 +8,14 @@ public struct StructWithNestedPrivateTypes
     }
     
     private NestedPrivateStruct PrivateField;
+    
+    private struct UnusedPrivateStruct
+    {
+        private int Field;
+    }
+
+    public struct UnusedPublicStruct
+    {
+        private int Field;
+    }
 }

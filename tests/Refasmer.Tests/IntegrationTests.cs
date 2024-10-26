@@ -10,6 +10,10 @@ public class IntegrationTests
     [TestCase("RefasmerTestAssembly.PublicStructWithPrivateFields")]
     [TestCase("RefasmerTestAssembly.UnsafeClassWithFunctionPointer")]
     [TestCase("RefasmerTestAssembly.StructWithNestedPrivateTypes")]
+    [TestCase("RefasmerTestAssembly.BlittableGraph")]
+    [TestCase("RefasmerTestAssembly.BlittableStructWithPrivateField")]
+    [TestCase("RefasmerTestAssembly.NonBlittableStructWithPrivateField")]
+    [TestCase("RefasmerTestAssembly.NonBlittableGraph")]
     public async Task CheckRefasmedType(string typeName)
     {
         var assemblyPath = await BuildTestAssembly();
