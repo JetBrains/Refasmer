@@ -19,7 +19,7 @@ public class IntegrationTests
     private static async Task<string> BuildTestAssembly()
     {
         var root = FindSourceRoot();
-        var testProject = Path.Combine(root, "src/RefasmerTestAssembly/RefasmerTestAssembly.csproj");
+        var testProject = Path.Combine(root, "tests/RefasmerTestAssembly/RefasmerTestAssembly.csproj");
         Console.WriteLine($"Building project {testProject}…");
         var result = await Command.Run("dotnet", "build", testProject, "--configuration", "Release").Task;
 
@@ -28,7 +28,7 @@ public class IntegrationTests
             Is.EqualTo(0),
             $"Failed to build test assembly, exit code {result.ExitCode}. StdOut:\n{result.StandardOutput}\nStdErr: {result.StandardError}");
         
-        return Path.Combine(root, "src/RefasmerTestAssembly/bin/Release/net6.0/RefasmerTestAssembly.dll");
+        return Path.Combine(root, "tests/RefasmerTestAssembly/bin/Release/net6.0/RefasmerTestAssembly.dll");
     }
     
     private static string FindSourceRoot()

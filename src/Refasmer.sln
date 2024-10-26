@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RefasmerExe", "RefasmerExe\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RefasmerCliTool", "RefasmerCliTool\RefasmerCliTool.csproj", "{955EAC57-AF1C-46F1-AF12-7B112E6BE1E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RefasmerTestAssembly", "RefasmerTestAssembly\RefasmerTestAssembly.csproj", "{B23C2DDC-7FEC-4C37-ABBF-9C16AEABF911}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RefasmerTestAssembly", "..\tests\RefasmerTestAssembly\RefasmerTestAssembly.csproj", "{B23C2DDC-7FEC-4C37-ABBF-9C16AEABF911}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Refasmer.Tests", "..\tests\Refasmer.Tests\Refasmer.Tests.csproj", "{58090E13-68B1-4D20-B316-B9A9154E6AE2}"
 EndProject
