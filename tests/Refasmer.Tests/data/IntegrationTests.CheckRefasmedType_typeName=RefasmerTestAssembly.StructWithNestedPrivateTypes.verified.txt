@@ -1,0 +1,7 @@
+﻿public type: RefasmerTestAssembly.StructWithNestedPrivateTypes
+fields:
+- PrivateField: RefasmerTestAssembly.StructWithNestedPrivateTypes/NestedPrivateStruct
+types:
+  private type: RefasmerTestAssembly.StructWithNestedPrivateTypes/NestedPrivateStruct
+  fields:
+  - Field: System.Int32
