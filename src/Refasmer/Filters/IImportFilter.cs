@@ -4,13 +4,20 @@ namespace JetBrains.Refasmer.Filters
 {
     public interface IImportFilter
     {
+        /// <summary>
+        /// Whether the <see cref="PreprocessAssembly"/> should be called before actual filtering happens.
+        /// </summary>
         bool RequiresPreprocessing { get; }
-        void Preprocess();
+        void PreprocessAssembly(MetadataReader assembly);
         
         bool AllowImport( TypeDefinition type, MetadataReader reader );
         bool AllowImport( MethodDefinition method, MetadataReader reader );
         bool AllowImport( FieldDefinition field, MetadataReader reader );
 
-        // TODO: others on demand
+        /// <summary>Allows this filter to completely substitute the processing of a value type field block.</summary>
+        /// <returns>
+        /// Whether the replacement happened. If <c>true</c>, then the fields won't be processed outside.
+        /// </returns>
+        bool ProcessValueTypeFields();
     }
 }

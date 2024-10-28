@@ -1,6 +1,6 @@
 namespace RefasmerTestAssembly;
 
-public struct BlittableStructWithNestedPrivateTypes
+public struct BlittableStructWithPrivateFields
 {
     private long x;
     private long y;

@@ -44,26 +44,32 @@ namespace JetBrains.Refasmer
 
             using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
-            var isValueType = _reader.GetFullname(src.BaseType) == "System::ValueType";
-
-            if (isValueType)
-                Trace?.Invoke($"{_reader.ToString(src)} is ValueType, all fields should be imported");
-            
-            
-            foreach (var srcFieldHandle in src.GetFields())
+            if (Filter?.ProcessValueTypeFields() == true)
             {
-                var srcField = _reader.GetFieldDefinition(srcFieldHandle);
+                Trace?.Invoke($"Field definitions for {_reader.ToString(src)} were substituted by the filter.");
+            }
+            else
+            {
+                var isValueType = _reader.GetFullname(src.BaseType) == "System::ValueType";
 
-                if (!isValueType && Filter?.AllowImport(srcField, _reader) == false)
+                if (isValueType)
+                    Trace?.Invoke($"{_reader.ToString(src)} is ValueType, all fields should be imported");
+                
+                foreach (var srcFieldHandle in src.GetFields())
                 {
-                    Trace?.Invoke($"Not imported {_reader.ToString(srcField)}");
-                    continue;
-                }
+                    var srcField = _reader.GetFieldDefinition(srcFieldHandle);
 
-                var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name),
-                    ImportSignatureWithHeader(srcField.Signature));
-                _fieldDefinitionCache.Add(srcFieldHandle, dstFieldHandle);
-                Trace?.Invoke($"Imported {_reader.ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
+                    if (!isValueType && Filter?.AllowImport(srcField, _reader) == false)
+                    {
+                        Trace?.Invoke($"Not imported {_reader.ToString(srcField)}");
+                        continue;
+                    }
+
+                    var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name),
+                        ImportSignatureWithHeader(srcField.Signature));
+                    _fieldDefinitionCache.Add(srcFieldHandle, dstFieldHandle);
+                    Trace?.Invoke($"Imported {_reader.ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
+                }
             }
 
             var implementations = src.GetMethodImplementations()

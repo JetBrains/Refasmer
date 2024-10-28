@@ -11,13 +11,29 @@ public class IntegrationTests
     [TestCase("RefasmerTestAssembly.UnsafeClassWithFunctionPointer")]
     [TestCase("RefasmerTestAssembly.StructWithNestedPrivateTypes")]
     [TestCase("RefasmerTestAssembly.BlittableGraph")]
-    [TestCase("RefasmerTestAssembly.BlittableStructWithPrivateField")]
+    [TestCase("RefasmerTestAssembly.BlittableStructWithPrivateFields")]
     [TestCase("RefasmerTestAssembly.NonBlittableStructWithPrivateField")]
     [TestCase("RefasmerTestAssembly.NonBlittableGraph")]
     public async Task CheckRefasmedType(string typeName)
     {
         var assemblyPath = await BuildTestAssembly();
         var resultAssembly = RefasmTestAssembly(assemblyPath);
+        await VerifyTypeContent(resultAssembly, typeName);
+    }
+    
+    [TestCase("RefasmerTestAssembly.PublicClassWithPrivateFields")]
+    [TestCase("RefasmerTestAssembly.PublicStructWithPrivateFields")]
+    [TestCase("RefasmerTestAssembly.UnsafeClassWithFunctionPointer")]
+    [TestCase("RefasmerTestAssembly.StructWithNestedPrivateTypes")]
+    [TestCase("RefasmerTestAssembly.BlittableGraph")]
+    [TestCase("RefasmerTestAssembly.BlittableStructWithPrivateFields")]
+    [TestCase("RefasmerTestAssembly.NonBlittableStructWithPrivateField")]
+    [TestCase("RefasmerTestAssembly.NonBlittableGraph")]
+
+    public async Task CheckRefasmedTypeOmitNonApi(string typeName)
+    {
+        var assemblyPath = await BuildTestAssembly();
+        var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiTypes: true);
         await VerifyTypeContent(resultAssembly, typeName);
     }
     
@@ -48,11 +64,25 @@ public class IntegrationTests
         throw new Exception("Cannot find source root.");
     }
 
-    private static string RefasmTestAssembly(string assemblyPath)
+    private static string RefasmTestAssembly(string assemblyPath, bool omitNonApiTypes = false)
     {
         var tempLocation = Path.GetTempFileName();
-        var exitCode = Program.Main(new[] { $"-v", $"--output={tempLocation}", assemblyPath });
-        Assert.That(exitCode, Is.EqualTo(0));
+        var args = new List<string>
+        {
+            "-v",
+            $"--output={tempLocation}"
+        };
+        if (omitNonApiTypes)
+        {
+            args.Add("--omit-non-api-types");
+        }
+        args.Add(assemblyPath);
+        using var collector = CollectConsoleOutput();
+        var exitCode = Program.Main(args.ToArray());
+        Assert.That(
+            exitCode,
+            Is.EqualTo(0), 
+            $"Refasmer returned exit code {exitCode}. StdOut:\n{collector.StdOut}\nStdErr: {collector.StdErr}");
 
         return tempLocation;
     }
@@ -70,4 +100,29 @@ public class IntegrationTests
         verifySettings.UseParameters(typeName);
         return Verify(printout, verifySettings);
     }
+
+    private class Outputs : IDisposable
+    {
+        public StringBuilder StdOut { get; } = new();
+        public StringBuilder StdErr { get; } = new();
+        
+        private readonly TextWriter _oldStdOut;
+        private readonly TextWriter _oldStdErr;
+        
+        public Outputs()
+        {
+            _oldStdOut = Console.Out;
+            _oldStdErr = Console.Error;
+            Console.SetOut(new StringWriter(StdOut));
+            Console.SetError(new StringWriter(StdErr));
+        }
+        
+        public void Dispose()
+        {
+            Console.SetError(_oldStdErr);
+            Console.SetOut(_oldStdOut);
+        }
+    }
+
+    private static Outputs CollectConsoleOutput() => new();
 }

@@ -3,12 +3,13 @@ using System.Reflection.Metadata;
 
 namespace JetBrains.Refasmer.Filters
 {
-    public class AllowPublicAndInternals: IImportFilter
+    public class AllowPublicAndInternals(bool omitNonApiTypes) : TypeFilterBase(omitNonApiTypes)
     {
         private readonly CachedAttributeChecker _attrChecker = new();
         
-        public virtual bool AllowImport( TypeDefinition type, MetadataReader reader )
+        public override bool AllowImport( TypeDefinition type, MetadataReader reader )
         {
+            if (RequireImport(type, reader)) return true;
             switch (type.Attributes & TypeAttributes.VisibilityMask)
             {
                 case TypeAttributes.NotPublic:
@@ -28,7 +29,7 @@ namespace JetBrains.Refasmer.Filters
             }
         }
         
-        public virtual bool AllowImport( MethodDefinition method, MetadataReader reader )
+        public override bool AllowImport( MethodDefinition method, MetadataReader reader )
         {
             switch (method.Attributes & MethodAttributes.MemberAccessMask)
             {
@@ -49,7 +50,7 @@ namespace JetBrains.Refasmer.Filters
             }
         }
 
-        public virtual bool AllowImport( FieldDefinition field, MetadataReader reader )
+        public override bool AllowImport( FieldDefinition field, MetadataReader reader )
         {
             switch (field.Attributes & FieldAttributes.FieldAccessMask)
             {

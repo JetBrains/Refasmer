@@ -28,8 +28,14 @@ namespace JetBrains.Refasmer
         }
 
 
-        public static byte[] MakeRefasm(MetadataReader metaReader, PEReader peReader, LoggerBase logger, IImportFilter filter = null, 
-            bool makeMock = false, bool omitReferenceAssemblyAttr = false )
+        public static byte[] MakeRefasm(
+            MetadataReader metaReader,
+            PEReader peReader,
+            LoggerBase logger,
+            IImportFilter filter,
+            bool omitNonApiTypes,
+            bool makeMock = false,
+            bool omitReferenceAssemblyAttr = false)
         {
             var metaBuilder = new MetadataBuilder();
             var ilStream = new BlobBuilder();
@@ -48,12 +54,12 @@ namespace JetBrains.Refasmer
             }
             else if (importer.IsInternalsVisible())
             {
-                importer.Filter = new AllowPublicAndInternals();
+                importer.Filter = new AllowPublicAndInternals(omitNonApiTypes);
                 logger.Info?.Invoke("InternalsVisibleTo attributes found, using AllowPublicAndInternals entity filter");
             }
             else
             {
-                importer.Filter = new AllowPublic();
+                importer.Filter = new AllowPublic(omitNonApiTypes);
                 logger.Info?.Invoke("Using AllowPublic entity filter");
             }
             
@@ -114,7 +120,7 @@ namespace JetBrains.Refasmer
             if (!metaReader.IsAssembly)
                 throw new Exception("File format is not supported"); 
             
-            var result = MakeRefasm(metaReader, peReader, logger, filter, makeMock);
+            var result = MakeRefasm(metaReader, peReader, logger, filter, omitNonApiTypes: false, makeMock);
 
             logger.Debug?.Invoke($"Writing result to {outputPath}");
             if (File.Exists(outputPath))
