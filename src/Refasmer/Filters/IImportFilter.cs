@@ -10,7 +10,7 @@ namespace JetBrains.Refasmer.Filters
         bool RequiresPreprocessing { get; }
         void PreprocessAssembly(MetadataReader assembly);
         
-        bool AllowImport( TypeDefinition type, MetadataReader reader );
+        bool AllowImport(TypeDefinition type, MetadataReader reader, CachedAttributeChecker attributeChecker);
         bool AllowImport( MethodDefinition method, MetadataReader reader );
         bool AllowImport( FieldDefinition field, MetadataReader reader );
 

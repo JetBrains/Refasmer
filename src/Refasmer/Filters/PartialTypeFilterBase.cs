@@ -2,7 +2,9 @@ using System.Reflection.Metadata;
 
 namespace JetBrains.Refasmer.Filters;
 
-public abstract class TypeFilterBase(bool omitNonApiTypes) : IImportFilter
+/// <summary>Base type for a filter that doesn't pass all types.</summary>
+/// <param name="omitNonApiTypes">Whether the non-API types should be hidden when possible.</param>
+public abstract class PartialTypeFilterBase(bool omitNonApiTypes) : IImportFilter
 {
     public bool RequiresPreprocessing => omitNonApiTypes;
 
@@ -15,7 +17,12 @@ public abstract class TypeFilterBase(bool omitNonApiTypes) : IImportFilter
         return false;
     }
 
-    public abstract bool AllowImport(TypeDefinition type, MetadataReader reader);
+    public bool AllowImport(TypeDefinition type, MetadataReader reader, CachedAttributeChecker attributeChecker)
+    {
+        var isCompilerGenerated = attributeChecker.HasAttribute(reader, type, FullNames.CompilerGenerated);
+        return !isCompilerGenerated;
+    }
+    
     public abstract bool AllowImport(MethodDefinition method, MetadataReader reader);
     public abstract bool AllowImport(FieldDefinition field, MetadataReader reader);
 

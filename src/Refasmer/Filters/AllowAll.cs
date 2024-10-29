@@ -9,7 +9,8 @@ namespace JetBrains.Refasmer.Filters
         public void PreprocessAssembly(MetadataReader assembly) =>
             throw new InvalidOperationException();
 
-        public virtual bool AllowImport( TypeDefinition declaringType, MetadataReader reader ) => true;
+        public virtual bool AllowImport(TypeDefinition declaringType, MetadataReader reader,
+            CachedAttributeChecker attributeChecker) => true;
         public virtual bool AllowImport( MethodDefinition method, MetadataReader reader ) => true;
         public virtual bool AllowImport( FieldDefinition field, MetadataReader reader ) => true;
 

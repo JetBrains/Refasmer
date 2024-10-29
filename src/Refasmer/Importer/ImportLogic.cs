@@ -22,7 +22,7 @@ namespace JetBrains.Refasmer
             switch (typeHandle.Kind)
             {
                 case HandleKind.TypeDefinition:
-                    return Filter.AllowImport(_reader.GetTypeDefinition((TypeDefinitionHandle) typeHandle), _reader);
+                    return true;
                 case HandleKind.TypeReference:
                     return true;
                 case HandleKind.TypeSpecification:
@@ -452,7 +452,7 @@ namespace JetBrains.Refasmer
                 }
                 else
                 {
-                    shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false;
+                    shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader, checker) != false;
                 }
 
                 if (shouldImport)

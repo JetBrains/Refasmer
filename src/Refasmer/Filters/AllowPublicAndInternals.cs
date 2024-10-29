@@ -3,31 +3,9 @@ using System.Reflection.Metadata;
 
 namespace JetBrains.Refasmer.Filters
 {
-    public class AllowPublicAndInternals(bool omitNonApiTypes) : TypeFilterBase(omitNonApiTypes)
+    public class AllowPublicAndInternals(bool omitNonApiTypes) : PartialTypeFilterBase(omitNonApiTypes)
     {
         private readonly CachedAttributeChecker _attrChecker = new();
-        
-        public override bool AllowImport( TypeDefinition type, MetadataReader reader )
-        {
-            if (RequireImport(type, reader)) return true;
-            switch (type.Attributes & TypeAttributes.VisibilityMask)
-            {
-                case TypeAttributes.NotPublic:
-                    return !_attrChecker.HasAttribute(reader, type.GetCustomAttributes(), FullNames.CompilerGenerated);
-                case TypeAttributes.Public:
-                    return true;
-                case TypeAttributes.NestedPublic:
-                case TypeAttributes.NestedAssembly:
-                case TypeAttributes.NestedFamORAssem:
-                    return AllowImport(reader.GetTypeDefinition(type.GetDeclaringType()), reader);
-                case TypeAttributes.NestedFamily:
-                case TypeAttributes.NestedFamANDAssem:
-                    var declaringType = reader.GetTypeDefinition(type.GetDeclaringType());
-                    return (declaringType.Attributes & TypeAttributes.Sealed) == 0 && AllowImport(declaringType, reader);
-                default:
-                    return false;
-            }
-        }
         
         public override bool AllowImport( MethodDefinition method, MetadataReader reader )
         {
