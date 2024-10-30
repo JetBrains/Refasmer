@@ -1,6 +1,6 @@
 namespace RefasmerTestAssembly;
 
-public struct NonBlittableStructWithNestedPrivateTypes
+public struct NonBlittableStructWithPrivateFields
 {
     private string x;
     private long y;

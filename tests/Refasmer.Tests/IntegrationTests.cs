@@ -12,7 +12,7 @@ public class IntegrationTests
     [TestCase("RefasmerTestAssembly.StructWithNestedPrivateTypes")]
     [TestCase("RefasmerTestAssembly.BlittableGraph")]
     [TestCase("RefasmerTestAssembly.BlittableStructWithPrivateFields")]
-    [TestCase("RefasmerTestAssembly.NonBlittableStructWithPrivateField")]
+    [TestCase("RefasmerTestAssembly.NonBlittableStructWithPrivateFields")]
     [TestCase("RefasmerTestAssembly.NonBlittableGraph")]
     public async Task CheckRefasmedType(string typeName)
     {
@@ -91,6 +91,8 @@ public class IntegrationTests
     {
         var assembly = AssemblyDefinition.ReadAssembly(assemblyPath);
         var type = assembly.MainModule.GetType(typeName);
+        Assert.That(assembly.MainModule.GetType(typeName), Is.Not.Null);
+        
         var printout = new StringBuilder();
         Printer.PrintType(type, printout);
 

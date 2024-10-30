@@ -1,0 +1,5 @@
+﻿public type: RefasmerTestAssembly.BlittableStructWithPrivateFields
+fields:
+- x: System.Int64
+- y: System.Int64
+- z: System.Int64

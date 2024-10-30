@@ -1,0 +1,11 @@
+﻿public type: RefasmerTestAssembly.NonBlittableGraph
+fields:
+- x: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType
+types:
+  private type: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType
+  fields:
+  - x: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType/NonBlittableType
+  types:
+    private type: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType/NonBlittableType
+    fields:
+    - x: System.String
