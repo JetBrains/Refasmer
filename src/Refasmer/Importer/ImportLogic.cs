@@ -44,33 +44,40 @@ namespace JetBrains.Refasmer
 
             using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
-            if (Filter?.ProcessValueTypeFields() == true)
-            {
-                Trace?.Invoke($"Field definitions for {_reader.ToString(src)} were substituted by the filter.");
-            }
+            var isValueType = _reader.GetFullname(src.BaseType) == "System::ValueType";
+            var forcePreservePrivateFields = isValueType && !Filter.OmitNonApiMembers;
+
+            List<FieldDefinition> importedFields = null;
+            List<FieldDefinition> skippedFields = null;
+            
+            if (forcePreservePrivateFields)
+                Trace?.Invoke($"{_reader.ToString(src)} is ValueType, all fields should be imported");
             else
             {
-                var isValueType = _reader.GetFullname(src.BaseType) == "System::ValueType";
-
-                if (isValueType)
-                    Trace?.Invoke($"{_reader.ToString(src)} is ValueType, all fields should be imported");
-                
-                foreach (var srcFieldHandle in src.GetFields())
-                {
-                    var srcField = _reader.GetFieldDefinition(srcFieldHandle);
-
-                    if (!isValueType && Filter?.AllowImport(srcField, _reader) == false)
-                    {
-                        Trace?.Invoke($"Not imported {_reader.ToString(srcField)}");
-                        continue;
-                    }
-
-                    var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name),
-                        ImportSignatureWithHeader(srcField.Signature));
-                    _fieldDefinitionCache.Add(srcFieldHandle, dstFieldHandle);
-                    Trace?.Invoke($"Imported {_reader.ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
-                }
+                importedFields = [];
+                skippedFields = [];                    
             }
+            
+            foreach (var srcFieldHandle in src.GetFields())
+            {
+                var srcField = _reader.GetFieldDefinition(srcFieldHandle);
+
+                if (!forcePreservePrivateFields && Filter?.AllowImport(srcField, _reader) == false)
+                {
+                    Trace?.Invoke($"Not imported {_reader.ToString(srcField)}");
+                    skippedFields?.Add(srcField);
+                    continue;
+                }
+
+                var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name),
+                    ImportSignatureWithHeader(srcField.Signature));
+                _fieldDefinitionCache.Add(srcFieldHandle, dstFieldHandle);
+                Trace?.Invoke($"Imported {_reader.ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
+                importedFields?.Add(srcField);
+            }
+
+            if (!forcePreservePrivateFields)
+                PostProcessSkippedValueTypeFields(skippedFields, importedFields);
 
             var implementations = src.GetMethodImplementations()
                 .Select(_reader.GetMethodImplementation)
@@ -452,7 +459,7 @@ namespace JetBrains.Refasmer
                 }
                 else
                 {
-                    shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader, checker) != false;
+                    shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false;
                 }
 
                 if (shouldImport)
@@ -535,5 +542,21 @@ namespace JetBrains.Refasmer
             return mvidBlob;
         }
 
+        /// <remarks>
+        /// The point of this method is to make a value type non-empty in case we've decided to skip all its fields.
+        /// </remarks>
+        private void PostProcessSkippedValueTypeFields(
+            List<FieldDefinition> skippedFields,
+            List<FieldDefinition> importedFields)
+        {
+            if (importedFields.Count > 0) return; // we have imported some fields, no need to make the struct non-empty
+            if (skippedFields.Count == 0) return; // we haven't skipped any fields; the struct was empty to begin with
+            
+            // We have skipped all fields, so we need to add a dummy field to make the struct non-empty.
+            _builder.AddFieldDefinition(
+                FieldAttributes.Private,
+                _builder.GetOrAddString("<SyntheticNonEmptyStructMarker>"),
+                _builder.GetOrAddBlob(new[] { (byte)SignatureKind.Field, (byte)SignatureTypeCode.Int32 }));
+        }
     }
 }

@@ -1,0 +1,3 @@
+﻿public type: RefasmerTestAssembly.BlittableStructWithPrivateFields
+fields:
+- <SyntheticNonEmptyStructMarker>: System.Int32

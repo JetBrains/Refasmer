@@ -27,13 +27,13 @@ public class IntegrationTests
     [TestCase("RefasmerTestAssembly.StructWithNestedPrivateTypes")]
     [TestCase("RefasmerTestAssembly.BlittableGraph")]
     [TestCase("RefasmerTestAssembly.BlittableStructWithPrivateFields")]
-    [TestCase("RefasmerTestAssembly.NonBlittableStructWithPrivateField")]
+    [TestCase("RefasmerTestAssembly.NonBlittableStructWithPrivateFields")]
     [TestCase("RefasmerTestAssembly.NonBlittableGraph")]
 
     public async Task CheckRefasmedTypeOmitNonApi(string typeName)
     {
         var assemblyPath = await BuildTestAssembly();
-        var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiTypes: true);
+        var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiMembers: true);
         await VerifyTypeContent(resultAssembly, typeName);
     }
     
@@ -64,7 +64,7 @@ public class IntegrationTests
         throw new Exception("Cannot find source root.");
     }
 
-    private static string RefasmTestAssembly(string assemblyPath, bool omitNonApiTypes = false)
+    private static string RefasmTestAssembly(string assemblyPath, bool omitNonApiMembers = false)
     {
         var tempLocation = Path.GetTempFileName();
         var args = new List<string>
@@ -72,9 +72,9 @@ public class IntegrationTests
             "-v",
             $"--output={tempLocation}"
         };
-        if (omitNonApiTypes)
+        if (omitNonApiMembers)
         {
-            args.Add("--omit-non-api-types");
+            args.Add("--omit-non-api-members");
         }
         args.Add(assemblyPath);
         using var collector = CollectConsoleOutput();

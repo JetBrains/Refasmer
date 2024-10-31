@@ -31,7 +31,7 @@ namespace JetBrains.Refasmer
         private static bool _public;
         private static bool _internals;
         private static bool _all;
-        private static bool _omitNonApiTypes;
+        private static bool _omitNonApiMembers;
 
         private static bool _makeMock;
         private static bool _omitReferenceAssemblyAttr;
@@ -87,7 +87,7 @@ namespace JetBrains.Refasmer
                 { "p|public", "drop non-public types even with InternalsVisibleTo", v => _public = v != null },
                 { "i|internals", "import public and internal types", v => _internals = v != null },
                 { "all", "ignore visibility and import all", v => _all = v != null },
-                { "omit-non-api-types", "omit private types not participating in the public API (will preserve the empty vs non-empty struct semantics, but might affect unmanaged struct constraint)", x => _omitNonApiTypes = x != null },
+                { "omit-non-api-members", "omit private members and types not participating in the public API (will preserve the empty vs non-empty struct semantics, but might affect unmanaged struct constraint)", x => _omitNonApiMembers = x != null },
                 
                 { "m|mock", "make mock assembly instead of reference assembly", p => _makeMock = p != null },
                 { "n|noattr", "omit reference assembly attribute", p => _omitReferenceAssemblyAttr = p != null },
@@ -255,9 +255,9 @@ namespace JetBrains.Refasmer
             IImportFilter filter = null;
 
             if (_public)
-                filter = new AllowPublic(_omitNonApiTypes);
+                filter = new AllowPublic(_omitNonApiMembers);
             else if (_internals)
-                filter = new AllowPublicAndInternals(_omitNonApiTypes);
+                filter = new AllowPublicAndInternals(_omitNonApiMembers);
             else if (_all)
                 filter = new AllowAll();
             
@@ -269,7 +269,7 @@ namespace JetBrains.Refasmer
                     peReader,
                     _logger,
                     filter,
-                    _omitNonApiTypes,
+                    _omitNonApiMembers,
                     _makeMock,
                     _omitReferenceAssemblyAttr);
             }

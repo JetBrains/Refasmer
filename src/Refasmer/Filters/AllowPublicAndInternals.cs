@@ -3,9 +3,31 @@ using System.Reflection.Metadata;
 
 namespace JetBrains.Refasmer.Filters
 {
-    public class AllowPublicAndInternals(bool omitNonApiTypes) : PartialTypeFilterBase(omitNonApiTypes)
+    public class AllowPublicAndInternals(bool omitNonApiMembers) : PartialTypeFilterBase(omitNonApiMembers)
     {
-        private readonly CachedAttributeChecker _attrChecker = new();
+        public override bool AllowImport(TypeDefinition type, MetadataReader reader)
+        {
+            if (!base.AllowImport(type, reader)) return false;
+            if (!omitNonApiMembers) return true;
+            
+            switch (type.Attributes & TypeAttributes.VisibilityMask)
+            {
+                case TypeAttributes.NotPublic:
+                    return !AttributeCache.HasAttribute(reader, type.GetCustomAttributes(), FullNames.CompilerGenerated);
+                case TypeAttributes.Public:
+                    return true;
+                case TypeAttributes.NestedPublic:
+                case TypeAttributes.NestedAssembly:
+                case TypeAttributes.NestedFamORAssem:
+                    return AllowImport(reader.GetTypeDefinition(type.GetDeclaringType()), reader);
+                case TypeAttributes.NestedFamily:
+                case TypeAttributes.NestedFamANDAssem:
+                    var declaringType = reader.GetTypeDefinition(type.GetDeclaringType());
+                    return (declaringType.Attributes & TypeAttributes.Sealed) == 0 && AllowImport(declaringType, reader);
+                default:
+                    return false;
+            }
+        }
         
         public override bool AllowImport( MethodDefinition method, MetadataReader reader )
         {
@@ -14,7 +36,7 @@ namespace JetBrains.Refasmer.Filters
                 case MethodAttributes.Assembly:
                     if ((method.Attributes & MethodAttributes.SpecialName) != 0)
                         return true;
-                    return !_attrChecker.HasAttribute(reader, method, FullNames.CompilerGenerated);
+                    return !AttributeCache.HasAttribute(reader, method, FullNames.CompilerGenerated);
 
                 case MethodAttributes.Public:
                 case MethodAttributes.FamORAssem:
@@ -33,7 +55,7 @@ namespace JetBrains.Refasmer.Filters
             switch (field.Attributes & FieldAttributes.FieldAccessMask)
             {
                 case FieldAttributes.Assembly:
-                    return !_attrChecker.HasAttribute(reader, field, FullNames.CompilerGenerated);
+                    return !AttributeCache.HasAttribute(reader, field, FullNames.CompilerGenerated);
                 case FieldAttributes.Public:
                 case FieldAttributes.FamORAssem:
                     return true;

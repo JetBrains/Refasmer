@@ -29,7 +29,7 @@ Options:
   -p, --public               drop non-public types even with InternalsVisibleTo
   -i, --internals            import public and internal types
       --all                  ignore visibility and import all
-      --omit-non-api-types   omit private types not participating in the public
+      --omit-non-api-members omit private members not participating in the public
                                API (will preserve the empty vs non-empty struct
                                semantics, but might affect unmanaged struct
                                constraint)

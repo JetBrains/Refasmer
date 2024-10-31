@@ -1,0 +1,3 @@
+﻿public type: RefasmerTestAssembly.NonBlittableGraph
+fields:
+- <SyntheticNonEmptyStructMarker>: System.Int32

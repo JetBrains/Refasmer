@@ -3,8 +3,28 @@ using System.Reflection.Metadata;
 
 namespace JetBrains.Refasmer.Filters
 {
-    public class AllowPublic(bool omitNonApiTypes) : PartialTypeFilterBase(omitNonApiTypes)
+    public class AllowPublic(bool omitNonApiMembers) : PartialTypeFilterBase(omitNonApiMembers)
     {
+        public override bool AllowImport(TypeDefinition type, MetadataReader reader)
+        {
+            if (!base.AllowImport(type, reader)) return false;
+            if (!omitNonApiMembers) return true;
+            
+            switch (type.Attributes & TypeAttributes.VisibilityMask)
+            {
+                case TypeAttributes.Public:
+                    return true;
+                case TypeAttributes.NestedPublic:
+                    return AllowImport(reader.GetTypeDefinition(type.GetDeclaringType()), reader);
+                case TypeAttributes.NestedFamily:
+                case TypeAttributes.NestedFamORAssem:
+                    var declaringType = reader.GetTypeDefinition(type.GetDeclaringType());
+                    return (declaringType.Attributes & TypeAttributes.Sealed) == 0 && AllowImport(declaringType, reader);
+                default:
+                    return false;
+            }
+        }
+        
         public override bool AllowImport( MethodDefinition method, MetadataReader reader )
         {
             switch (method.Attributes & MethodAttributes.MemberAccessMask)
