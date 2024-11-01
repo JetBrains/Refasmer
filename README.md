@@ -16,7 +16,7 @@ You could download refasmer from GitHub: https://github.com/JetBrains/Refasmer/r
 
 ## Usage:
 ```
-Usage: refasmer [options] <dll> [<**/*.dll> ...]
+refasmer [options] <dll> [<**/*.dll> ...]
 Options:
   -v                         increase verbosity
   -q, --quiet                be quiet
@@ -29,15 +29,16 @@ Options:
   -p, --public               drop non-public types even with InternalsVisibleTo
   -i, --internals            import public and internal types
       --all                  ignore visibility and import all
-      --omit-non-api-members omit private members not participating in the public
-                               API (will preserve the empty vs non-empty struct
-                               semantics, but might affect unmanaged struct
-                               constraint)
+      --omit-non-api-members omit private members and types not participating
+                               in the public API (will preserve the empty vs
+                               non-empty struct semantics, but might affect
+                               unmanaged struct constraint)
   -m, --mock                 make mock assembly instead of reference assembly
   -n, --noattr               omit reference assembly attribute
   -l, --list                 make file list xml
   -a, --attr=VALUE           add FileList tag attribute
   -g, --globs                expand globs internally: ?, *, **
+
 ```
 
 (note the executable is called `RefasmerExe.exe` if built locally; `refasmer` is a name of an executable installed by `dotnet tool install`)
@@ -47,7 +48,7 @@ Mock assembly throws `System.NotImplementedException` in each imported method.
 Reference assembly contains only type definition and method signatures with no method bodies.
 
 > [!IMPORTANT]
-> Note that `--omit-non-api-types` performs a nontrivial transformation on the resulting assembly. Normally, a reference assembly should include any types participating as private members of any value type, because this is up to the spec. However, in some cases, it is possible to omit these types from the reference assembly, because they are not part of the public API, while preserving some of the value type semantics. In these cases, Refasmer is able to remove these types from the assembly, sometimes emitting synthetic fields in the output type. This will preserve the difference of empty and non-empty struct types, but will not preserve the type blittability (i.e. some types after refasming might obtain the ability to follow the `: unmanaged` constraint, even if they were unable before refasming).
+> Note that `--omit-non-api-members` performs a nontrivial transformation on the resulting assembly. Normally, a reference assembly should include any types, including private and internal ones, because this is up to the spec. However, in some cases, it is possible to omit private and internal types from the reference assembly, because they are not part of the public API, while preserving some of the value type semantics. In these cases, Refasmer is able to remove these types from the assembly, sometimes emitting synthetic fields in the output type. This will preserve the difference of empty and non-empty struct types, but will not preserve the type blittability (i.e. some types after refasming might obtain the ability to follow the `unmanaged` constraint, even if this wasn't possible before refasming).
 
 ## Examples:
 
