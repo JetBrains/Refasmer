@@ -1,0 +1,3 @@
+﻿public type: RefasmerTestAssembly.NonEmptyStructWithStaticMember
+fields:
+- <SyntheticNonEmptyStructMarker>: System.Int32

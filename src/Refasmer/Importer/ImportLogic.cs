@@ -41,31 +41,35 @@ namespace JetBrains.Refasmer
                 Import(src.BaseType), NextFieldHandle(), NextMethodHandle());
 
             Trace?.Invoke($"Imported {_reader.ToString(src)} -> {RowId(dstHandle):X}");
-
+    
             using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             var isValueType = _reader.GetFullname(src.BaseType) == "System::ValueType";
             var forcePreservePrivateFields = isValueType && !Filter.OmitNonApiMembers;
 
-            List<FieldDefinition> importedFields = null;
-            List<FieldDefinition> skippedFields = null;
+            List<FieldDefinition> importedInstanceFields = null;
+            List<FieldDefinition> skippedInstanceFields = null;
             
             if (forcePreservePrivateFields)
                 Trace?.Invoke($"{_reader.ToString(src)} is ValueType, all fields should be imported");
             else
             {
-                importedFields = [];
-                skippedFields = [];                    
+                importedInstanceFields = [];
+                skippedInstanceFields = [];                    
             }
             
             foreach (var srcFieldHandle in src.GetFields())
             {
                 var srcField = _reader.GetFieldDefinition(srcFieldHandle);
+                var isStatic = (srcField.Attributes & FieldAttributes.Static) != 0;
+                var isForcedToInclude = forcePreservePrivateFields && !isStatic;
 
-                if (!forcePreservePrivateFields && Filter?.AllowImport(srcField, _reader) == false)
+                if (!isForcedToInclude && Filter?.AllowImport(srcField, _reader) == false)
                 {
                     Trace?.Invoke($"Not imported {_reader.ToString(srcField)}");
-                    skippedFields?.Add(srcField);
+                    if (!isStatic)
+                        skippedInstanceFields?.Add(srcField);
+
                     continue;
                 }
 
@@ -73,11 +77,12 @@ namespace JetBrains.Refasmer
                     ImportSignatureWithHeader(srcField.Signature));
                 _fieldDefinitionCache.Add(srcFieldHandle, dstFieldHandle);
                 Trace?.Invoke($"Imported {_reader.ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
-                importedFields?.Add(srcField);
+                if (!isStatic)
+                    importedInstanceFields?.Add(srcField);
             }
 
             if (!forcePreservePrivateFields)
-                PostProcessSkippedValueTypeFields(skippedFields, importedFields);
+                PostProcessSkippedValueTypeFields(skippedInstanceFields, importedInstanceFields);
 
             var implementations = src.GetMethodImplementations()
                 .Select(_reader.GetMethodImplementation)
