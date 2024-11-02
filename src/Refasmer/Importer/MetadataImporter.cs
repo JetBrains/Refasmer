@@ -27,13 +27,12 @@ namespace JetBrains.Refasmer
             _ilStream = ilStream;
         }
 
-
         public static byte[] MakeRefasm(
             MetadataReader metaReader,
             PEReader peReader,
             LoggerBase logger,
             IImportFilter filter,
-            bool omitNonApiTypes,
+            bool? omitNonApiMembers,
             bool makeMock = false,
             bool omitReferenceAssemblyAttr = false)
         {
@@ -54,12 +53,16 @@ namespace JetBrains.Refasmer
             }
             else if (importer.IsInternalsVisible())
             {
-                importer.Filter = new AllowPublicAndInternals(omitNonApiTypes);
+                importer.Filter = new AllowPublicAndInternals(
+                    omitNonApiMembers ?? throw new Exception(
+                        $"{nameof(omitNonApiMembers)} should be specified for the current filter mode."));
                 logger.Info?.Invoke("InternalsVisibleTo attributes found, using AllowPublicAndInternals entity filter");
             }
             else
             {
-                importer.Filter = new AllowPublic(omitNonApiTypes);
+                importer.Filter = new AllowPublic(
+                    omitNonApiMembers ?? throw new Exception(
+                        $"{nameof(omitNonApiMembers)} should be specified for the current filter mode."));
                 logger.Info?.Invoke("Using AllowPublic entity filter");
             }
             
@@ -120,7 +123,7 @@ namespace JetBrains.Refasmer
             if (!metaReader.IsAssembly)
                 throw new Exception("File format is not supported"); 
             
-            var result = MakeRefasm(metaReader, peReader, logger, filter, omitNonApiTypes: false, makeMock);
+            var result = MakeRefasm(metaReader, peReader, logger, filter, omitNonApiMembers: false, makeMock);
 
             logger.Debug?.Invoke($"Writing result to {outputPath}");
             if (File.Exists(outputPath))

@@ -31,7 +31,7 @@ namespace JetBrains.Refasmer
         private static bool _public;
         private static bool _internals;
         private static bool _all;
-        private static bool _omitNonApiMembers;
+        private static bool? _omitNonApiMembers;
 
         private static bool _makeMock;
         private static bool _omitReferenceAssemblyAttr;
@@ -87,7 +87,7 @@ namespace JetBrains.Refasmer
                 { "p|public", "drop non-public types even with InternalsVisibleTo", v => _public = v != null },
                 { "i|internals", "import public and internal types", v => _internals = v != null },
                 { "all", "ignore visibility and import all", v => _all = v != null },
-                { "omit-non-api-members", "omit private members and types not participating in the public API (will preserve the empty vs non-empty struct semantics, but might affect unmanaged struct constraint)", x => _omitNonApiMembers = x != null },
+                { "omit-non-api-members=", "omit private members and types not participating in the public API (will preserve the empty vs non-empty struct semantics, but might affect unmanaged struct constraint)", x => _omitNonApiMembers = string.Equals(x, "true", StringComparison.OrdinalIgnoreCase) },
                 
                 { "m|mock", "make mock assembly instead of reference assembly", p => _makeMock = p != null },
                 { "n|noattr", "omit reference assembly attribute", p => _omitReferenceAssemblyAttr = p != null },
@@ -131,6 +131,12 @@ namespace JetBrains.Refasmer
             if (!string.IsNullOrEmpty(_outputFile) && inputs.Count > 1)
             {
                 Console.Error.WriteLine("Output file should not be specified for many inputs");
+                return 2;
+            }
+
+            if (!_all && _omitNonApiMembers == null)
+            {
+                Console.Error.WriteLine("Either specify --all to emit all private types, or specify --omit-non-api-members to either true or false.");
                 return 2;
             }
 
@@ -255,9 +261,9 @@ namespace JetBrains.Refasmer
             IImportFilter filter = null;
 
             if (_public)
-                filter = new AllowPublic(_omitNonApiMembers);
+                filter = new AllowPublic(_omitNonApiMembers ?? throw new Exception("--omit-non-api-members should be specified for the passed filter type."));
             else if (_internals)
-                filter = new AllowPublicAndInternals(_omitNonApiMembers);
+                filter = new AllowPublicAndInternals(_omitNonApiMembers ?? throw new Exception("--omit-non-api-members should be specified for the passed filter type."));
             else if (_all)
                 filter = new AllowAll();
             
