@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using JetBrains.Refasmer.Filters;
 
@@ -27,6 +28,30 @@ namespace JetBrains.Refasmer
             _ilStream = ilStream;
         }
 
+        /// <summary>Produces a reference assembly for the passed input.</summary>
+        /// <param name="metaReader">Input assembly's metadata reader.</param>
+        /// <param name="peReader">Input file's PE structure reader.</param>
+        /// <param name="logger">Logger to write the process information to.</param>
+        /// <param name="filter">
+        /// Filter to apply to the assembly members. If <c>null</c> then will be auto-detected from the assembly
+        /// contents: for an assembly that has a <see cref="InternalsVisibleToAttribute"/> applied to it, use
+        /// <see cref="AllowPublicAndInternals"/>, otherwise use <see cref="AllowPublic"/>.
+        /// </param>
+        /// <param name="omitNonApiMembers">
+        ///     <para>Omit private members and types not participating in the public API (will preserve the empty vs
+        ///     non-empty struct semantics, but might affect the <c>unmanaged</c> struct constraint).</para>
+        ///
+        ///     <para>Mandatory if the <paramref name="filter"/> is not passed. Ignored otherwise.</para>
+        /// </param>
+        /// <param name="makeMock">
+        /// Whether to make a mock assembly instead of a reference assembly. A mock assembly throws
+        /// <see cref="NotImplementedException"/> in each imported method, while a reference assembly follows the
+        /// reference assembly specification.
+        /// </param>
+        /// <param name="omitReferenceAssemblyAttr">
+        /// Whether to omit the reference assembly attribute in the generated assembly.
+        /// </param>
+        /// <returns>Bytes of the generated assembly.</returns>
         public static byte[] MakeRefasm(
             MetadataReader metaReader,
             PEReader peReader,
