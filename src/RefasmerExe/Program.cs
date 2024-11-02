@@ -136,7 +136,7 @@ namespace JetBrains.Refasmer
 
             if (!_all && _omitNonApiMembers == null)
             {
-                Console.Error.WriteLine("Either specify --all to emit all private types, or specify --omit-non-api-members to either true or false.");
+                Console.Error.WriteLine("Either specify --all to emit all private types, or set --omit-non-api-members to either true or false.");
                 return 2;
             }
 

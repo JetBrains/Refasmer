@@ -18,9 +18,4 @@ public abstract class PartialTypeFilterBase(bool omitNonApiMembers) : IImportFil
     
     public abstract bool AllowImport(MethodDefinition method, MetadataReader reader);
     public abstract bool AllowImport(FieldDefinition field, MetadataReader reader);
-
-    public bool ProcessValueTypeFields()
-    {
-        return false;
-    }
 }

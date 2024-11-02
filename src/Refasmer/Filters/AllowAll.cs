@@ -9,7 +9,5 @@ namespace JetBrains.Refasmer.Filters
         public virtual bool AllowImport(TypeDefinition declaringType, MetadataReader reader) => true;
         public virtual bool AllowImport( MethodDefinition method, MetadataReader reader ) => true;
         public virtual bool AllowImport( FieldDefinition field, MetadataReader reader ) => true;
-
-        public bool ProcessValueTypeFields() => false;
     }
 }
