@@ -22,11 +22,10 @@ namespace JetBrains.Refasmer
             MakeXmlList
         }
 
-        
         private static bool _overwrite;
-        private static string _outputDir;
-        private static string _outputFile;
-        private static LoggerBase _logger;
+        private static string _outputDir = null!;
+        private static string _outputFile = null!;
+        private static LoggerBase _logger = null!;
         
         private static bool _public;
         private static bool _internals;
@@ -37,6 +36,21 @@ namespace JetBrains.Refasmer
         private static bool _omitReferenceAssemblyAttr;
 
         private static bool _expandGlobs;
+
+        public static void ResetArguments()
+        {
+            _overwrite = false;
+            _outputDir = null!;
+            _outputFile = null!;
+            _logger = null!;
+            _public = false;
+            _internals = false;
+            _all = false;
+            _omitNonApiMembers = null;
+            _makeMock = false;
+            _omitReferenceAssemblyAttr = false;
+            _expandGlobs = false;
+        }
 
         class InvalidOptionException : Exception
         {
@@ -157,7 +171,7 @@ namespace JetBrains.Refasmer
                     return 2;
                 }
                 
-                XmlTextWriter xmlWriter = null;
+                XmlTextWriter? xmlWriter = null;
                 
                 if (operation == Operation.MakeXmlList)
                 {
@@ -189,7 +203,7 @@ namespace JetBrains.Refasmer
                                 MakeRefasm(input);
                                 break;
                             case Operation.MakeXmlList:
-                                WriteAssemblyToXml(input, xmlWriter);
+                                WriteAssemblyToXml(input, xmlWriter!);
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -258,7 +272,7 @@ namespace JetBrains.Refasmer
 
         private static void MakeRefasm((string Path, string RelativeForOutput) input)
         {
-            IImportFilter filter = null;
+            IImportFilter? filter = null;
 
             if (_public)
                 filter = new AllowPublic(_omitNonApiMembers ?? throw new Exception("--omit-non-api-members should be specified for the passed filter type."));

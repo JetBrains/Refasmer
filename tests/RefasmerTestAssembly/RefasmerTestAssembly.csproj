@@ -5,6 +5,7 @@
         <LangVersion>Latest</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+        <NoWarn>CS0169</NoWarn>
     </PropertyGroup>
 
 </Project>

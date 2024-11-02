@@ -45,10 +45,10 @@ namespace JetBrains.Refasmer
             using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
             var isValueType = _reader.GetFullname(src.BaseType) == "System::ValueType";
-            var forcePreservePrivateFields = isValueType && !Filter.OmitNonApiMembers;
+            var forcePreservePrivateFields = isValueType && Filter?.OmitNonApiMembers == false;
 
-            List<FieldDefinition> importedInstanceFields = null;
-            List<FieldDefinition> skippedInstanceFields = null;
+            List<FieldDefinition>? importedInstanceFields = null;
+            List<FieldDefinition>? skippedInstanceFields = null;
             
             if (forcePreservePrivateFields)
                 Trace?.Invoke($"{_reader.ToString(src)} is ValueType, all fields should be imported");
@@ -82,7 +82,7 @@ namespace JetBrains.Refasmer
             }
 
             if (!forcePreservePrivateFields)
-                PostProcessSkippedValueTypeFields(skippedInstanceFields, importedInstanceFields);
+                PostProcessSkippedValueTypeFields(skippedInstanceFields!, importedInstanceFields!);
 
             var implementations = src.GetMethodImplementations()
                 .Select(_reader.GetMethodImplementation)

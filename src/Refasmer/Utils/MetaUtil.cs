@@ -8,23 +8,7 @@ namespace JetBrains.Refasmer
 {
     public static class MetaUtil
     {
-        public static string GetName( this MetadataReader reader, EntityHandle entityHandle )
-        {
-            if (entityHandle.IsNil)
-                return null;
-
-            switch (entityHandle.Kind)
-            {
-                case HandleKind.TypeReference:
-                    return reader.GetString(reader.GetTypeReference((TypeReferenceHandle) entityHandle).Name);
-                case HandleKind.TypeDefinition:
-                    return reader.GetString(reader.GetTypeDefinition((TypeDefinitionHandle) entityHandle).Name);
-                default:
-                    return null;
-            }            
-        }
-
-        public static string GetFullname( this MetadataReader reader, EntityHandle entityHandle )
+        public static string? GetFullname( this MetadataReader reader, EntityHandle entityHandle )
         {
             if (entityHandle.IsNil)
                 return null;

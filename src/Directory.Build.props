@@ -12,4 +12,6 @@
         <PackageIcon>icon.png</PackageIcon>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
+
+    <Import Project="..\Directory.Build.props" />
 </Project>

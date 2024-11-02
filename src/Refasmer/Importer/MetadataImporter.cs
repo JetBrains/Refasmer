@@ -16,7 +16,7 @@ namespace JetBrains.Refasmer
         private readonly MetadataBuilder _builder;
         private readonly BlobBuilder _ilStream;
 
-        public IImportFilter Filter;
+        public IImportFilter? Filter;
 
         public bool MakeMock;
         public bool OmitReferenceAssemblyAttr;
@@ -56,7 +56,7 @@ namespace JetBrains.Refasmer
             MetadataReader metaReader,
             PEReader peReader,
             LoggerBase logger,
-            IImportFilter filter,
+            IImportFilter? filter,
             bool? omitNonApiMembers,
             bool makeMock = false,
             bool omitReferenceAssemblyAttr = false)
@@ -100,7 +100,7 @@ namespace JetBrains.Refasmer
             
             var peHeaderBuilder = new PEHeaderBuilder(
                 Machine.I386, // override machine to force AnyCPU assembly 
-                peReader.PEHeaders.PEHeader.SectionAlignment,
+                peReader.PEHeaders.PEHeader!.SectionAlignment,
                 peReader.PEHeaders.PEHeader.FileAlignment,
                 peReader.PEHeaders.PEHeader.ImageBase,
                 peReader.PEHeaders.PEHeader.MajorLinkerVersion,
@@ -126,7 +126,7 @@ namespace JetBrains.Refasmer
                     var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256) ?? throw new Exception("Cannot create hasher");
                     
                     foreach (var segment in blobs.Select(b => b.GetBytes()))
-                        hasher.AppendData(segment.Array, segment.Offset, segment.Count);
+                        hasher.AppendData(segment.Array!, segment.Offset, segment.Count);
                     
                     return BlobContentId.FromHash(hasher.GetHashAndReset());
                 });
@@ -139,7 +139,34 @@ namespace JetBrains.Refasmer
             return blobBuilder.ToArray();
         }
 
-        public static void MakeRefasm( string inputPath, string outputPath, LoggerBase logger, IImportFilter filter = null, bool makeMock = false )
+        /// <summary>Produces a reference assembly for the passed input.</summary>
+        /// <param name="inputPath">Path to the input assembly.</param>
+        /// <param name="outputPath">Path to the output assembly.</param>
+        /// <param name="logger">Logger to write the process information to.</param>
+        /// <param name="omitNonApiMembers">
+        ///     <para>Omit private members and types not participating in the public API (will preserve the empty vs
+        ///     non-empty struct semantics, but might affect the <c>unmanaged</c> struct constraint).</para>
+        ///
+        ///     <para>Mandatory if the <paramref name="filter"/> is not passed. Ignored otherwise.</para>
+        /// </param>
+        /// <param name="filter">
+        /// Filter to apply to the assembly members. If <c>null</c> then will be auto-detected from the assembly
+        /// contents: for an assembly that has a <see cref="InternalsVisibleToAttribute"/> applied to it, use
+        /// <see cref="AllowPublicAndInternals"/>, otherwise use <see cref="AllowPublic"/>.
+        /// </param>
+        /// <param name="makeMock">
+        /// Whether to make a mock assembly instead of a reference assembly. A mock assembly throws
+        /// <see cref="NotImplementedException"/> in each imported method, while a reference assembly follows the
+        /// reference assembly specification.
+        /// </param>
+        /// <returns>Bytes of the generated assembly.</returns>
+        public static void MakeRefasm(
+            string inputPath,
+            string outputPath,
+            LoggerBase logger,
+            bool? omitNonApiMembers,
+            IImportFilter? filter = null,
+            bool makeMock = false)
         {
             logger.Debug?.Invoke($"Reading assembly {inputPath}");
             var peReader = new PEReader(new FileStream(inputPath, FileMode.Open, FileAccess.Read)); 
@@ -148,7 +175,7 @@ namespace JetBrains.Refasmer
             if (!metaReader.IsAssembly)
                 throw new Exception("File format is not supported"); 
             
-            var result = MakeRefasm(metaReader, peReader, logger, filter, omitNonApiMembers: false, makeMock);
+            var result = MakeRefasm(metaReader, peReader, logger, filter, omitNonApiMembers, makeMock);
 
             logger.Debug?.Invoke($"Writing result to {outputPath}");
             if (File.Exists(outputPath))

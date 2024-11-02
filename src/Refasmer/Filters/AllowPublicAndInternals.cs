@@ -8,7 +8,7 @@ namespace JetBrains.Refasmer.Filters
         public override bool AllowImport(TypeDefinition type, MetadataReader reader)
         {
             if (!base.AllowImport(type, reader)) return false;
-            if (!omitNonApiMembers) return true;
+            if (!OmitNonApiMembers) return true;
             
             switch (type.Attributes & TypeAttributes.VisibilityMask)
             {

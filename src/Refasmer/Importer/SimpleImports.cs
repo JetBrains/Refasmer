@@ -98,7 +98,7 @@ namespace JetBrains.Refasmer
             }
 
             cache.Add(srcHandle, dstHandle);
-            Trace?.Invoke($"Imported {toString(srcHandle)} -> {RowId(dstHandle):X}");
+            Trace?.Invoke($"Imported {toString(srcHandle)} -> {RowId(dstHandle!):X}");
 
             return dstHandle;
         }
