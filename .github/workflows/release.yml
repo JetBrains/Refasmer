@@ -26,25 +26,9 @@ jobs:
       run: ../dotnet.cmd build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
       working-directory: src
 
-    - name: Publish net461
-      run: ../../dotnet.cmd publish --framework net461 --configuration Release --no-restore
-      working-directory: src/RefasmerExe
-
-    - name: Publish netcoreapp
-      run: ../../dotnet.cmd publish --framework netcoreapp3.1 --configuration Release --no-restore
-      working-directory: src/RefasmerExe
-
-    - name: Publish net5.0
-      run: ../../dotnet.cmd publish --framework net5.0 --configuration Release --no-restore
-      working-directory: src/RefasmerExe
-
-    - name: Publish net6.0
-      run: ../../dotnet.cmd publish --framework net6.0 --configuration Release --no-restore
-      working-directory: src/RefasmerExe
-
-    - name: Publish net7.0
-      run: ../../dotnet.cmd publish --framework net7.0 --configuration Release --no-restore
-      working-directory: src/RefasmerExe
+    - name: Publish
+      shell: pwsh
+      run: ./scripts/
 
     - name: Zip net461
       run: zip Refasmer.net461.1.0.${{ github.run_number }}.zip *
