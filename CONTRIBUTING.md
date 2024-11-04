@@ -3,7 +3,7 @@ Contributor Guide
 
 Prerequisites
 -------------
-.NET SDK 7.0 is required to build and run the project.
+.NET SDK 8.0 is required to build and run the project.
 
 Building
 --------
