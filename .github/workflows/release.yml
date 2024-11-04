@@ -1,132 +1,38 @@
 name: Release
-
 on:
   push:
-    branches: [ release ]
+    branches:
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  release:
+    runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+      - name: Read version from Git ref
+        id: version
+        shell: pwsh
+        run: echo "version=$(if ($env:GITHUB_REF.StartsWith('refs/tags/v')) { $env:GITHUB_REF -replace '^refs/tags/v', '' } else { 'next' })" >> $env:GITHUB_OUTPUT
 
-    - name: dotnet.cmd cache
-      uses: actions/cache@v4
-      with:
-        path: '~/.local/share/JetBrains/dotnet-cmd'
-        key: ${{ runner.os }}-dotnet-${{ hashFiles('dotnet.cmd') }}
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      working-directory: src
-      run: ../dotnet.cmd restore
+      - name: Read the changelog
+        uses: ForNeVeR/ChangelogAutomation.action@v1
+        with:
+          input: ./CHANGELOG.md
+          output: ./changelog-section.md
 
-    - name: Build
-      run: ../dotnet.cmd build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
-      working-directory: src
-
-    - name: Publish
-      shell: pwsh
-      run: ./scripts/
-
-    - name: Zip net461
-      run: zip Refasmer.net461.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/net461
-
-    - name: Zip netcoreapp
-      run: zip Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/netcoreapp3.1/publish
-
-    - name: Zip net5.0
-      run: zip Refasmer.net50.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/net5.0/publish
-
-    - name: Zip net6.0
-      run: zip Refasmer.net60.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/net6.0/publish
-
-    - name: Zip net7.0
-      run: zip Refasmer.net70.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/net7.0/publish
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: 1.0.${{ github.run_number }}
-        release_name: Release 1.0.${{ github.run_number }}
-        draft: false
-        prerelease: false
-    
-    - name: Upload nupkg
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: src/Refasmer/bin/Release/JetBrains.Refasmer.1.0.${{ github.run_number }}.nupkg
-        asset_name: JetBrains.Refasmer.1.0.${{ github.run_number }}.nupkg
-        asset_content_type: application/zip
-
-    - name: Upload zip net461
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: src/RefasmerExe/bin/Release/net461/Refasmer.net461.1.0.${{ github.run_number }}.zip
-        asset_name: Refasmer.net461.1.0.${{ github.run_number }}.zip
-        asset_content_type: application/zip
-
-    - name: Upload zip netcoreapp
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: src/RefasmerExe/bin/Release/netcoreapp3.1/publish/Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip
-        asset_name: Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip
-        asset_content_type: application/zip
-
-    - name: Upload zip net5.0
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: src/RefasmerExe/bin/Release/net5.0/publish/Refasmer.net50.1.0.${{ github.run_number }}.zip
-        asset_name: Refasmer.net50.1.0.${{ github.run_number }}.zip
-        asset_content_type: application/zip
-
-    - name: Upload zip net6.0
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: src/RefasmerExe/bin/Release/net6.0/publish/Refasmer.net60.1.0.${{ github.run_number }}.zip
-        asset_name: Refasmer.net60.1.0.${{ github.run_number }}.zip
-        asset_content_type: application/zip
-
-    - name: Upload zip net7.0
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: src/RefasmerExe/bin/Release/net7.0/publish/Refasmer.net70.1.0.${{ github.run_number }}.zip
-        asset_name: Refasmer.net70.1.0.${{ github.run_number }}.zip
-        asset_content_type: application/zip
-
-    - name: Upload cli tool
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: src/RefasmerCliTool/bin/Release/JetBrains.Refasmer.CliTool.1.0.${{ github.run_number }}.nupkg
-        asset_name: JetBrains.Refasmer.CliTool.1.0.${{ github.run_number }}.nupkg
-        asset_content_type: application/zip
+      - if: startsWith(github.ref, 'refs/tags/v')
+        name: Create a release
+        shell: pwsh
+        run: gh release create --title $env:TITLE --notes-file $env:RELEASE_NOTES_FILE $env:VERSION_TAG
+        env:
+          TITLE: 'Refasmer v${{ steps.version.outputs.version }}'
+          RELEASE_NOTES_FILE: './changelog-section.md'
+          VERSION_TAG: 'v${{ steps.version.outputs.version }}'
