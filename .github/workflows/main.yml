@@ -51,23 +51,3 @@ jobs:
     - name: Publish net7.0
       run: ../../dotnet.cmd publish --framework net7.0 --configuration Release --no-build
       working-directory: src/RefasmerExe
-
-    - name: Zip net461
-      run: zip Refasmer.net461.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/net461
-
-    - name: Zip netcoreapp
-      run: zip Refasmer.netcoreapp.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/netcoreapp3.1/publish
-
-    - name: Zip net5.0
-      run: zip Refasmer.net50.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/net5.0/publish
-
-    - name: Zip net6.0
-      run: zip Refasmer.net60.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/net6.0/publish
-
-    - name: Zip net7.0
-      run: zip Refasmer.net70.1.0.${{ github.run_number }}.zip *
-      working-directory: src/RefasmerExe/bin/Release/net7.0/publish
