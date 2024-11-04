@@ -11,37 +11,39 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
+
+    - name: dotnet.cmd cache
+      uses: actions/cache@v4
       with:
-        dotnet-version: 7.0.x
+        path: '~/.local/share/JetBrains/dotnet-cmd'
+        key: ${{ runner.os }}-dotnet-${{ hashFiles('dotnet.cmd') }}
 
     - name: Install dependencies
       working-directory: src
-      run: dotnet restore
+      run: ../dotnet.cmd restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
+      run: ../dotnet.cmd build --configuration Release --no-restore -property:VERSION_POSTFIX=".${{ github.run_number }}"
       working-directory: src
 
     - name: Publish net461
-      run: dotnet publish --framework net461 --configuration Release --no-restore 
+      run: ../../dotnet.cmd publish --framework net461 --configuration Release --no-restore
       working-directory: src/RefasmerExe
 
     - name: Publish netcoreapp
-      run: dotnet publish --framework netcoreapp3.1 --configuration Release --no-restore 
+      run: ../../dotnet.cmd publish --framework netcoreapp3.1 --configuration Release --no-restore
       working-directory: src/RefasmerExe
 
     - name: Publish net5.0
-      run: dotnet publish --framework net5.0 --configuration Release --no-restore 
+      run: ../../dotnet.cmd publish --framework net5.0 --configuration Release --no-restore
       working-directory: src/RefasmerExe
 
     - name: Publish net6.0
-      run: dotnet publish --framework net6.0 --configuration Release --no-restore 
+      run: ../../dotnet.cmd publish --framework net6.0 --configuration Release --no-restore
       working-directory: src/RefasmerExe
 
     - name: Publish net7.0
-      run: dotnet publish --framework net7.0 --configuration Release --no-restore 
+      run: ../../dotnet.cmd publish --framework net7.0 --configuration Release --no-restore
       working-directory: src/RefasmerExe
 
     - name: Zip net461
@@ -144,4 +146,3 @@ jobs:
         asset_path: src/RefasmerCliTool/bin/Release/JetBrains.Refasmer.CliTool.1.0.${{ github.run_number }}.nupkg
         asset_name: JetBrains.Refasmer.CliTool.1.0.${{ github.run_number }}.nupkg
         asset_content_type: application/zip
-
