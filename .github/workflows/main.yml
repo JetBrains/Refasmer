@@ -51,3 +51,18 @@ jobs:
     - name: Publish net7.0
       run: ../../dotnet.cmd publish --framework net7.0 --configuration Release --no-build
       working-directory: src/RefasmerExe
+
+    - name: Upload the packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: nupkg
+        path: |
+          src/Refasmer/bin/Release/*.nupkg
+          src/RefasmerCliTool/bin/Release/*.nupkg
+
+    - name: Upload the executables
+      uses: actions/upload-artifact@v4
+      with:
+        name: refasmer-exe
+        path: |
+          src/RefasmerExe/bin/Release/*/publish/**/*
