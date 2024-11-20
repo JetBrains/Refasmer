@@ -33,6 +33,7 @@ jobs:
         shell: pwsh
         run: gh release create --title $env:TITLE --notes-file $env:RELEASE_NOTES_FILE $env:VERSION_TAG
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TITLE: 'Refasmer v${{ steps.version.outputs.version }}'
           RELEASE_NOTES_FILE: './changelog-section.md'
           VERSION_TAG: 'v${{ steps.version.outputs.version }}'
