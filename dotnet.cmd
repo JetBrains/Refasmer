@@ -60,7 +60,7 @@ Linux)
 *) echo "Unknown platform: $(uname)" >&2; exit 1;;
 esac
 
-DOTNET_URL=https://dotnetcli.azureedge.net/dotnet/Sdk/$DOTNET_VERSION/dotnet-sdk-$DOTNET_VERSION-$DOTNET_OS-$DOTNET_ARCH.tar.gz
+DOTNET_URL=https://builds.dotnet.microsoft.com/dotnet/Sdk/$DOTNET_VERSION/dotnet-sdk-$DOTNET_VERSION-$DOTNET_OS-$DOTNET_ARCH.tar.gz
 DOTNET_TARGET_DIR=$TARGET_DIR/sdk-$DOTNET_VERSION-$DOTNET_ARCH-$SCRIPT_VERSION
 DOTNET_TEMP_FILE=$TARGET_DIR/temp-$SCRIPT_VERSION.tar.gz
 
@@ -151,7 +151,7 @@ goto fail
 
 ))))
 
-set DOTNET_URL=https://dotnetcli.azureedge.net/dotnet/Sdk/%DOTNET_VERSION%/dotnet-sdk-%DOTNET_VERSION%-win-%DOTNET_ARCH%.zip
+set DOTNET_URL=https://builds.dotnet.microsoft.com/dotnet/Sdk/%DOTNET_VERSION%/dotnet-sdk-%DOTNET_VERSION%-win-%DOTNET_ARCH%.zip
 set DOTNET_TARGET_DIR=%TARGET_DIR%sdk-%DOTNET_VERSION%-%DOTNET_ARCH%-%SCRIPT_VERSION%\
 set DOTNET_TEMP_FILE=%TARGET_DIR%temp-%SCRIPT_VERSION%.zip
 
