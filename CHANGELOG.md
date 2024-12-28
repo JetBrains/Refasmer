@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Fixed
 - [#38: Internal types in public API break `omit-non-api-members=true`](https://github.com/JetBrains/Refasmer/issues/38).
+- Fix regression since v2.0.0: public compiler-generated types are no longer ommitted from the refasmed assemblies.
 
 ## [2.0.0] - 2024-11-20
 ### Changed
