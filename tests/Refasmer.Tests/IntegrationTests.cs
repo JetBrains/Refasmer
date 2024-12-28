@@ -34,6 +34,19 @@ public class IntegrationTests : IntegrationTestBase
         await VerifyTypeContent(resultAssembly, typeName);
     }
 
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task CheckCompilerGeneratedClasses(bool omitNonApi)
+    {
+        var assemblyPath = await BuildTestAssemblyWithInternalTypeInPublicApi();
+        var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiMembers: omitNonApi);
+        await VerifyTypeContents(
+            resultAssembly,
+            ["RefasmerTestAssembly.CompilerGeneratedPublicClass", "RefasmerTestAssembly.CompilerGeneratedInternalClass"],
+            assertTypeExists: false,
+            parameters: [omitNonApi]);
+    }
+
     [Test]
     public async Task InternalTypeInPublicApi()
     {

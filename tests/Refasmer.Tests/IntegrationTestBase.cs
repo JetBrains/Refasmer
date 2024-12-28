@@ -72,21 +72,25 @@ public abstract class IntegrationTestBase : IDisposable
     }
 
     protected static Task VerifyTypeContent(string assemblyPath, string typeName) =>
-        VerifyTypeContents(assemblyPath, [typeName], [typeName]);
+        VerifyTypeContents(assemblyPath, [typeName], parameters: [typeName]);
 
-    protected static Task VerifyTypeContents(string assemblyPath, string[] typeNames, object[]? parameters = null)
+    protected static Task VerifyTypeContents(string assemblyPath, string[] typeNames, bool assertTypeExists = true, object[]? parameters = null)
     {
         var assembly = AssemblyDefinition.ReadAssembly(assemblyPath);
         var printout = new StringBuilder();
         foreach (var typeName in typeNames)
         {
             var type = assembly.MainModule.GetType(typeName);
-            Assert.That(
-                type,
-                Is.Not.Null,
-                $"Type \"{typeName}\" is not found in assembly \"{assemblyPath}\".");
+            if (assertTypeExists)
+            {
+                Assert.That(
+                    type,
+                    Is.Not.Null,
+                    $"Type \"{typeName}\" is not found in assembly \"{assemblyPath}\".");
+            }
 
-            Printer.PrintType(type, printout);
+            if (type != null)
+                Printer.PrintType(type, printout);
         }
 
         var verifySettings = new VerifySettings();

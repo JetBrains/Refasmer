@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Reflection.Metadata;
 
 namespace JetBrains.Refasmer.Filters;
@@ -12,6 +13,7 @@ public abstract class PartialTypeFilterBase(bool omitNonApiMembers) : IImportFil
     
     public virtual bool AllowImport(TypeDefinition type, MetadataReader reader)
     {
+        if (type.Attributes.HasFlag(TypeAttributes.Public)) return true;
         var isCompilerGenerated = AttributeCache.HasAttribute(reader, type, FullNames.CompilerGenerated);
         return !isCompilerGenerated;
     }
