@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using JetBrains.Refasmer.Filters;
+using JetBrains.Refasmer.Importer;
 
 namespace JetBrains.Refasmer;
 
@@ -33,14 +34,16 @@ public partial class MetadataImporter
         }
     }
 
-    private TypeDefinitionHandle ImportTypeDefinitionSkeleton( TypeDefinitionHandle srcHandle )
+    private TypeDefinitionHandle ImportTypeDefinitionSkeleton(TypeDefinitionHandle srcHandle, bool omitMembers)
     {
         var src = _reader.GetTypeDefinition(srcHandle);
 
         var dstHandle = _builder.AddTypeDefinition(src.Attributes, ImportValue(src.Namespace), ImportValue(src.Name),
             Import(src.BaseType), NextFieldHandle(), NextMethodHandle());
 
-        Trace?.Invoke($"Imported {_reader.ToString(src)} -> {RowId(dstHandle):X}");
+        Trace?.Invoke($"Imported {_reader.ToString(src)} -> {RowId(dstHandle)}");
+
+        if (omitMembers) return dstHandle;
 
         using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
@@ -76,7 +79,7 @@ public partial class MetadataImporter
             var dstFieldHandle = _builder.AddFieldDefinition(srcField.Attributes, ImportValue(srcField.Name),
                 ImportSignatureWithHeader(srcField.Signature));
             _fieldDefinitionCache.Add(srcFieldHandle, dstFieldHandle);
-            Trace?.Invoke($"Imported {_reader.ToString(srcFieldHandle)} -> {RowId(dstFieldHandle):X}");
+            Trace?.Invoke($"Imported {_reader.ToString(srcFieldHandle)} -> {RowId(dstFieldHandle)}");
             if (!isStatic)
                 importedInstanceFields?.Add(srcField);
         }
@@ -114,7 +117,7 @@ public partial class MetadataImporter
             var dstMethodHandle = _builder.AddMethodDefinition(srcMethod.Attributes, srcMethod.ImplAttributes,
                 ImportValue(srcMethod.Name), dstSignature, bodyOffset, NextParameterHandle());
             _methodDefinitionCache.Add(srcMethodHandle, dstMethodHandle);
-            Trace?.Invoke($"Imported {_reader.ToString(srcMethod)} -> {RowId(dstMethodHandle):X}");
+            Trace?.Invoke($"Imported {_reader.ToString(srcMethod)} -> {RowId(dstMethodHandle)}");
 
             using var __ = WithLogPrefix($"[{_reader.ToString(srcMethod)}]");
             foreach (var srcParameterHandle in srcMethod.GetParameters())
@@ -123,7 +126,7 @@ public partial class MetadataImporter
                 var dstParameterHandle = _builder.AddParameter(srcParameter.Attributes,
                     ImportValue(srcParameter.Name), srcParameter.SequenceNumber);
                 _parameterCache.Add(srcParameterHandle, dstParameterHandle);
-                Trace?.Invoke($"Imported {_reader.ToString(srcParameter)} -> {RowId(dstParameterHandle):X}");
+                Trace?.Invoke($"Imported {_reader.ToString(srcParameter)} -> {RowId(dstParameterHandle)}");
 
                 var defaultValue = srcParameter.GetDefaultValue();
 
@@ -163,7 +166,7 @@ public partial class MetadataImporter
                 var dstInterfaceImplHandle = _builder.AddInterfaceImplementation(dstHandle, dstInterfaceHandle);
                 _interfaceImplementationCache.Add(srcInterfaceImplHandle, dstInterfaceImplHandle);
                 Trace?.Invoke(
-                    $"Imported interface implementation {_reader.ToString(srcInterfaceImpl)} ->  {RowId(dstInterfaceHandle):X} {RowId(dstInterfaceImplHandle):X}");
+                    $"Imported interface implementation {_reader.ToString(srcInterfaceImpl)} ->  {RowId(dstInterfaceHandle)} {RowId(dstInterfaceImplHandle)}");
             }
         }
 
@@ -214,7 +217,7 @@ public partial class MetadataImporter
 
             var dstConst = _builder.AddConstant(dstHandle, value);
 
-            Trace?.Invoke($"Imported default value {_reader.ToString(srcConst)} -> {RowId(dstConst):X} = {value}");
+            Trace?.Invoke($"Imported default value {_reader.ToString(srcConst)} -> {RowId(dstConst)} = {value}");
         }
 
         if (!src.GetMarshallingDescriptor().IsNil)
@@ -275,32 +278,32 @@ public partial class MetadataImporter
 
         var dstHandle = _builder.AddEvent(src.Attributes, ImportValue(src.Name), Import(src.Type));
         _eventDefinitionCache.Add(srcHandle, dstHandle);
-        Trace?.Invoke($"Imported event {_reader.ToString(src)} -> {RowId(dstHandle):X}");
+        Trace?.Invoke($"Imported event {_reader.ToString(src)} -> {RowId(dstHandle)}");
 
         using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
         if (!adder.IsNil)
         {
             _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Adder, adder);
-            Trace?.Invoke($"Imported adder {_reader.ToString(accessors.Adder)} -> {RowId(adder):X}");
+            Trace?.Invoke($"Imported adder {_reader.ToString(accessors.Adder)} -> {RowId(adder)}");
         }
 
         if (!remover.IsNil)
         {
             _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Remover, remover);
-            Trace?.Invoke($"Imported remover {_reader.ToString(accessors.Remover)} -> {RowId(remover):X}");
+            Trace?.Invoke($"Imported remover {_reader.ToString(accessors.Remover)} -> {RowId(remover)}");
         }
 
         if (!raiser.IsNil)
         {
             _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Raiser, raiser);
-            Trace?.Invoke($"Imported raiser {_reader.ToString(accessors.Raiser)} -> {RowId(raiser):X}");
+            Trace?.Invoke($"Imported raiser {_reader.ToString(accessors.Raiser)} -> {RowId(raiser)}");
         }
 
         foreach (var (srcAccessor, dstAccessor) in others)
         {
             _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Other, dstAccessor);
-            Trace?.Invoke($"Imported other {_reader.ToString(srcAccessor)} -> {RowId(dstAccessor):X}");
+            Trace?.Invoke($"Imported other {_reader.ToString(srcAccessor)} -> {RowId(dstAccessor)}");
         }
 
     }
@@ -328,26 +331,26 @@ public partial class MetadataImporter
         var dstHandle = _builder.AddProperty(src.Attributes, ImportValue(src.Name), ImportSignatureWithHeader(src.Signature));
         _propertyDefinitionCache.Add(srcHandle, dstHandle);
 
-        Trace?.Invoke($"Imported property {_reader.ToString(src)} -> {RowId(dstHandle):X}");
+        Trace?.Invoke($"Imported property {_reader.ToString(src)} -> {RowId(dstHandle)}");
 
         using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
         if (!getter.IsNil)
         {
             _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Getter, getter);
-            Trace?.Invoke($"Imported getter {_reader.ToString(accessors.Getter)} -> {RowId(getter):X}");
+            Trace?.Invoke($"Imported getter {_reader.ToString(accessors.Getter)} -> {RowId(getter)}");
         }
 
         if (!setter.IsNil)
         {
             _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Setter, setter);
-            Trace?.Invoke($"Imported setter {_reader.ToString(accessors.Setter)} -> {RowId(setter):X}");
+            Trace?.Invoke($"Imported setter {_reader.ToString(accessors.Setter)} -> {RowId(setter)}");
         }
 
         foreach (var (srcAccessor, dstAccessor) in others)
         {
             _builder.AddMethodSemantics(dstHandle, MethodSemanticsAttributes.Other, dstAccessor);
-            Trace?.Invoke($"Imported other {_reader.ToString(srcAccessor)} -> {RowId(dstAccessor):X}");
+            Trace?.Invoke($"Imported other {_reader.ToString(srcAccessor)} -> {RowId(dstAccessor)}");
         }
 
         var defaultValue = src.GetDefaultValue();
@@ -367,7 +370,7 @@ public partial class MetadataImporter
             _genericParameterCache.Add(srcParamHandle, dstParamHandle);
             srcConstraints.AddRange(srcParam.GetConstraints().Select(x => Tuple.Create(dstParamHandle, x)));
 
-            Trace?.Invoke($"Imported generic parameter {_reader.ToString(srcParam)} -> {RowId(dstParamHandle):X}");
+            Trace?.Invoke($"Imported generic parameter {_reader.ToString(srcParam)} -> {RowId(dstParamHandle)}");
         }
 
         foreach (var (dstParam, srcConstraintHandle) in srcConstraints)
@@ -385,7 +388,7 @@ public partial class MetadataImporter
             var value = _reader.GetBlobReader(srcConst.Value).ReadConstant(srcConst.TypeCode);
             var dstConst = _builder.AddConstant(dstHandle, value);
 
-            Trace?.Invoke($"Imported default value {_reader.ToString(srcConst)} -> {RowId(dstConst):X} = {value}");
+            Trace?.Invoke($"Imported default value {_reader.ToString(srcConst)} -> {RowId(dstConst)} = {value}");
         }
     }
 
@@ -477,12 +480,28 @@ public partial class MetadataImporter
             }
         }
 
+        var internalTypesToPreserve = new HashSet<TypeDefinitionHandle>();
+        if (Filter?.OmitNonApiMembers == true)
+        {
+            Debug?.Invoke("Generating internal type stubs.");
+            foreach (var internalTypeHandle in CalculateInternalTypesToPreserve(_typeDefinitionCache.Keys))
+            {
+                internalTypesToPreserve.Add(internalTypeHandle);
+                _typeDefinitionCache[internalTypeHandle] = MetadataTokens.TypeDefinitionHandle(index++);
+            }
+        }
+
         Debug?.Invoke("Importing type definitions");
         foreach (var srcHandle in _reader.TypeDefinitions.Where(_typeDefinitionCache.ContainsKey))
         {
-            var dstHandle = ImportTypeDefinitionSkeleton(srcHandle);
+            var shouldOmitMembers = internalTypesToPreserve.Contains(srcHandle);
+            var dstHandle = ImportTypeDefinitionSkeleton(srcHandle, shouldOmitMembers);
             if (dstHandle != _typeDefinitionCache[srcHandle])
-                throw new Exception("WTF: type handle mismatch");
+                throw new Exception(
+                    "WTF: type handle mismatch." +
+                    $" Original type {_reader.GetFullname(srcHandle)}," +
+                    $" already created handle {MetaUtil.RowId(srcHandle)}," +
+                    $" new handle {MetaUtil.RowId(dstHandle)}.");
         }
 
         Debug?.Invoke("Importing type definition accessories");
@@ -508,7 +527,7 @@ public partial class MetadataImporter
         foreach (var (dstHandle, srcNested, dstNested) in nestedTypes)
         {
             _builder.AddNestedType(dstNested, dstHandle);
-            Trace?.Invoke($"Imported nested type {_reader.ToString(srcNested)} -> {RowId(dstNested):X}");
+            Trace?.Invoke($"Imported nested type {_reader.ToString(srcNested)} -> {RowId(dstNested)}");
         }
 
         var generic = _typeDefinitionCache
@@ -562,5 +581,72 @@ public partial class MetadataImporter
             FieldAttributes.Private,
             _builder.GetOrAddString("<SyntheticNonEmptyStructMarker>"),
             _builder.GetOrAddBlob(new[] { (byte)SignatureKind.Field, (byte)SignatureTypeCode.Int32 }));
+    }
+
+    private IEnumerable<TypeDefinitionHandle> CalculateInternalTypesToPreserve(
+        IReadOnlyCollection<TypeDefinitionHandle> importedTypeHandles)
+    {
+        var preservedTypes = new HashSet<TypeDefinitionHandle>(importedTypeHandles);
+        var result = new List<TypeDefinitionHandle>();
+        foreach (var importedTypeHandle in importedTypeHandles)
+        {
+            var candidateTypes = new List<TypeDefinitionHandle>();
+            var type = _reader.GetTypeDefinition(importedTypeHandle);
+            var collector = new UsedTypeCollector(candidateTypes);
+            foreach (var fieldHandle in type.GetFields())
+            {
+                var field = _reader.GetFieldDefinition(fieldHandle);
+                if (Filter == null || Filter.AllowImport(field, _reader))
+                    AcceptFieldSignature(field, collector);
+            }
+
+            foreach (var methodHandle in type.GetMethods())
+            {
+                var method = _reader.GetMethodDefinition(methodHandle);
+                if (Filter == null || Filter.AllowImport(method, _reader))
+                    AcceptMethodSignature(method, collector);
+            }
+
+            foreach (var typeHandle in candidateTypes)
+            {
+                if (preservedTypes.Add(typeHandle))
+                {
+                    result.Add(typeHandle);
+                    Debug?.Invoke($"Exposing internal type {_reader.GetFullname(typeHandle)}.");
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private class UsedTypeCollector(List<TypeDefinitionHandle> collectedTypes) : ISignatureVisitor<object?>
+    {
+        public void VisitReader(BlobReader reader) { }
+
+        public void WriteByte(byte @byte) { }
+
+        public void WriteCompressedInteger(int integer) { }
+
+        public void WriteCompressedSignedInteger(int integer) { }
+
+        public void VisitTypeHandle(EntityHandle srcHandle)
+        {
+            switch (srcHandle.Kind)
+            {
+                case HandleKind.TypeReference:
+                case HandleKind.TypeSpecification:
+                    break;
+                case HandleKind.TypeDefinition:
+                    collectedTypes.Add((TypeDefinitionHandle)srcHandle);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(srcHandle),
+                        $"Unexpected type handle kind: {srcHandle.Kind}.");
+            }
+        }
+
+        public object? GetResult() => null;
     }
 }

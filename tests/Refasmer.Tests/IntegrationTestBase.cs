@@ -49,7 +49,7 @@ public abstract class IntegrationTestBase : IDisposable
     {
         var args = new List<string>
         {
-            "-v",
+            "-vvv",
             $"--output={outputPath}"
         };
         args.AddRange(additionalOptions);

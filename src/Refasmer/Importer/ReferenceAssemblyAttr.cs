@@ -119,7 +119,7 @@ public partial class MetadataImporter
         else
         {
             var attrHandle = _builder.AddCustomAttribute(Import(EntityHandle.AssemblyDefinition), ctorHandle, _builder.GetOrAddBlob(VoidValueBlob));
-            Debug?.Invoke($"Added ReferenceAssembly attribute {RowId(attrHandle):X}");
+            Debug?.Invoke($"Added ReferenceAssembly attribute {RowId(attrHandle)}");
         }
     }   
 }

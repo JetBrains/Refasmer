@@ -98,7 +98,7 @@ public partial class MetadataImporter
         }
 
         cache.Add(srcHandle, dstHandle);
-        Trace?.Invoke($"Imported {toString(srcHandle)} -> {RowId(dstHandle!):X}");
+        Trace?.Invoke($"Imported {toString(srcHandle)} -> {RowId(dstHandle!)}");
 
         return dstHandle;
     }
