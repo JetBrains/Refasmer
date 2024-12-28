@@ -22,6 +22,14 @@ public abstract class IntegrationTestBase : IDisposable
         return Path.Combine(root, "tests/RefasmerTestAssembly/bin/Release/net6.0/RefasmerTestAssembly.dll");
     }
 
+    protected static async Task<string> BuildTestAssemblyWithInternalTypeInPublicApi()
+    {
+        var assemblyPath = await BuildTestAssembly();
+        var internalizedAssemblyPath = Path.ChangeExtension(assemblyPath, ".TypesMarkedInternal.dll");
+        MarkTypesInternal(assemblyPath, internalizedAssemblyPath, "ToBeMarkedInternal");
+        return internalizedAssemblyPath;
+    }
+
     private static string FindSourceRoot()
     {
         var current = Directory.GetCurrentDirectory();
@@ -63,20 +71,55 @@ public abstract class IntegrationTestBase : IDisposable
         return outputPath;
     }
 
-    protected static Task VerifyTypeContent(string assemblyPath, string typeName)
+    protected static Task VerifyTypeContent(string assemblyPath, string typeName) =>
+        VerifyTypeContents(assemblyPath, [typeName], [typeName]);
+
+    protected static Task VerifyTypeContents(string assemblyPath, string[] typeNames, object[]? parameters = null)
     {
         var assembly = AssemblyDefinition.ReadAssembly(assemblyPath);
-        var type = assembly.MainModule.GetType(typeName);
-        Assert.That(assembly.MainModule.GetType(typeName), Is.Not.Null);
-
         var printout = new StringBuilder();
-        Printer.PrintType(type, printout);
+        foreach (var typeName in typeNames)
+        {
+            var type = assembly.MainModule.GetType(typeName);
+            Assert.That(
+                assembly.MainModule.GetType(typeName),
+                Is.Not.Null,
+                $"Type \"{typeName}\" is not found in assembly \"{assemblyPath}\".");
+
+            Printer.PrintType(type, printout);
+        }
 
         var verifySettings = new VerifySettings();
         verifySettings.DisableDiff();
         verifySettings.UseDirectory("data");
-        verifySettings.UseParameters(typeName);
+        if (parameters != null)
+            verifySettings.UseParameters(parameters);
         return Verify(printout, verifySettings);
+    }
+
+    private static void MarkTypesInternal(string inputAssemblyPath, string outputAssemblyPath, string typeNameSuffix)
+    {
+        var anyTypeMathed = false;
+        var assemblyDefinition = AssemblyDefinition.ReadAssembly(inputAssemblyPath);
+        foreach (var type in assemblyDefinition.MainModule.Types)
+        {
+            if (type.IsPublic && type.Name.EndsWith(typeNameSuffix))
+            {
+                type.IsPublic = false;
+                type.IsNotPublic = true;
+                anyTypeMathed = true;
+            }
+        }
+
+        if (!anyTypeMathed)
+        {
+            Assert.Fail(
+                $"Unable to find any types with names ending on \"{typeNameSuffix}\" " +
+                $"in the assembly \"{inputAssemblyPath}\".");
+        }
+
+        assemblyDefinition.Write(outputAssemblyPath);
+        assemblyDefinition.Dispose();
     }
 
     protected class Outputs : IDisposable

@@ -33,4 +33,14 @@ public class IntegrationTests : IntegrationTestBase
         var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiMembers: true);
         await VerifyTypeContent(resultAssembly, typeName);
     }
+
+    [Test]
+    public async Task InternalTypeInPublicApi()
+    {
+        var assemblyPath = await BuildTestAssemblyWithInternalTypeInPublicApi();
+        var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiMembers: true);
+        await VerifyTypeContents(
+            resultAssembly,
+            ["RefasmerTestAssembly.PublicClassWithInternalTypeInApi", "RefasmerTestAssembly.ClassToBeMarkedAsInternal"]);
+    }
 }
