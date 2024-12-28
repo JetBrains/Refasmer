@@ -82,7 +82,7 @@ public abstract class IntegrationTestBase : IDisposable
         {
             var type = assembly.MainModule.GetType(typeName);
             Assert.That(
-                assembly.MainModule.GetType(typeName),
+                type,
                 Is.Not.Null,
                 $"Type \"{typeName}\" is not found in assembly \"{assemblyPath}\".");
 

@@ -18,7 +18,7 @@ public partial class MetadataImporter
     private readonly Dictionary<InterfaceImplementationHandle, InterfaceImplementationHandle> _interfaceImplementationCache = new();
     private readonly Dictionary<GenericParameterHandle, GenericParameterHandle> _genericParameterCache = new();
     private readonly Dictionary<GenericParameterConstraintHandle, GenericParameterConstraintHandle> _genericParameterConstraintCache = new(); 
-    private readonly Dictionary<TypeDefinitionHandle, TypeDefinitionHandle> _typeDefinitionCache = new();
+    private Dictionary<TypeDefinitionHandle, TypeDefinitionHandle> _typeDefinitionCache = null!;
     private readonly Dictionary<MethodDefinitionHandle, MethodDefinitionHandle> _methodDefinitionCache = new();
     private readonly Dictionary<FieldDefinitionHandle, FieldDefinitionHandle> _fieldDefinitionCache = new();
     private readonly Dictionary<PropertyDefinitionHandle, PropertyDefinitionHandle> _propertyDefinitionCache = new();

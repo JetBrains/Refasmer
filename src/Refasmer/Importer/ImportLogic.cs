@@ -431,64 +431,27 @@ public partial class MetadataImporter
         foreach (var srcHandle in _reader.AssemblyFiles)
             Import(srcHandle);
 
-        var index = 1;
         Debug?.Invoke("Preparing type list for import");
 
-        var checker = new CachedAttributeChecker();
-
-        foreach (var srcHandle in _reader.TypeDefinitions)
-        {
-            bool shouldImport;
-
-            var src = _reader.GetTypeDefinition(srcHandle);
-
-            // Special <Module> type
-            if (srcHandle.GetHashCode() == 1 && _reader.GetString(src.Name) == "<Module>")
-            {
-                shouldImport = true;
-            }
-            else if (checker.HasAttribute(_reader, src, FullNames.Embedded) &&
-                     checker.HasAttribute(_reader, src, FullNames.CompilerGenerated))
-            {
-                Trace?.Invoke($"Embedded type found {_reader.ToString(srcHandle)}");
-                shouldImport = true;
-            }
-            else if (_reader.GetString(src.Namespace) == FullNames.CompilerServices &&
-                     _reader.GetFullname(src.BaseType) == FullNames.Attribute)
-            {
-                Trace?.Invoke($"CompilerServices attribute found {_reader.ToString(srcHandle)}");
-                shouldImport = true;
-            }
-            else if (_reader.GetString(src.Namespace) == FullNames.CodeAnalysis &&
-                     _reader.GetFullname(src.BaseType) == FullNames.Attribute)
-            {
-                Trace?.Invoke($"CodeAnalysis attribute found {_reader.ToString(srcHandle)}");
-                shouldImport = true;
-            }
-            else
-            {
-                shouldImport = Filter?.AllowImport(_reader.GetTypeDefinition(srcHandle), _reader) != false;
-            }
-
-            if (shouldImport)
-            {
-                _typeDefinitionCache[srcHandle] = MetadataTokens.TypeDefinitionHandle(index++);
-            }
-            else
-            {
-                Trace?.Invoke($"Type filtered and will not be imported {_reader.ToString(srcHandle)}");
-            }
-        }
-
+        // 1. Process/assign numbers to the initial set of the imported types.
         var internalTypesToPreserve = new HashSet<TypeDefinitionHandle>();
+        var initialTypeDefinitions = TypeImportPass(_reader, internalTypesToPreserve, Filter, Trace);
+
         if (Filter?.OmitNonApiMembers == true)
         {
-            Debug?.Invoke("Generating internal type stubs.");
-            foreach (var internalTypeHandle in CalculateInternalTypesToPreserve(_typeDefinitionCache.Keys))
+            // 2. If required, seek for the additional internal types to import.
+            Debug?.Invoke("Enumerating the internal types for import.");
+            foreach (var internalTypeHandle in CalculateInternalTypesToPreserve(initialTypeDefinitions.Keys))
             {
                 internalTypesToPreserve.Add(internalTypeHandle);
-                _typeDefinitionCache[internalTypeHandle] = MetadataTokens.TypeDefinitionHandle(index++);
             }
+
+            // 3. Enumerate the imported types again, to assign proper final numbering.
+            _typeDefinitionCache = TypeImportPass(_reader, internalTypesToPreserve, Filter, Trace);
+        }
+        else
+        {
+            _typeDefinitionCache = initialTypeDefinitions;
         }
 
         Debug?.Invoke("Importing type definitions");
@@ -564,6 +527,66 @@ public partial class MetadataImporter
         Debug?.Invoke("Importing done");
 
         return mvidBlob;
+    }
+
+    private static Dictionary<TypeDefinitionHandle, TypeDefinitionHandle> TypeImportPass(
+        MetadataReader reader,
+        HashSet<TypeDefinitionHandle> internalTypesToPreserve,
+        IImportFilter? filter,
+        Action<string>? traceLog)
+    {
+        var checker = new CachedAttributeChecker();
+        var typeDefinitions = new Dictionary<TypeDefinitionHandle, TypeDefinitionHandle>();
+        var index = 1;
+        foreach (var srcHandle in reader.TypeDefinitions)
+        {
+            bool shouldImport;
+
+            var src = reader.GetTypeDefinition(srcHandle);
+
+            // Special <Module> type
+            if (srcHandle.GetHashCode() == 1 && reader.GetString(src.Name) == "<Module>")
+            {
+                shouldImport = true;
+            }
+            else if (checker.HasAttribute(reader, src, FullNames.Embedded) &&
+                     checker.HasAttribute(reader, src, FullNames.CompilerGenerated))
+            {
+                traceLog?.Invoke($"Embedded type found {reader.ToString(srcHandle)}");
+                shouldImport = true;
+            }
+            else if (reader.GetString(src.Namespace) == FullNames.CompilerServices &&
+                     reader.GetFullname(src.BaseType) == FullNames.Attribute)
+            {
+                traceLog?.Invoke($"CompilerServices attribute found {reader.ToString(srcHandle)}");
+                shouldImport = true;
+            }
+            else if (reader.GetString(src.Namespace) == FullNames.CodeAnalysis &&
+                     reader.GetFullname(src.BaseType) == FullNames.Attribute)
+            {
+                traceLog?.Invoke($"CodeAnalysis attribute found {reader.ToString(srcHandle)}");
+                shouldImport = true;
+            }
+            else if (internalTypesToPreserve.Contains(srcHandle))
+            {
+                shouldImport = true;
+            }
+            else
+            {
+                shouldImport = filter?.AllowImport(reader.GetTypeDefinition(srcHandle), reader) != false;
+            }
+
+            if (shouldImport)
+            {
+                typeDefinitions[srcHandle] = MetadataTokens.TypeDefinitionHandle(index++);
+            }
+            else
+            {
+                traceLog?.Invoke($"Type filtered and will not be imported {reader.ToString(srcHandle)}");
+            }
+        }
+
+        return typeDefinitions;
     }
 
     /// <remarks>
