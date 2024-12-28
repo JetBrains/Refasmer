@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- [#38: Internal types in public API break `omit-non-api-members=true`](https://github.com/JetBrains/Refasmer/issues/38).
+
 ## [2.0.0] - 2024-11-20
 ### Changed
 - **(Breaking change!)** A new mandatory parameter `--omit-non-api-types` (pass either `true` or `false`).
@@ -185,4 +189,4 @@ Release the initial version in form of a .NET executable and a NuGet package.
 [1.0.32]: https://github.com/JetBrains/Refasmer/compare/1.0.31...1.0.32
 [1.0.33]: https://github.com/JetBrains/Refasmer/compare/1.0.32...1.0.33
 [2.0.0]: https://github.com/JetBrains/Refasmer/compare/1.0.33...v2.0.0
-[Unreleased]: https://github.com/JetBrains/Refasmer/compare/1.0.33...HEAD
+[Unreleased]: https://github.com/JetBrains/Refasmer/compare/v2.0.0...HEAD
