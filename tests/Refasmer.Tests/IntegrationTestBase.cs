@@ -5,7 +5,7 @@ using Mono.Cecil;
 
 namespace JetBrains.Refasmer.Tests;
 
-public abstract class IntegrationTestBase : IDisposable
+public abstract class IntegrationTestBase
 {
     protected static async Task<string> BuildTestAssembly()
     {
@@ -151,7 +151,8 @@ public abstract class IntegrationTestBase : IDisposable
 
     protected static Outputs CollectConsoleOutput() => new();
 
-    public void Dispose()
+    [TearDown]
+    public void TearDown()
     {
         Program.ResetArguments();
     }
