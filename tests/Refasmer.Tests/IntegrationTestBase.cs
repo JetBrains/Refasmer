@@ -107,7 +107,8 @@ public abstract class IntegrationTestBase
         var assemblyDefinition = AssemblyDefinition.ReadAssembly(inputAssemblyPath);
         foreach (var type in assemblyDefinition.MainModule.Types)
         {
-            if (type.IsPublic && type.Name.EndsWith(typeNameSuffix))
+            var friendlyTypeName = type.Name.Split('`')[0]; // strip generic suffix
+            if (type.IsPublic && friendlyTypeName.EndsWith(typeNameSuffix))
             {
                 type.IsPublic = false;
                 type.IsNotPublic = true;

@@ -10,6 +10,21 @@ public static class Printer
         var access = GetAccessString(type);
         var typeKind = GetTypeKindString(type);
         printout.AppendLine($"{indent}{access} {typeKind}: {type.FullName}");
+
+        var baseType = type.BaseType;
+        if (baseType != null && baseType.FullName != "System.Object" && baseType.FullName != "System.ValueType")
+        {
+            printout.AppendLine($"{indent}  - base type: {baseType.FullName}");
+        }
+
+        if (type.HasInterfaces)
+        {
+            foreach (var @interface in type.Interfaces)
+            {
+                printout.AppendLine($"{indent}  - interface impl: {@interface.InterfaceType.FullName}");
+            }
+        }
+
         if (type.HasFields)
         {
             printout.AppendLine($"{indent}fields:");

@@ -51,6 +51,7 @@ public class IntegrationTests : IntegrationTestBase
     [TestCase("PublicClassDerivingFromInternal", "Class2ToBeMarkedInternal")]
     [TestCase("PublicClassImplementingInternal", "IInterface1ToBeMarkedInternal")]
     [TestCase("PublicClassWithInternalInterfaceImpl", "Class3ToBeMarkedInternal,IInterface2ToBeMarkedInternal`1")]
+    [TestCase("PublicClassWithInternalTypeInExplicitImpl", "IInterface3")]
     public async Task InternalTypeInPublicApi(string mainClassName, string auxiliaryClassNames)
     {
         var assemblyPath = await BuildTestAssemblyWithInternalTypeInPublicApi();
@@ -62,6 +63,7 @@ public class IntegrationTests : IntegrationTestBase
         await VerifyTypeContents(
             resultAssembly,
             [fullMainClassName, ..fullAuxiliaryClassNames],
+            assertTypeExists: false,
             parameters: [mainClassName]);
     }
 }

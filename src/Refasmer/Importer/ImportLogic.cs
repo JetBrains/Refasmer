@@ -87,17 +87,13 @@ public partial class MetadataImporter
         if (!forcePreservePrivateFields)
             PostProcessSkippedValueTypeFields(skippedInstanceFields!, importedInstanceFields!);
 
-        var implementations = src.GetMethodImplementations()
-            .Select(_reader.GetMethodImplementation)
-            .Where(mi => AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
-            .Select(mi => (MethodDefinitionHandle)mi.MethodBody)
-            .ToImmutableHashSet();
+        var implementations = GetAllowedInterfaceMethodImplementations(src);
 
         foreach (var srcMethodHandle in src.GetMethods())
         {
             var srcMethod = _reader.GetMethodDefinition(srcMethodHandle);
 
-            if (!implementations.Contains(srcMethodHandle) && Filter?.AllowImport(srcMethod, _reader) == false)
+            if (!AllowImportMethod(implementations, srcMethodHandle, srcMethod))
             {
                 Trace?.Invoke($"Not imported {_reader.ToString(srcMethod)}");
                 continue;
@@ -406,6 +402,19 @@ public partial class MetadataImporter
             .Select(_reader.GetFullname)
             .Any(name => name == FullNames.ReferenceAssembly);
 
+    private ImmutableHashSet<MethodDefinitionHandle> GetAllowedInterfaceMethodImplementations(TypeDefinition type) =>
+        type.GetMethodImplementations()
+            .Select(_reader.GetMethodImplementation)
+            .Where(mi => AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
+            .Select(mi => (MethodDefinitionHandle)mi.MethodBody)
+            .ToImmutableHashSet();
+
+    private bool AllowImportMethod(
+        IImmutableSet<MethodDefinitionHandle> implementations,
+        MethodDefinitionHandle methodHandle,
+        MethodDefinition method) =>
+        !implementations.Contains(methodHandle) && (Filter == null || Filter.AllowImport(method, _reader));
+
     public ReservedBlob<GuidHandle> Import()
     {
         if (_reader.IsAssembly)
@@ -646,10 +655,11 @@ public partial class MetadataImporter
                     AcceptFieldSignature(field, collector);
             }
 
+            var methodImplementations = GetAllowedInterfaceMethodImplementations(type);
             foreach (var methodHandle in type.GetMethods())
             {
                 var method = _reader.GetMethodDefinition(methodHandle);
-                if (Filter == null || Filter.AllowImport(method, _reader))
+                if (AllowImportMethod(methodImplementations, methodHandle, method))
                     AcceptMethodSignature(method, collector);
             }
 

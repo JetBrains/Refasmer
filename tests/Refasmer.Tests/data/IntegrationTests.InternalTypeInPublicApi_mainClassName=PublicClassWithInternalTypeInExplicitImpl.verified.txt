@@ -1,0 +1,5 @@
+﻿public class: RefasmerTestAssembly.PublicClassWithInternalTypeInExplicitImpl
+  - interface impl: RefasmerTestAssembly.IInterface3
+methods:
+- .ctor(): System.Void:
+internal interface: RefasmerTestAssembly.IInterface3

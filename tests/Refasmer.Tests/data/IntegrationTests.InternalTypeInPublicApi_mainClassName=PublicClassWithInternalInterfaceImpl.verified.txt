@@ -1,9 +1,6 @@
 ﻿public class: RefasmerTestAssembly.PublicClassWithInternalInterfaceImpl
+  - interface impl: RefasmerTestAssembly.IInterface2ToBeMarkedInternal`1<RefasmerTestAssembly.Class3ToBeMarkedInternal>
 methods:
-- RefasmerTestAssembly.IInterface2ToBeMarkedInternal<RefasmerTestAssembly.Class3ToBeMarkedInternal>.Foo(): RefasmerTestAssembly.Class3ToBeMarkedInternal:
 - .ctor(): System.Void:
 internal class: RefasmerTestAssembly.Class3ToBeMarkedInternal
-public interface: RefasmerTestAssembly.IInterface2ToBeMarkedInternal`1
-methods:
-- Foo(): T:
-  - <abstract>
+internal interface: RefasmerTestAssembly.IInterface2ToBeMarkedInternal`1
