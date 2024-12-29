@@ -616,6 +616,23 @@ public partial class MetadataImporter
             var candidateTypes = new List<TypeDefinitionHandle>();
             var type = _reader.GetTypeDefinition(importedTypeHandle);
             var collector = new UsedTypeCollector(candidateTypes);
+
+            var parentTypes = new List<EntityHandle>();
+            if (!type.BaseType.IsNil) parentTypes.Add(type.BaseType);
+            foreach (var interfaceImpl in type.GetInterfaceImplementations())
+            {
+                var @interface = _reader.GetInterfaceImplementation(interfaceImpl);
+                parentTypes.Add(@interface.Interface);
+            }
+
+            foreach (var parentTypeHandle in parentTypes)
+            {
+                if (parentTypeHandle.Kind == HandleKind.TypeDefinition)
+                {
+                    candidateTypes.Add((TypeDefinitionHandle)parentTypeHandle);
+                }
+            }
+
             foreach (var fieldHandle in type.GetFields())
             {
                 var field = _reader.GetFieldDefinition(fieldHandle);

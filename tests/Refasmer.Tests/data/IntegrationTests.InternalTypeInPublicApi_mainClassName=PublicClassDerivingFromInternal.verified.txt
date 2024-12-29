@@ -1,0 +1,4 @@
+﻿public type: RefasmerTestAssembly.PublicClassDerivingFromInternal
+methods:
+- .ctor(): System.Void:
+internal type: RefasmerTestAssembly.Class2ToBeMarkedInternal

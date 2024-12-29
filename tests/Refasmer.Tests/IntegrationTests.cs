@@ -47,13 +47,20 @@ public class IntegrationTests : IntegrationTestBase
             parameters: [omitNonApi]);
     }
 
-    [Test]
-    public async Task InternalTypeInPublicApi()
+    [TestCase("PublicClassWithInternalTypeInApi", "Class1ToBeMarkedInternal")]
+    [TestCase("PublicClassDerivingFromInternal", "Class2ToBeMarkedInternal")]
+    [TestCase("PublicClassImplementingInternal", "InterfaceToBeMarkedInternal")]
+    public async Task InternalTypeInPublicApi(string mainClassName, string auxiliaryClassName)
     {
         var assemblyPath = await BuildTestAssemblyWithInternalTypeInPublicApi();
         var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiMembers: true);
+
+        var fullMainClassName = $"RefasmerTestAssembly.{mainClassName}";
+        var fullAuxiliaryClassName = $"RefasmerTestAssembly.{auxiliaryClassName}";
+
         await VerifyTypeContents(
             resultAssembly,
-            ["RefasmerTestAssembly.PublicClassWithInternalTypeInApi", "RefasmerTestAssembly.ClassToBeMarkedInternal"]);
+            [fullMainClassName, fullAuxiliaryClassName],
+            parameters: [mainClassName]);
     }
 }
