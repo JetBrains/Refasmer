@@ -49,18 +49,19 @@ public class IntegrationTests : IntegrationTestBase
 
     [TestCase("PublicClassWithInternalTypeInApi", "Class1ToBeMarkedInternal")]
     [TestCase("PublicClassDerivingFromInternal", "Class2ToBeMarkedInternal")]
-    [TestCase("PublicClassImplementingInternal", "InterfaceToBeMarkedInternal")]
-    public async Task InternalTypeInPublicApi(string mainClassName, string auxiliaryClassName)
+    [TestCase("PublicClassImplementingInternal", "IInterface1ToBeMarkedInternal")]
+    [TestCase("PublicClassWithInternalInterfaceImpl", "Class3ToBeMarkedInternal,IInterface2ToBeMarkedInternal`1")]
+    public async Task InternalTypeInPublicApi(string mainClassName, string auxiliaryClassNames)
     {
         var assemblyPath = await BuildTestAssemblyWithInternalTypeInPublicApi();
         var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiMembers: true);
 
         var fullMainClassName = $"RefasmerTestAssembly.{mainClassName}";
-        var fullAuxiliaryClassName = $"RefasmerTestAssembly.{auxiliaryClassName}";
+        var fullAuxiliaryClassNames = auxiliaryClassNames.Split(',').Select(x => $"RefasmerTestAssembly.{x}");
 
         await VerifyTypeContents(
             resultAssembly,
-            [fullMainClassName, fullAuxiliaryClassName],
+            [fullMainClassName, ..fullAuxiliaryClassNames],
             parameters: [mainClassName]);
     }
 }

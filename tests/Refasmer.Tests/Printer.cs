@@ -8,7 +8,8 @@ public static class Printer
     public static void PrintType(TypeDefinition type, StringBuilder printout, string indent = "")
     {
         var access = GetAccessString(type);
-        printout.AppendLine($"{indent}{access} type: {type.FullName}");
+        var typeKind = GetTypeKindString(type);
+        printout.AppendLine($"{indent}{access} {typeKind}: {type.FullName}");
         if (type.HasFields)
         {
             printout.AppendLine($"{indent}fields:");
@@ -34,10 +35,15 @@ public static class Printer
                     }
                 }
 
-                printout.AppendLine($"{indent}): {method.ReturnType}:");
-                foreach (var instruction in method.Body.Instructions)
+                printout.AppendLine($"): {method.ReturnType}:");
+                if (method.IsAbstract)
+                    printout.AppendLine($"{indent}  - <abstract>");
+                else
                 {
-                    printout.AppendLine($"{indent}  - {instruction}");
+                    foreach (var instruction in method.Body.Instructions)
+                    {
+                        printout.AppendLine($"{indent}  - {instruction}");
+                    }
                 }
             }
         }
@@ -61,5 +67,15 @@ public static class Printer
         if (type.IsNestedFamilyOrAssembly) return "protected internal";
         if (type.IsNestedFamilyAndAssembly) return "private protected";
         return "internal";
+    }
+
+    private static string GetTypeKindString(TypeDefinition typeDefinition)
+    {
+        var result = new StringBuilder();
+        if (typeDefinition.IsInterface) result.Append("interface");
+        else if (typeDefinition.IsAbstract) result.Append("abstract ");
+        if (typeDefinition.IsValueType) result.Append("struct");
+        else if (typeDefinition.IsClass) result.Append("class");
+        return result.ToString();
     }
 }

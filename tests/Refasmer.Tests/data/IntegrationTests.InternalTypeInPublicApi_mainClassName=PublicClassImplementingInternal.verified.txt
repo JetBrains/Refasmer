@@ -1,4 +1,4 @@
-﻿public type: RefasmerTestAssembly.PublicClassImplementingInternal
+﻿public class: RefasmerTestAssembly.PublicClassImplementingInternal
 methods:
 - .ctor(): System.Void:
-internal type: RefasmerTestAssembly.InterfaceToBeMarkedInternal
+internal interface: RefasmerTestAssembly.IInterface1ToBeMarkedInternal

@@ -1,1 +1,1 @@
-﻿public type: RefasmerTestAssembly.EmptyStructWithStaticMember
+﻿public struct: RefasmerTestAssembly.EmptyStructWithStaticMember

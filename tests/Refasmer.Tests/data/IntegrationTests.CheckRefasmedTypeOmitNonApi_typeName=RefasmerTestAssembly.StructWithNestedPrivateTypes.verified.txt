@@ -1,7 +1,7 @@
-﻿public type: RefasmerTestAssembly.StructWithNestedPrivateTypes
+﻿public struct: RefasmerTestAssembly.StructWithNestedPrivateTypes
 fields:
 - <SyntheticNonEmptyStructMarker>: System.Int32
 types:
-  internal type: RefasmerTestAssembly.StructWithNestedPrivateTypes/UnusedPublicStruct
+  internal struct: RefasmerTestAssembly.StructWithNestedPrivateTypes/UnusedPublicStruct
   fields:
   - <SyntheticNonEmptyStructMarker>: System.Int32

@@ -1,4 +1,4 @@
-﻿public type: RefasmerTestAssembly.UnsafeClassWithFunctionPointer
+﻿public class: RefasmerTestAssembly.UnsafeClassWithFunctionPointer
 methods:
 - MethodWithFunctionPointer(method System.Void *() functionPointer): System.Void:
 - .ctor(): System.Void:
