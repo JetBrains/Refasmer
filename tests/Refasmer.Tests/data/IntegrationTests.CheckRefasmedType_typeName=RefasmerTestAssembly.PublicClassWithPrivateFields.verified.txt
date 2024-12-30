@@ -1,4 +1,4 @@
-﻿public type: RefasmerTestAssembly.PublicClassWithPrivateFields
+﻿public class: RefasmerTestAssembly.PublicClassWithPrivateFields
 fields:
 - PublicInt: System.Int32
 methods:

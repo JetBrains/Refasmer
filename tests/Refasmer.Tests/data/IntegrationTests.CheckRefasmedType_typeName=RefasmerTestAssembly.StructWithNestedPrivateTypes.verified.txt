@@ -1,13 +1,13 @@
-﻿public type: RefasmerTestAssembly.StructWithNestedPrivateTypes
+﻿public struct: RefasmerTestAssembly.StructWithNestedPrivateTypes
 fields:
 - PrivateField: RefasmerTestAssembly.StructWithNestedPrivateTypes/NestedPrivateStruct
 types:
-  private type: RefasmerTestAssembly.StructWithNestedPrivateTypes/NestedPrivateStruct
+  private struct: RefasmerTestAssembly.StructWithNestedPrivateTypes/NestedPrivateStruct
   fields:
   - Field: System.Int32
-  private type: RefasmerTestAssembly.StructWithNestedPrivateTypes/UnusedPrivateStruct
+  private struct: RefasmerTestAssembly.StructWithNestedPrivateTypes/UnusedPrivateStruct
   fields:
   - Field: System.Int32
-  internal type: RefasmerTestAssembly.StructWithNestedPrivateTypes/UnusedPublicStruct
+  internal struct: RefasmerTestAssembly.StructWithNestedPrivateTypes/UnusedPublicStruct
   fields:
   - Field: System.Int32

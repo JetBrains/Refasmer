@@ -1,5 +1,5 @@
-﻿public type: RefasmerTestAssembly.PublicClassWithInternalTypeInApi
+﻿public class: RefasmerTestAssembly.PublicClassWithInternalTypeInApi
 methods:
 - Accept(RefasmerTestAssembly.Class1ToBeMarkedInternal argument): System.Void:
 - .ctor(): System.Void:
-internal type: RefasmerTestAssembly.Class1ToBeMarkedInternal
+internal class: RefasmerTestAssembly.Class1ToBeMarkedInternal
