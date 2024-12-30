@@ -7,6 +7,8 @@ namespace JetBrains.Refasmer.Tests;
 
 public abstract class IntegrationTestBase
 {
+    private const string TestAssemblyTargetFramework = "net7.0";
+
     protected static async Task<string> BuildTestAssembly()
     {
         var root = FindSourceRoot();
@@ -19,7 +21,9 @@ public abstract class IntegrationTestBase
             Is.EqualTo(0),
             $"Failed to build test assembly, exit code {result.ExitCode}. StdOut:\n{result.StandardOutput}\nStdErr: {result.StandardError}");
 
-        return Path.Combine(root, "tests/RefasmerTestAssembly/bin/Release/net6.0/RefasmerTestAssembly.dll");
+        return Path.Combine(
+            root,
+            $"tests/RefasmerTestAssembly/bin/Release/{TestAssemblyTargetFramework}/RefasmerTestAssembly.dll");
     }
 
     protected static async Task<string> BuildTestAssemblyWithInternalTypeInPublicApi()

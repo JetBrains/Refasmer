@@ -87,7 +87,7 @@ public partial class MetadataImporter
         if (!forcePreservePrivateFields)
             PostProcessSkippedValueTypeFields(skippedInstanceFields!, importedInstanceFields!);
 
-        var implementations = GetAllowedInterfaceMethodImplementations(src);
+        var implementations = GetCurrentAssemblyInterfaceMethodImplementations(src);
 
         foreach (var srcMethodHandle in src.GetMethods())
         {
@@ -402,12 +402,29 @@ public partial class MetadataImporter
             .Select(_reader.GetFullname)
             .Any(name => name == FullNames.ReferenceAssembly);
 
-    private ImmutableHashSet<MethodDefinitionHandle> GetAllowedInterfaceMethodImplementations(TypeDefinition type) =>
-        type.GetMethodImplementations()
-            .Select(_reader.GetMethodImplementation)
-            .Where(mi => AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
-            .Select(mi => (MethodDefinitionHandle)mi.MethodBody)
-            .ToImmutableHashSet();
+    private ImmutableHashSet<MethodDefinitionHandle> GetCurrentAssemblyInterfaceMethodImplementations(
+        TypeDefinition type)
+    {
+        return GetImplementations().ToImmutableHashSet();
+
+        IEnumerable<MethodDefinitionHandle> GetImplementations()
+        {
+            var implementations = type.GetMethodImplementations()
+                .Select(_reader.GetMethodImplementation);
+            foreach (var mi in implementations)
+            {
+                if (!AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
+                    continue;
+
+                var bodyHandle = (MethodDefinitionHandle)mi.MethodBody;
+                var method = _reader.GetMethodDefinition(bodyHandle);
+                var isStatic = (method.Attributes & MethodAttributes.Static) != 0;
+                if (isStatic) continue;
+
+                yield return bodyHandle;
+            }
+        }
+    }
 
     private bool AllowImportMethod(
         IImmutableSet<MethodDefinitionHandle> implementations,
@@ -655,7 +672,7 @@ public partial class MetadataImporter
                     AcceptFieldSignature(field, collector);
             }
 
-            var methodImplementations = GetAllowedInterfaceMethodImplementations(type);
+            var methodImplementations = GetCurrentAssemblyInterfaceMethodImplementations(type);
             foreach (var methodHandle in type.GetMethods())
             {
                 var method = _reader.GetMethodDefinition(methodHandle);

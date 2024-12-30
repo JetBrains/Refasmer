@@ -66,4 +66,15 @@ public class IntegrationTests : IntegrationTestBase
             assertTypeExists: false,
             parameters: [mainClassName]);
     }
+
+    [Test]
+    public async Task InterfaceImplementations()
+    {
+        var assemblyPath = await BuildTestAssemblyWithInternalTypeInPublicApi();
+        var resultAssembly = RefasmTestAssembly(assemblyPath, omitNonApiMembers: true);
+
+        await VerifyTypeContents(
+            resultAssembly,
+            ["RefasmerTestAssembly.InterfaceImplementations", "RefasmerTestAssembly.IWithStaticMethods`1"]);
+    }
 }

@@ -1,0 +1,14 @@
+﻿public class: RefasmerTestAssembly.InterfaceImplementations
+  - interface impl: RefasmerTestAssembly.IWithStaticMethods`1<RefasmerTestAssembly.InterfaceImplementations>
+methods:
+- Equals(System.Object obj): System.Boolean:
+- GetHashCode(): System.Int32:
+- op_Equality(RefasmerTestAssembly.InterfaceImplementations a, RefasmerTestAssembly.InterfaceImplementations b): System.Boolean:
+- op_Inequality(RefasmerTestAssembly.InterfaceImplementations a, RefasmerTestAssembly.InterfaceImplementations b): System.Boolean:
+- .ctor(): System.Void:
+public interface: RefasmerTestAssembly.IWithStaticMethods`1
+methods:
+- op_Equality(TSelf a, TSelf b): System.Boolean:
+  - <abstract>
+- op_Inequality(TSelf a, TSelf b): System.Boolean:
+  - <abstract>
