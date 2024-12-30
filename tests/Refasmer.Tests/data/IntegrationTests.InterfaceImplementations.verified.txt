@@ -5,10 +5,13 @@ methods:
 - GetHashCode(): System.Int32:
 - op_Equality(RefasmerTestAssembly.InterfaceImplementations a, RefasmerTestAssembly.InterfaceImplementations b): System.Boolean:
 - op_Inequality(RefasmerTestAssembly.InterfaceImplementations a, RefasmerTestAssembly.InterfaceImplementations b): System.Boolean:
+- InstanceMethod(): System.Void:
 - .ctor(): System.Void:
 public interface: RefasmerTestAssembly.IWithStaticMethods`1
 methods:
 - op_Equality(TSelf a, TSelf b): System.Boolean:
   - <abstract>
 - op_Inequality(TSelf a, TSelf b): System.Boolean:
+  - <abstract>
+- InstanceMethod(): System.Void:
   - <abstract>

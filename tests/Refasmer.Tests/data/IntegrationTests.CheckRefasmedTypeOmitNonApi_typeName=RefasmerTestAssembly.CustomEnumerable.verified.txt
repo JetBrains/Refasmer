@@ -1,0 +1,5 @@
+﻿public class: RefasmerTestAssembly.CustomEnumerable
+  - interface impl: System.Collections.IEnumerable
+methods:
+- System.Collections.IEnumerable.GetEnumerator(): System.Collections.IEnumerator:
+- .ctor(): System.Void:

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 
 namespace RefasmerTestAssembly;
 
@@ -6,6 +7,8 @@ public interface IWithStaticMethods<TSelf> where TSelf : IWithStaticMethods<TSel
 {
     static abstract bool operator ==(TSelf a, TSelf b);
     static abstract bool operator !=(TSelf a, TSelf b);
+
+    void InstanceMethod();
 }
 public class InterfaceImplementations : IWithStaticMethods<InterfaceImplementations>
 {
@@ -16,4 +19,10 @@ public class InterfaceImplementations : IWithStaticMethods<InterfaceImplementati
     public static bool operator ==(InterfaceImplementations a, InterfaceImplementations b) => throw new NotSupportedException();
 
     public static bool operator !=(InterfaceImplementations a, InterfaceImplementations b) => throw new NotSupportedException();
+
+    public void InstanceMethod() { }
+}
+public class CustomEnumerable : IEnumerable
+{
+    IEnumerator IEnumerable.GetEnumerator() => null!;
 }

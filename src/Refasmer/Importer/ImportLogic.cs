@@ -23,7 +23,8 @@ public partial class MetadataImporter
         switch (typeHandle.Kind)
         {
             case HandleKind.TypeDefinition:
-                return true;
+                var type = _reader.GetTypeDefinition((TypeDefinitionHandle)typeHandle);
+                return Filter.AllowImport(type, _reader);
             case HandleKind.TypeReference:
                 return true;
             case HandleKind.TypeSpecification:
@@ -87,7 +88,7 @@ public partial class MetadataImporter
         if (!forcePreservePrivateFields)
             PostProcessSkippedValueTypeFields(skippedInstanceFields!, importedInstanceFields!);
 
-        var implementations = GetCurrentAssemblyInterfaceMethodImplementations(src);
+        var implementations = GetAllowlistedInterfaceMethodImplementations(src);
 
         foreach (var srcMethodHandle in src.GetMethods())
         {
@@ -402,7 +403,7 @@ public partial class MetadataImporter
             .Select(_reader.GetFullname)
             .Any(name => name == FullNames.ReferenceAssembly);
 
-    private ImmutableHashSet<MethodDefinitionHandle> GetCurrentAssemblyInterfaceMethodImplementations(
+    private ImmutableHashSet<MethodDefinitionHandle> GetAllowlistedInterfaceMethodImplementations(
         TypeDefinition type)
     {
         return GetImplementations().ToImmutableHashSet();
@@ -413,15 +414,8 @@ public partial class MetadataImporter
                 .Select(_reader.GetMethodImplementation);
             foreach (var mi in implementations)
             {
-                if (!AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
-                    continue;
-
-                var bodyHandle = (MethodDefinitionHandle)mi.MethodBody;
-                var method = _reader.GetMethodDefinition(bodyHandle);
-                var isStatic = (method.Attributes & MethodAttributes.Static) != 0;
-                if (isStatic) continue;
-
-                yield return bodyHandle;
+                if (AllowImportType(_reader.GetMethodClass(mi.MethodDeclaration)))
+                    yield return (MethodDefinitionHandle)mi.MethodBody;
             }
         }
     }
@@ -430,7 +424,7 @@ public partial class MetadataImporter
         IImmutableSet<MethodDefinitionHandle> implementations,
         MethodDefinitionHandle methodHandle,
         MethodDefinition method) =>
-        !implementations.Contains(methodHandle) && (Filter == null || Filter.AllowImport(method, _reader));
+        implementations.Contains(methodHandle) || Filter == null || Filter.AllowImport(method, _reader);
 
     public ReservedBlob<GuidHandle> Import()
     {
@@ -672,7 +666,7 @@ public partial class MetadataImporter
                     AcceptFieldSignature(field, collector);
             }
 
-            var methodImplementations = GetCurrentAssemblyInterfaceMethodImplementations(type);
+            var methodImplementations = GetAllowlistedInterfaceMethodImplementations(type);
             foreach (var methodHandle in type.GetMethods())
             {
                 var method = _reader.GetMethodDefinition(methodHandle);

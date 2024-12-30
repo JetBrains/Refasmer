@@ -27,6 +27,7 @@ public class IntegrationTests : IntegrationTestBase
     [TestCase("RefasmerTestAssembly.NonBlittableGraph")]
     [TestCase("RefasmerTestAssembly.EmptyStructWithStaticMember")]
     [TestCase("RefasmerTestAssembly.NonEmptyStructWithStaticMember")]
+    [TestCase("RefasmerTestAssembly.CustomEnumerable")]
     public async Task CheckRefasmedTypeOmitNonApi(string typeName)
     {
         var assemblyPath = await BuildTestAssembly();
