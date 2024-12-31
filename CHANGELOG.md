@@ -4,10 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.1] - 2024-12-31
 ### Fixed
 - [#38: Internal types in public API break `omit-non-api-members=true`](https://github.com/JetBrains/Refasmer/issues/38).
-- Fix regression since v2.0.0: public compiler-generated types are no longer ommitted from the refasmed assemblies.
+- Fix regression since v2.0.0: public compiler-generated types are no longer omitted from the refasmed assemblies.
 
 ## [2.0.0] - 2024-11-20
 ### Changed
@@ -190,4 +190,5 @@ Release the initial version in form of a .NET executable and a NuGet package.
 [1.0.32]: https://github.com/JetBrains/Refasmer/compare/1.0.31...1.0.32
 [1.0.33]: https://github.com/JetBrains/Refasmer/compare/1.0.32...1.0.33
 [2.0.0]: https://github.com/JetBrains/Refasmer/compare/1.0.33...v2.0.0
-[Unreleased]: https://github.com/JetBrains/Refasmer/compare/v2.0.0...HEAD
+[2.0.1]: https://github.com/JetBrains/Refasmer/compare/v2.0.0...v2.0.1
+[Unreleased]: https://github.com/JetBrains/Refasmer/compare/v2.0.1...HEAD
