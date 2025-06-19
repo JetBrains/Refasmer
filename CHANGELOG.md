@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2025-06-19
+### Fixed
+- [#45: Field `value__` should not be removed from enums](https://github.com/JetBrains/Refasmer/issues/45).
+
+  (Even if this is about `internal` enums that are left as part of the tracking of other internal types' signatures.)
+
 ## [2.0.1] - 2024-12-31
 ### Fixed
 - [#38: Internal types in public API break `omit-non-api-members=true`](https://github.com/JetBrains/Refasmer/issues/38).
@@ -191,4 +197,5 @@ Release the initial version in form of a .NET executable and a NuGet package.
 [1.0.33]: https://github.com/JetBrains/Refasmer/compare/1.0.32...1.0.33
 [2.0.0]: https://github.com/JetBrains/Refasmer/compare/1.0.33...v2.0.0
 [2.0.1]: https://github.com/JetBrains/Refasmer/compare/v2.0.0...v2.0.1
-[Unreleased]: https://github.com/JetBrains/Refasmer/compare/v2.0.1...HEAD
+[2.0.2]: https://github.com/JetBrains/Refasmer/compare/v2.0.1...v2.0.2
+[Unreleased]: https://github.com/JetBrains/Refasmer/compare/v2.0.2...HEAD
