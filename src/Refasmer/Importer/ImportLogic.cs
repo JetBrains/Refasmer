@@ -49,13 +49,17 @@ public partial class MetadataImporter
         using var _ = WithLogPrefix($"[{_reader.ToString(src)}]");
 
         var isValueType = _reader.GetFullname(src.BaseType) == "System::ValueType";
-        var forcePreservePrivateFields = isValueType && Filter?.OmitNonApiMembers == false;
+        var isEnum = _reader.GetFullname(src.BaseType) == "System::Enum";
+        var forcePreservePrivateInstanceFields = isValueType && Filter?.OmitNonApiMembers == false;
+        var forcePreserveAllFields = isEnum && Filter?.OmitNonApiMembers == false;
 
         List<FieldDefinition>? importedInstanceFields = null;
         List<FieldDefinition>? skippedInstanceFields = null;
 
-        if (forcePreservePrivateFields)
+        if (forcePreservePrivateInstanceFields)
             Trace?.Invoke($"{_reader.ToString(src)} is ValueType, all fields should be imported");
+        else if (forcePreserveAllFields)
+            Trace?.Invoke($"{_reader.ToString(src)} is an Enum, all fields should be imported.");
         else
         {
             importedInstanceFields = [];
@@ -66,7 +70,9 @@ public partial class MetadataImporter
         {
             var srcField = _reader.GetFieldDefinition(srcFieldHandle);
             var isStatic = (srcField.Attributes & FieldAttributes.Static) != 0;
-            var isForcedToInclude = forcePreservePrivateFields && !isStatic;
+            var isForcedToInclude =
+                (forcePreservePrivateInstanceFields && !isStatic)
+                || forcePreserveAllFields;
 
             if (!isForcedToInclude && Filter?.AllowImport(srcField, _reader) == false)
             {
@@ -85,7 +91,7 @@ public partial class MetadataImporter
                 importedInstanceFields?.Add(srcField);
         }
 
-        if (!forcePreservePrivateFields)
+        if (!forcePreservePrivateInstanceFields && !forcePreserveAllFields)
             PostProcessSkippedValueTypeFields(skippedInstanceFields!, importedInstanceFields!);
 
         var implementations = GetAllowlistedInterfaceMethodImplementations(src);
@@ -426,6 +432,16 @@ public partial class MetadataImporter
         MethodDefinition method) =>
         implementations.Contains(methodHandle) || Filter == null || Filter.AllowImport(method, _reader);
 
+    private bool ShouldOmitTypeMembers(
+        TypeDefinitionHandle srcHandle,
+        HashSet<TypeDefinitionHandle> internalTypesToPreserve)
+    {
+        // Normally, we omit members of all types, but enums are an exception (see #45 on that).
+        var src = _reader.GetTypeDefinition(srcHandle);
+        var isEnum = _reader.GetFullname(src.BaseType) == "System::Enum";
+        return !isEnum && internalTypesToPreserve.Contains(srcHandle);
+    }
+
     public ReservedBlob<GuidHandle> Import()
     {
         if (_reader.IsAssembly)
@@ -477,7 +493,7 @@ public partial class MetadataImporter
         Debug?.Invoke("Importing type definitions");
         foreach (var srcHandle in _reader.TypeDefinitions.Where(_typeDefinitionCache.ContainsKey))
         {
-            var shouldOmitMembers = internalTypesToPreserve.Contains(srcHandle);
+            var shouldOmitMembers = ShouldOmitTypeMembers(srcHandle, internalTypesToPreserve);
             var dstHandle = ImportTypeDefinitionSkeleton(srcHandle, shouldOmitMembers);
             if (dstHandle != _typeDefinitionCache[srcHandle])
                 throw new Exception(
