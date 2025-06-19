@@ -30,7 +30,7 @@ public static class Printer
             printout.AppendLine($"{indent}fields:");
             foreach (var field in type.Fields)
             {
-                printout.AppendLine($"{indent}- {field.Name}: {field.FieldType}");
+                printout.AppendLine($"{indent}- {GetAccessString(field)} {field.Name}: {field.FieldType}");
             }
         }
 
@@ -82,6 +82,17 @@ public static class Printer
         if (type.IsNestedFamilyOrAssembly) return "protected internal";
         if (type.IsNestedFamilyAndAssembly) return "private protected";
         return "internal";
+    }
+
+    private static string GetAccessString(FieldDefinition field)
+    {
+        if (field.IsPublic) return "public";
+        if (field.IsFamily) return "protected";
+        if (field.IsPrivate) return "private";
+        if (field.IsAssembly) return "internal";
+        if (field.IsFamilyOrAssembly) return "protected internal";
+        if (field.IsFamilyAndAssembly) return "private protected";
+        throw new Exception($"Unknown field accessibility for field {field}.");
     }
 
     private static string GetTypeKindString(TypeDefinition typeDefinition)

@@ -1,8 +1,8 @@
 ﻿internal struct: RefasmerTestAssembly.InternalEnumType
   - base type: System.Enum
 fields:
-- value__: System.Int32
-- A: RefasmerTestAssembly.InternalEnumType
-- B: RefasmerTestAssembly.InternalEnumType
-- C: RefasmerTestAssembly.InternalEnumType
-- D: RefasmerTestAssembly.InternalEnumType
+- public value__: System.Int32
+- public A: RefasmerTestAssembly.InternalEnumType
+- public B: RefasmerTestAssembly.InternalEnumType
+- public C: RefasmerTestAssembly.InternalEnumType
+- public D: RefasmerTestAssembly.InternalEnumType

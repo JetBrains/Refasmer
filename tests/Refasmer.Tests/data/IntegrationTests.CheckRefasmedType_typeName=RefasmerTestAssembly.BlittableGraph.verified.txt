@@ -1,11 +1,11 @@
 ﻿public struct: RefasmerTestAssembly.BlittableGraph
 fields:
-- x: RefasmerTestAssembly.BlittableGraph/BlittableType
+- private x: RefasmerTestAssembly.BlittableGraph/BlittableType
 types:
   private struct: RefasmerTestAssembly.BlittableGraph/BlittableType
   fields:
-  - x: RefasmerTestAssembly.BlittableGraph/BlittableType/BlittableType2
+  - private x: RefasmerTestAssembly.BlittableGraph/BlittableType/BlittableType2
   types:
     private struct: RefasmerTestAssembly.BlittableGraph/BlittableType/BlittableType2
     fields:
-    - x: System.Int64
+    - private x: System.Int64

@@ -1,5 +1,5 @@
 ﻿public class: RefasmerTestAssembly.PublicClassWithPrivateFields
 fields:
-- PublicInt: System.Int32
+- public PublicInt: System.Int32
 methods:
 - .ctor(): System.Void:

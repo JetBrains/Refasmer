@@ -1,8 +1,8 @@
 ﻿public struct: RefasmerTestAssembly.EnumType
   - base type: System.Enum
 fields:
-- value__: System.Int32
-- A: RefasmerTestAssembly.EnumType
-- B: RefasmerTestAssembly.EnumType
-- C: RefasmerTestAssembly.EnumType
-- D: RefasmerTestAssembly.EnumType
+- public value__: System.Int32
+- public A: RefasmerTestAssembly.EnumType
+- public B: RefasmerTestAssembly.EnumType
+- public C: RefasmerTestAssembly.EnumType
+- public D: RefasmerTestAssembly.EnumType

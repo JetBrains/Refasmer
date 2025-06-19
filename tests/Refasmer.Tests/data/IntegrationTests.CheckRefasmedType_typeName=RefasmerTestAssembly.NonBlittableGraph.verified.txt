@@ -1,11 +1,11 @@
 ﻿public struct: RefasmerTestAssembly.NonBlittableGraph
 fields:
-- x: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType
+- private x: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType
 types:
   private struct: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType
   fields:
-  - x: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType/NonBlittableType
+  - private x: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType/NonBlittableType
   types:
     private struct: RefasmerTestAssembly.NonBlittableGraph/DubiouslyBlittableType/NonBlittableType
     fields:
-    - x: System.String
+    - private x: System.String
