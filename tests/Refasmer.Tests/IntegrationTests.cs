@@ -10,6 +10,8 @@ public class IntegrationTests : IntegrationTestBase
     [TestCase("RefasmerTestAssembly.BlittableStructWithPrivateFields")]
     [TestCase("RefasmerTestAssembly.NonBlittableStructWithPrivateFields")]
     [TestCase("RefasmerTestAssembly.NonBlittableGraph")]
+    [TestCase("RefasmerTestAssembly.InternalEnumType")]
+    [TestCase("RefasmerTestAssembly.EnumType")]
     public async Task CheckRefasmedType(string typeName)
     {
         var assemblyPath = await BuildTestAssembly();
@@ -28,6 +30,8 @@ public class IntegrationTests : IntegrationTestBase
     [TestCase("RefasmerTestAssembly.EmptyStructWithStaticMember")]
     [TestCase("RefasmerTestAssembly.NonEmptyStructWithStaticMember")]
     [TestCase("RefasmerTestAssembly.CustomEnumerable")]
+    [TestCase("RefasmerTestAssembly.EnumType")]
+    [TestCase("RefasmerTestAssembly.InternalEnumType")]
     public async Task CheckRefasmedTypeOmitNonApi(string typeName)
     {
         var assemblyPath = await BuildTestAssembly();

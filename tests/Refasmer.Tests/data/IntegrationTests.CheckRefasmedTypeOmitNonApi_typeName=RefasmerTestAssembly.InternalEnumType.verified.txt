@@ -1,0 +1,8 @@
+﻿internal struct: RefasmerTestAssembly.InternalEnumType
+  - base type: System.Enum
+fields:
+- value__: System.Int32
+- A: RefasmerTestAssembly.InternalEnumType
+- B: RefasmerTestAssembly.InternalEnumType
+- C: RefasmerTestAssembly.InternalEnumType
+- D: RefasmerTestAssembly.InternalEnumType
