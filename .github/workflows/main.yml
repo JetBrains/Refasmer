@@ -53,7 +53,7 @@ jobs:
       working-directory: src/RefasmerExe
 
     - name: Upload the packages
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: nupkg
         path: |
@@ -61,7 +61,7 @@ jobs:
           src/RefasmerCliTool/bin/Release/*.nupkg
 
     - name: Upload the executables
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: refasmer-exe
         path: |
