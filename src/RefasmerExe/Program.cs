@@ -209,7 +209,7 @@ public static class Program
                                 throw new ArgumentOutOfRangeException();
                         }
                     }
-                    catch (InvalidOperationException e)
+                    catch (Exception e)
                     {
                         _logger.Error?.Invoke(e.Message);
                         if (continueOnErrors)
