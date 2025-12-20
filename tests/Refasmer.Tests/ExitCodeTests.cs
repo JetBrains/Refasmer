@@ -20,10 +20,13 @@ public class ExitCodeTests : IntegrationTestBase
         var outputPath = Path.GetTempFileName();
         using var collector = CollectConsoleOutput();
         var exitCode = ExecuteRefasmAndGetExitCode(assemblyPath, outputPath, additionalArgs);
+        if (exitCode != expectedCode)
+        {
+            await TestContext.Out.WriteLineAsync($"StdOut:\n{collector.StdOut}\nStdErr: {collector.StdErr}");
+        }
         Assert.That(
             exitCode,
             Is.EqualTo(expectedCode),
-            $"Refasmer returned exit code {exitCode}, while {expectedCode} was expected." +
-            $" StdOut:\n{collector.StdOut}\nStdErr: {collector.StdErr}");
+            $"Refasmer returned exit code {exitCode}, while {expectedCode} was expected.");
     }
 }

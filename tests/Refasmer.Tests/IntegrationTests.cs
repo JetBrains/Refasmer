@@ -32,7 +32,7 @@ public class IntegrationTests : IntegrationTestBase
     [TestCase("RefasmerTestAssembly.CustomEnumerable")]
     [TestCase("RefasmerTestAssembly.EnumType")]
     [TestCase("RefasmerTestAssembly.InternalEnumType")]
-    [TestCase("RefasmerTestAssembly.InternalInterfaceImplBug")]
+    [TestCase("RefasmerTestAssembly.ExplicitImplOfInternalInterface")]
     public async Task CheckRefasmedTypeOmitNonApi(string typeName)
     {
         var assemblyPath = await BuildTestAssembly();

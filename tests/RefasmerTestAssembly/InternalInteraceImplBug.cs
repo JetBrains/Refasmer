@@ -1,15 +1,15 @@
 ﻿namespace RefasmerTestAssembly;
 
-public class Class1 : IInternalInterace<string>
+public class ExplicitImplOfInternalInterface : IInternalInterface<string>
 {
-    void IInternalInterace<string>.Method(string x, Internal2 y)
+    void IInternalInterface<string>.Method(string x, Internal2 y)
     {
     }
 }
 
 internal class Internal2{}
 
-internal interface IInternalInterace<T>
+internal interface IInternalInterface<T>
 {
     void Method(T x, Internal2 y);
 }
