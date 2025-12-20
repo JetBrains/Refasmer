@@ -16,10 +16,15 @@ public abstract class IntegrationTestBase
         Console.WriteLine($"Building project {testProject}…");
         var result = await Command.Run("dotnet", "build", testProject, "--configuration", "Release").Task;
 
+        if (result.ExitCode != 0)
+        {
+            await TestContext.Out.WriteLineAsync($"StdOut:\n{result.StandardOutput}\nStdErr: {result.StandardError}");
+        }
+
         Assert.That(
             result.ExitCode,
             Is.EqualTo(0),
-            $"Failed to build test assembly, exit code {result.ExitCode}. StdOut:\n{result.StandardOutput}\nStdErr: {result.StandardError}");
+            $"Failed to build test assembly, exit code {result.ExitCode}.");
 
         return Path.Combine(
             root,
@@ -67,10 +72,11 @@ public abstract class IntegrationTestBase
         var options = new[]{ "--omit-non-api-members", omitNonApiMembers.ToString(CultureInfo.InvariantCulture) };
         using var collector = CollectConsoleOutput();
         var exitCode = ExecuteRefasmAndGetExitCode(assemblyPath, outputPath, options);
-        Assert.That(
-            exitCode,
-            Is.EqualTo(0),
-            $"Refasmer returned exit code {exitCode}. StdOut:\n{collector.StdOut}\nStdErr: {collector.StdErr}");
+        if (exitCode != 0)
+        {
+            TestContext.Out.WriteLine($"Refasmer returned exit code {exitCode}. StdOut:\n{collector.StdOut}\nStdErr: {collector.StdErr}");
+        }
+        Assert.That(exitCode, Is.EqualTo(0));
 
         return outputPath;
     }
