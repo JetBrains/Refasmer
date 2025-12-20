@@ -178,9 +178,17 @@ public partial class MetadataImporter
                 srcImpl =>
                 {
                     var body = Import(srcImpl.MethodBody);
+
+                    // If the method body wasn't imported (e.g., private explicit interface implementation),
+                    // skip importing the declaration. For generic interfaces, the declaration is a
+                    // MemberReference whose import triggers signature processing. If the signature contains
+                    // internal types that weren't preserved, this would throw UnknownTypeInSignature.
+                    // See: https://github.com/JetBrains/Refasmer/issues/54
+                    if (body.IsNil)
+                        return default;
                     var decl = Import(srcImpl.MethodDeclaration);
 
-                    return body.IsNil || decl.IsNil
+                    return decl.IsNil
                         ? default
                         : _builder.AddMethodImplementation(dstHandle, body, decl);
                 },
