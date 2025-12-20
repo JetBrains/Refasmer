@@ -32,7 +32,6 @@ public class IntegrationTests : IntegrationTestBase
     [TestCase("RefasmerTestAssembly.CustomEnumerable")]
     [TestCase("RefasmerTestAssembly.EnumType")]
     [TestCase("RefasmerTestAssembly.InternalEnumType")]
-    [TestCase("RefasmerTestAssembly.ExplicitImplOfInternalInterface")]
     public async Task CheckRefasmedTypeOmitNonApi(string typeName)
     {
         var assemblyPath = await BuildTestAssembly();
@@ -58,6 +57,7 @@ public class IntegrationTests : IntegrationTestBase
     [TestCase("PublicClassImplementingInternal", "IInterface1ToBeMarkedInternal")]
     [TestCase("PublicClassWithInternalInterfaceImpl", "Class3ToBeMarkedInternal,IInterface2ToBeMarkedInternal`1")]
     [TestCase("PublicClassWithInternalTypeInExplicitImpl", "IInterface3")]
+    [TestCase("ExplicitImplOfInternalInterface", "IInternalInterface`1")]
     public async Task InternalTypeInPublicApi(string mainClassName, string auxiliaryClassNames)
     {
         var assemblyPath = await BuildTestAssemblyWithInternalTypeInPublicApi();

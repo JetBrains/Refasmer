@@ -2,3 +2,4 @@
   - interface impl: RefasmerTestAssembly.IInternalInterface`1<System.String>
 methods:
 - .ctor(): System.Void:
+internal interface: RefasmerTestAssembly.IInternalInterface`1
