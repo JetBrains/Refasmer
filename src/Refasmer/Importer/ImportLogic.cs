@@ -184,6 +184,10 @@ public partial class MetadataImporter
                     // MemberReference whose import triggers signature processing. If the signature contains
                     // internal types that weren't preserved, this would throw UnknownTypeInSignature.
                     // See: https://github.com/JetBrains/Refasmer/issues/54
+                    //
+                    // Note: a non-generic interface method implementation is not a MemberReference, but a
+                    // MethodDefinition which doesn't trigger signature processing (should be already in the method
+                    // definition cache).
                     if (body.IsNil)
                         return default;
                     var decl = Import(srcImpl.MethodDeclaration);
