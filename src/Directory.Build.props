@@ -1,6 +1,6 @@
 ﻿<Project>
     <PropertyGroup Label="Packaging">
-        <Version>2.0.2</Version>
+        <Version>2.0.3</Version>
         <Copyright>Copyright © JetBrains 2025</Copyright>
 
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
